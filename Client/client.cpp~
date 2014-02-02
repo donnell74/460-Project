@@ -18,11 +18,12 @@ int DEFAULT_PORT = 51717;
 char LOCALHOST[] = "127.0.0.1";
 const char EXIT = 'x';
 const char MESSAGE = 'm';
+// last line of ACCEPTED_CHARS is for command chars
 vector<char> ACCEPTED_CHARS = {'1', '2', '3', '4', 
                                'Q', 'W', 'E', 'R',
                                'A', 'S', 'D', 'F', 
                                'Z', 'X', 'C', 'V',
-                               'U', 'I'}; // last line is special keys
+                               'U', 'I', 'T'}; 
 
 /* Globals */
 int client_sock_fd = 0;

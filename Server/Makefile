@@ -1,2 +1,5 @@
-server: server.cpp
-	g++ --std=c++0x -Wall -o server server.cpp
+CC = g++
+CFLAGS = --std=c++0x -Wall
+
+build: server.cpp
+	$(CC) $(CFLAGS) -o server server.cpp

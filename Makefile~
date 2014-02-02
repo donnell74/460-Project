@@ -1,4 +1,8 @@
-all:
-	cd server; make
-	cd client; make
-	cd includes; make
+CFLAGS = -C -Wall
+DIRS = Server Client Includes
+
+build:
+	for each_dir in $(DIRS); do \
+		$(MAKE) $(CFLAGS) $$each_dir build; \
+	done
+
