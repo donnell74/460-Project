@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <poll.h>
 #include <netdb.h>
+#include <vector>
 using namespace std;
 
 /* Constants */
@@ -16,6 +17,11 @@ int DEFAULT_PORT = 51717;
 char LOCALHOST[] = "127.0.0.1";
 const char EXIT = 'x';
 const char MESSAGE = 'm';
+vector<char> ACCEPTED_CHARS = {'1', '2', '3', '4', 
+                               'Q', 'W', 'E', 'R',
+                               'A', 'S', 'D', 'F', 
+                               'Z', 'X', 'C', 'V',
+                               'U', 'I'}; // last line is special keys
 
 /* Globals */
 int client_sock_fd = 0;
@@ -54,12 +60,12 @@ void handle_input()
   for ( auto it = inp.begin(); it != inp.end(); ++it )
   {
     *it = toupper(*it);
-  } 
-
-  if ( inp.compare("QUIT") == 0)
-  {
-    bytes_sent = write( client_sock_fd, inp.c_str(), inp.size() );
-    return;
+    if ( find(ACCEPTED_CHARS.begin(), ACCEPTED_CHARS.end(), (*it)) == 
+         ACCEPTED_CHARS.end() )
+    {
+      cout << "Key " << *it << " is not allowed." << endl;
+      return;
+    }
   } 
 
   // substr will only get first 3, stop long string entries
