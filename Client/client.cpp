@@ -18,11 +18,12 @@ int DEFAULT_PORT = 51717;
 char LOCALHOST[] = "127.0.0.1";
 const char EXIT = 'x';
 const char MESSAGE = 'm';
+// last line of ACCEPTED_CHARS is for command chars
 vector<char> ACCEPTED_CHARS = {'1', '2', '3', '4', 
                                'Q', 'W', 'E', 'R',
                                'A', 'S', 'D', 'F', 
                                'Z', 'X', 'C', 'V',
-                               'U', 'I'}; // last line is special keys
+                               'U', 'I', 'T'}; 
 
 /* Globals */
 int client_sock_fd = 0;
@@ -54,14 +55,20 @@ void cleanup()
 
 void handle_input()
 {
-  string inp = {};
+  string inp = {0};
   cin >> inp;
   int bytes_sent = -1;
+
+  if ( inp.size() < (size_t) 3 )
+  {
+    cout << "Not using all three inputs will never be a set." << endl;
+    return;
+  }
 
   for ( auto it = inp.begin(); it != inp.end(); ++it )
   {
     *it = toupper(*it);
-    if ( find(ACCEPTED_CHARS.begin(), ACCEPTED_CHARS.end(), (*it)) == 
+    if ( find(ACCEPTED_CHARS.begin(), ACCEPTED_CHARS.end(), *it) == 
          ACCEPTED_CHARS.end() )
     {
       cout << "Key " << *it << " is not allowed." << endl;
@@ -71,6 +78,14 @@ void handle_input()
 
   // substr will only get first 3, stop long string entries
   inp = inp.substr(0, 3);
+
+  // check if any repeats
+  if ( inp[0] == inp[1] ||
+       inp[1] == inp[2] ||
+       inp[0] == inp[2] )
+  {
+    cout << "Repeats are not allowed." << endl;
+  }
 
   bytes_sent = write( client_sock_fd, inp.c_str(), inp.size() );
   if ( bytes_sent < 0 )
