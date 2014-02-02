@@ -47,13 +47,26 @@ void cleanup()
 
 void handle_input()
 {
-  int inp;
-
+  string inp = {};
   cin >> inp;
-  switch( toupper( inp ) )
+  int bytes_sent = -1;
+
+  for ( auto it = inp.begin(); it != inp.end(); ++it )
   {
-    default:
-      break;
+    *it = toupper(*it);
+  } 
+
+  // substr will only get first 3, stop long string entries
+  inp = inp.substr(0, 3);
+
+  bytes_sent = write( client_sock_fd, inp.c_str(), inp.size() );
+  if ( bytes_sent < 0 )
+  {
+    die( "Unable to send message." );
+  }
+  if ( bytes_sent == 0 )
+  {
+    cout << "No bytes sent." << endl;
   }
 }
 
@@ -69,6 +82,13 @@ void handle_server_msg()
     switch( type )
     {
       case EXIT:
+        bytes_read = read( client_sock_fd, &buffer, 255 );
+        if ( bytes_read == -1 )
+        {
+          die("Lost connection with server.");
+        }
+
+        cout << buffer << endl;
         cleanup();
         break;
 
@@ -109,6 +129,7 @@ void game_loop ()
       {
         handle_input();
       }
+
       if ( ( poll_fds[1].revents & POLLIN ) != 0 )
       {
         handle_server_msg();

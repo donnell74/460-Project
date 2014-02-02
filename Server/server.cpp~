@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <poll.h>
 
 using namespace std;
 
@@ -22,14 +23,15 @@ struct Client
 int DEBUG = 1;
 int DEFAULT_PORT = 51717;
 char LOCALHOST[] = "127.0.0.1";
-
+int MAXCLIENTS = 25;
 
 /* Globals */
 int server_sock_fd = 0;
 vector<Client> client_list;
+vector<pollfd> poll_fds {{STDIN_FILENO, POLLIN, 0}};
 
 
-void error ( string error_msg )
+void die ( string error_msg )
 {
   // standardize error_msg so no extra new lines
   error_msg.erase(error_msg.find_last_not_of(" \n\r\t")+1); 
@@ -37,60 +39,15 @@ void error ( string error_msg )
 
   if ( DEBUG )
   {
-    cerr << strerror(errno) << endl;
+    cerr << strerror( errno ) << endl;
   }
   
   // close socket to server
-  close( server_sock_fd ); 
+  if ( close( server_sock_fd ) == -1 && DEBUG )
+  {
+    cerr << strerror( errno ) << endl;
+  }
   exit(EXIT_FAILURE);
-}
-
-void init_server ( int port, char *addr )
-{
-  cout << "Entering init_server." << endl;
-  // create socket for server
-  server_sock_fd = socket( AF_INET, SOCK_STREAM, 0 );
-  if ( server_sock_fd < 0 )
-  {
-    error("Error opening socket. ");
-  }
- 
-  // create sock addr we use for the rest of program
-  struct sockaddr_in server_addr = {};
-  server_addr.sin_family = AF_INET;
-  server_addr.sin_port = htons( port );
-
-  // convert ip text string to binary
-  if ( inet_pton( AF_INET, addr, &server_addr.sin_addr ) != 1 )
-  {
-    error("Error converting addr during server initialization. ");
-  }  
-
-  // bind socket to the server ip
-  if ( bind( server_sock_fd, 
-             (struct sockaddr *) &server_addr,
-             sizeof server_addr ) < 0)
-  {
-    error("Can't bind to server socket. ");
-  }
-
-  // start listening for a connection
-  // change SOMAXCON to a int if requirements
-  // require a limit on clients
-  if ( listen( server_sock_fd, SOMAXCONN ) < 0 )
-  {
-    error( "Unable to listen." );
-  }
-
-  // output that it is listening
-  cout << "Listening on port " << addr << endl;
-}
-
-
-/* syntactic sugar */
-void sendMessage( int sock_fd, char type )
-{
-  sendMessage( sock_fd, type, "");
 }
 
 
@@ -100,8 +57,68 @@ void sendMessage( int sock_fd, char type, string msg )
   int bytes_sent = write( sock_fd, msg.c_str(), msg.size()); 
   if ( bytes_sent < 0 )
   {
-    error( "Unable to send message." );
+    die( "Unable to send message." );
   }
+}
+
+
+void cleanup ()
+{
+  for ( auto client_it : client_list )
+  {
+    sendMessage( client_it.sock_fd, 'x', "You have been disconnected"); 
+  }
+  if ( close( server_sock_fd ) == -1  && DEBUG )
+  {
+    cerr << strerror( errno ) << endl;
+  }
+  exit(EXIT_SUCCESS);
+}
+
+
+void init_server ( int port, char *addr )
+{
+  cout << "Entering init_server." << endl;
+  // create socket for server
+  server_sock_fd = socket( AF_INET, SOCK_STREAM, 0 );
+  if ( server_sock_fd < 0 )
+  {
+    die("Error opening socket. ");
+  }
+
+  // add server socket to poll_fds
+  struct pollfd server_pollfd = {server_sock_fd, POLLIN, 0};
+  poll_fds.push_back(server_pollfd);
+
+  // create sock addr we use for the rest of program
+  struct sockaddr_in server_addr = {};
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_port = htons( port );
+
+  // convert ip text string to binary
+  if ( inet_pton( AF_INET, addr, &server_addr.sin_addr ) != 1 )
+  {
+    die("Error converting addr during server initialization. ");
+  }  
+
+  // bind socket to the server ip
+  if ( bind( server_sock_fd, 
+             (struct sockaddr *) &server_addr,
+             sizeof server_addr ) < 0)
+  {
+    die("Can't bind to server socket. ");
+  }
+
+  // start listening for a connection
+  // change SOMAXCON to a int if requirements
+  // require a limit on clients
+  if ( listen( server_sock_fd, MAXCLIENTS ) < 0 )
+  {
+    die( "Unable to listen." );
+  }
+
+  // output that it is listening
+  cout << "Listening on port " << addr << endl;
 }
 
 
@@ -120,24 +137,118 @@ void wait_for_client ()
 
   if ( client_it->sock_fd < 0 )
   {
-    error("Error on accept. ");
+    die("Error on accept. ");
   }
   else
   {
     cout << "Connected new client." << endl;
+
+    // add poll fd and send message
+    struct pollfd client_sock_fd = {client_it->sock_fd, POLLIN, 0};
+    poll_fds.push_back(client_sock_fd);
     sendMessage( client_it->sock_fd, 'm', "You have been connected.");
   }
 }
 
 
-void cleanup ()
+void handle_input()
 {
-  for ( auto client_it : client_list )
+  char inp;
+
+  cin >> inp;
+  switch( toupper( inp ) )
   {
-    sendMessage( client_it.sock_fd, 'x'); 
+    case 'Q':
+      cleanup();
+    default:
+      break;
   }
-  close( server_sock_fd );
-  exit(EXIT_SUCCESS);
+}
+
+
+void disconnect_client( int client_sock_fd )
+{
+  for ( auto client_it = client_list.begin(); client_it != client_list.end(); ++client_it )
+  {
+    if ( client_it->sock_fd == client_sock_fd )
+    {
+      client_list.erase( client_it );
+      break;
+    }
+  }
+
+  for ( auto poll_fd_it = poll_fds.begin(); poll_fd_it != poll_fds.end(); ++poll_fd_it )
+  {
+    if ( poll_fd_it->fd == client_sock_fd )
+    {
+      poll_fds.erase( poll_fd_it );
+      break;
+    }
+  }
+
+  // even if close fails, server acts if client has died
+  // as of this point
+  sendMessage( client_sock_fd, 'x', "You have been disconnected"); 
+  close( client_sock_fd );
+  cout << "Client with fd of " << client_sock_fd << " has disconnected." << endl;
+}
+
+
+void recieve_input( int client_sock_fd )
+{
+  int bytes_read = 0;
+  char buffer[5]; // will only care about first 3 if guess
+
+  bytes_read = read( client_sock_fd, &buffer, 3);
+  if ( bytes_read != -1 )
+  {
+    if ( strcmp( buffer, "QUI" ) == 0 )
+    {
+      disconnect_client( client_sock_fd );
+    }
+    else
+    {
+      cout << "Guess from " << client_sock_fd << " of "
+           << buffer << endl;
+    }
+  }
+}
+
+
+void wait_for_input ()
+{
+  for ( ;; )
+  {
+    // &poll_fds[0] can cause problems on reallocation
+    if ( poll( &poll_fds[0], poll_fds.size(), -1 ) == -1 )
+    {
+      die("Problem with input.");
+    }    
+    else
+    {
+
+      if ( ( poll_fds[0].revents & POLLIN ) != 0 )
+      {
+        handle_input();
+      }
+
+      if ( ( poll_fds[1].revents & POLLIN ) != 0 )
+      {
+        // probally handle new connection?
+      }
+
+      if ( poll_fds.size() > 2 )
+      {
+        for ( auto poll_fd_it : poll_fds )
+        {
+          if ( ( poll_fd_it.revents & POLLIN ) != 0 )
+          {
+            recieve_input( poll_fd_it.fd );
+          }
+        }
+      }
+    }
+  }
 }
 
 
@@ -146,7 +257,7 @@ int main ( int argc, char *argv[] )
 
   if ( argc == 1 || argc > 3 )
   {
-    error("Usage: ./server <port>");
+    die("Usage: ./server <port>");
   }
   else
   {
@@ -161,6 +272,7 @@ int main ( int argc, char *argv[] )
     }
   }
  
-  wait_for_client(); 
+  wait_for_client();
+  wait_for_input(); 
   cleanup(); 
 }
