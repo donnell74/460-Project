@@ -154,10 +154,12 @@ void wait_for_client ()
 
 void handle_input()
 {
-  char inp;
+  char type = 0;
+  string inp = {};
 
   cin >> inp;
-  switch( toupper( inp ) )
+  type = inp[0];
+  switch( toupper( type ) )
   {
     case 'Q':
       cleanup();
@@ -242,6 +244,11 @@ void wait_for_input ()
       {
         for ( auto poll_fd_it : poll_fds )
         {
+          if ( poll_fd_it.fd < 4 ) // basic fd and server fd are 0-3
+          {
+            break;
+          }
+
           if ( ( poll_fd_it.revents & POLLIN ) != 0 )
           {
             recieve_input( poll_fd_it.fd );
