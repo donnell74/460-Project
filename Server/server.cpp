@@ -79,7 +79,7 @@ void init_server ( int port, char *addr )
   // require a limit on clients
   if ( listen( server_sock_fd, SOMAXCONN ) < 0 )
   {
-    error("Unable to listen.");
+    error( "Unable to listen." );
   }
 
   // output that it is listening
@@ -92,7 +92,7 @@ void sendMessage( int sock_fd, string msg )
   int bytes_sent = write( sock_fd, msg.c_str(), msg.size()); 
   if ( bytes_sent < 0 )
   {
-    error("Unable to send message.");
+    error( "Unable to send message." );
   }
 }
 
@@ -105,7 +105,6 @@ void wait_for_client ()
   // list but placing in front is faster
   auto client_it = client_list.emplace( client_list.begin(), Client{});
   // emplace might be replacing, check when implementing multiple client
-  char buffer[256];
   socklen_t client_len = sizeof (client_it->addr);
   client_it->sock_fd = accept(server_sock_fd,
                                   (struct sockaddr *) &client_it->addr,
@@ -118,8 +117,7 @@ void wait_for_client ()
   else
   {
     cout << "Connected new client." << endl;
-    memset( buffer, 0, sizeof buffer );
-    sendMessage( client_it->sock_fd, "You have been connected." );
+    sendMessage( client_it->sock_fd, "MYou have been connected." );
   }
 }
 
