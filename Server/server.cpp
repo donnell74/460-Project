@@ -87,8 +87,9 @@ void init_server ( int port, char *addr )
 }
 
 
-void sendMessage( int sock_fd, string msg )
+void sendMessage( int sock_fd, char type, string msg )
 {
+  msg.insert(msg.begin(), type); // makes calls to sendMessage more readable
   int bytes_sent = write( sock_fd, msg.c_str(), msg.size()); 
   if ( bytes_sent < 0 )
   {
@@ -117,13 +118,17 @@ void wait_for_client ()
   else
   {
     cout << "Connected new client." << endl;
-    sendMessage( client_it->sock_fd, "MYou have been connected." );
+    sendMessage( client_it->sock_fd, 'm', "You have been connected.");
   }
 }
 
 
 void cleanup ()
 {
+  for ( auto client_it : client_list )
+  {
+    sendMessage( client_it.sock_fd, 'x', ""); 
+  }
   close( server_sock_fd );
   exit(EXIT_SUCCESS);
 }

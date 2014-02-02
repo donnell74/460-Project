@@ -64,7 +64,7 @@ void handle_server_msg()
   int bytes_read = 0;
 
   bytes_read = read( client_sock_fd, &type, 1);
-  if ( bytes_read > 0 )
+  if ( bytes_read != -1 )
   {
     switch( type )
     {
@@ -74,7 +74,7 @@ void handle_server_msg()
 
       case MESSAGE:
         bytes_read = read( client_sock_fd, &buffer, 255 ); 
-        if ( bytes_read > 0 )
+        if ( bytes_read == -1 )
         {
           die("Lost connection with server.");
         }
