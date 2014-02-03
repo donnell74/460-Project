@@ -251,9 +251,13 @@ void wait_for_input ()
       {
         for ( auto poll_fd_it : poll_fds )
         {
+          if ( poll_fd_it.fd < 4 )
+          {
+            continue;
+          }
+
           if ( ( poll_fd_it.revents & POLLIN ) != 0 )
           {
-            cout << poll_fd_it.fd << endl;
             recieve_input( poll_fd_it.fd );
           }
         }

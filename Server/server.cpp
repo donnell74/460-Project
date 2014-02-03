@@ -200,7 +200,7 @@ void disconnect_client( int client_sock_fd )
 void recieve_input( int client_sock_fd )
 {
   int bytes_read = 0;
-  char buffer[4]; // will only care about first 3 if guess
+  char buffer[4] = {0}; // will only care about first 3 if guess
 
   bytes_read = read( client_sock_fd, &buffer, 3);
   if ( bytes_read != -1 )
