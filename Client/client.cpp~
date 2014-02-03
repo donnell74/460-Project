@@ -55,9 +55,10 @@ void cleanup()
 
 void handle_input()
 {
-  string inp = {0};
+  string inp = "";
   cin >> inp;
   int bytes_sent = -1;
+  cin.get(); // remove newline
 
   if ( inp.size() < (size_t) 3 )
   {
@@ -95,6 +96,10 @@ void handle_input()
   if ( bytes_sent == 0 )
   {
     cout << "No bytes sent." << endl;
+  }
+  if ( bytes_sent > 0 )
+  {
+    cout << "Sent " << inp << " to server." << endl;
   }
 }
 

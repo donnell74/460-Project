@@ -55,9 +55,10 @@ void cleanup()
 
 void handle_input()
 {
-  string inp = {0};
+  string inp = "";
   cin >> inp;
   int bytes_sent = -1;
+  cin.get(); // remove newline
 
   if ( inp.size() < (size_t) 3 )
   {
@@ -77,7 +78,6 @@ void handle_input()
   } 
 
   // substr will only get first 3, stop long string entries
-  inp = inp.substr(0, 3);
 
   // check if any repeats
   if ( inp[0] == inp[1] ||
@@ -87,7 +87,7 @@ void handle_input()
     cout << "Repeats are not allowed." << endl;
   }
 
-  bytes_sent = write( client_sock_fd, inp.c_str(), inp.size() );
+  bytes_sent = write( client_sock_fd, (inp.substr(0,3)).c_str(), 3 );
   if ( bytes_sent < 0 )
   {
     die( "Unable to send message." );
@@ -95,6 +95,10 @@ void handle_input()
   if ( bytes_sent == 0 )
   {
     cout << "No bytes sent." << endl;
+  }
+  if ( bytes_sent > 0 )
+  {
+    cout << "Sent " << inp << " to server." << endl;
   }
 }
 

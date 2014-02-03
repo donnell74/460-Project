@@ -200,7 +200,7 @@ void disconnect_client( int client_sock_fd )
 void recieve_input( int client_sock_fd )
 {
   int bytes_read = 0;
-  char buffer[5]; // will only care about first 3 if guess
+  char buffer[4]; // will only care about first 3 if guess
 
   bytes_read = read( client_sock_fd, &buffer, 3);
   if ( bytes_read != -1 )
@@ -213,6 +213,13 @@ void recieve_input( int client_sock_fd )
     {
       cout << "Guess from " << client_sock_fd << " of "
            << buffer << endl;
+    }
+  }
+  else
+  {
+    if ( DEBUG )
+    {
+      cout << "Problem with read from client." << endl;
     }
   }
 }
@@ -244,13 +251,9 @@ void wait_for_input ()
       {
         for ( auto poll_fd_it : poll_fds )
         {
-          if ( poll_fd_it->fd < 4 ) // basic fd and server fd are 0-3
-          {
-            break;
-          }
-
           if ( ( poll_fd_it.revents & POLLIN ) != 0 )
           {
+            cout << poll_fd_it.fd << endl;
             recieve_input( poll_fd_it.fd );
           }
         }
