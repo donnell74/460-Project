@@ -9,7 +9,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <poll.h>
-
+/* Dependencies */
+#include "cardlib.h"
 using namespace std;
 
 /* structs - move to header file later */
@@ -266,28 +267,150 @@ void wait_for_input ()
   }
 }
 
-
-int main ( int argc, char *argv[] )
+//Initializer for Deck struct. Returns a deck struct pointer
+Deck* deck_init()
 {
+  Deck* ndeck = new Deck;
+  string  shade[3];
+  string symbols[3];
+  string colors[3];
 
-  if ( argc == 1 || argc > 3 )
-  {
-    die("Usage: ./server <port>");
-  }
-  else
-  {
-    if ( argc == 2 ) // No port number given
+  shade[0] = "solid";
+  shade[1] = "striped";
+  shade[2] = "open";
+
+  symbols[0] = "symbol_1";
+  symbols[1] = "symbol_2";
+  symbols[2] = "symbol_3";
+
+  colors[0] = "red";
+  colors[1] = "green";
+  colors [2] = "blue";
+
+  for(int i=1; i<4; i++)
     {
-      init_server( atoi( argv[1] ), LOCALHOST );  
+      for(int j=0; j<3; j++)
+	{
+	  for(int k=0; k<3; k++)
+	    {
+	      for(int l=0; l<3; l++)
+		{
+		  Card* ncard = new Card;
+		  ncard->number = i;
+		  ncard->symbol = symbols[j];
+		  ncard->shade = shade[k];
+		  ncard->color = colors[l];
+		  ncard->bitcode = 0;
+		  ndeck->cards.push_back(ncard);
+		}
+	    }
+	}
     }
-    
-    if ( argc == 3 ) // Addr and Port given
-    {
-      init_server( atoi( argv[1] ), argv[2] );
-    }
-  }
- 
-  wait_for_client();
-  wait_for_input(); 
-  cleanup(); 
+  
+  ndeck->card_count = ndeck->cards.size();
+
+  return ndeck;
 }
+
+//Shuffles the deck using Fisher-Yates Shuffle
+void shuffleDeck(Deck* deck)
+{
+  random_device rd;
+  default_random_engine e1(rd());
+  
+  //Pointer to Card struct for temporary storage
+  Card* temp;
+  for(int i=deck->card_count-1; i>0; i--)
+    {
+      uniform_int_distribution<int> uniform_dist(0,i);
+      int random_number = uniform_dist(e1);
+
+      temp = CARD_REF;
+      CARD_REF = deck->cards[random_number];
+      deck->cards[random_number] = temp;
+    }
+
+}
+
+//Displays the current contents of a deck struct
+void displayDeck(Deck* deck)
+{
+  if(deck == nullptr)
+    {
+      cout<<"Invalid deck pointer"<<endl;
+      exit(EXIT_FAILURE);
+    }
+
+  for(int i=0; i<deck->card_count; i++)
+    {
+      cout<<"Deck["<<i+1<<"]:"<<CARD_REF->number<<" "<<CARD_REF->symbol<<" "<<CARD_REF->shade<<" "<<CARD_REF->color<<endl;
+    }
+
+  cout<<"x----------------------------------------------x"<<endl;
+}
+
+
+void memoryAddresses(Deck* deck)
+{
+  //Deck Memory Address
+  cout<<"Deck Memory Address:"<<&deck<<endl;
+  for(int i=0; i<deck->card_count; i++)
+    {
+      cout<<"Deck["<<i+1<<"]"<<deck->cards[i]<<endl;
+    }
+}
+
+int main(int argc, char* argv[])
+{
+  //Initialize new deck struct
+  Deck* deck = deck_init();
+  int choice;
+  bool cont = true;
+  
+  //Auxillary testing functions
+  while(cont)
+    {
+      cout<<"1. Display deck"<<endl;
+      cout<<"2. Shuffle deck"<<endl;
+      cout<<"3. Memory Addresses"<<endl;
+      cin>>choice;
+
+      switch(choice)
+	{
+	case 1:
+	  displayDeck(deck);
+	  break;
+	case 2:
+	  cout<<"shuffling..."<<endl;
+	  shuffleDeck(deck);
+	  break;
+	case 3:
+	  memoryAddresses(deck);
+	  break;
+	default:
+	  cont = false;
+	 }
+    }
+
+  if ( argc ==1 || argc > 3 )
+    {
+      die("Usage: ./server <port>");
+    }
+  else
+    {
+      if ( argc == 2) // No port number given
+	{
+	  init_server( atoi( argv[1] ), LOCALHOST );
+	}
+
+      if ( argc == 3) // Addr and Port Given
+	{
+	  init_server( atoi( argv[1] ), argv[2] );
+	}
+    }
+
+  wait_for_client();
+  wait_for_input();
+  cleanup();
+}
+
