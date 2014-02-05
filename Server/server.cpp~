@@ -9,7 +9,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <poll.h>
-
+/* Dependencies */
+#include "cardlib.h"
 using namespace std;
 
 /* structs - move to header file later */
@@ -24,6 +25,7 @@ int DEBUG = 1;
 int DEFAULT_PORT = 51717;
 char LOCALHOST[] = "127.0.0.1";
 int MAXCLIENTS = 25;
+Deck *DECK = {};
 
 /* Globals */
 int server_sock_fd = 0;
@@ -148,7 +150,17 @@ void wait_for_client ()
     struct pollfd client_sock_fd = {client_it->sock_fd, POLLIN, 0};
     poll_fds.push_back(client_sock_fd);
     sendMessage( client_it->sock_fd, 'm', "You have been connected.");
+    sendMessage( client_it->sock_fd, 'c', "" + DECK->cards[0]->bitcode );
   }
+}
+
+
+void display_options ( )
+{
+  cout << "Q. Quit" << endl;
+  cout << "D. Display deck" << endl;
+  cout << "S. Shuffle deck" << endl;
+  cout << "A. Memory Addresses" << endl;
 }
 
 
@@ -163,6 +175,20 @@ void handle_input()
   {
     case 'Q':
       cleanup();
+
+    case 'D':
+      displayDeck(DECK);
+      break;
+      
+    case 'S':
+      cout<<"shuffling..."<<endl;
+      shuffleDeck(DECK);
+      break;
+
+    case 'A':
+      memoryAddresses(DECK);
+      break;
+    
     default:
       break;
   }
@@ -200,7 +226,7 @@ void disconnect_client( int client_sock_fd )
 void recieve_input( int client_sock_fd )
 {
   int bytes_read = 0;
-  char buffer[4]; // will only care about first 3 if guess
+  char buffer[4] = {0}; // will only care about first 3 if guess
 
   bytes_read = read( client_sock_fd, &buffer, 3);
   if ( bytes_read != -1 )
@@ -267,27 +293,31 @@ void wait_for_input ()
 }
 
 
-int main ( int argc, char *argv[] )
-{
 
-  if ( argc == 1 || argc > 3 )
+int main(int argc, char* argv[])
+{
+  //Initialize new deck struct
+  DECK = deck_init();
+  
+  if ( argc ==1 || argc > 3 )
   {
     die("Usage: ./server <port>");
   }
   else
   {
-    if ( argc == 2 ) // No port number given
+    if ( argc == 2) // No port number given
     {
-      init_server( atoi( argv[1] ), LOCALHOST );  
+      init_server( atoi( argv[1] ), LOCALHOST );
     }
-    
-    if ( argc == 3 ) // Addr and Port given
+
+    if ( argc == 3) // Addr and Port Given
     {
       init_server( atoi( argv[1] ), argv[2] );
     }
   }
- 
+
   wait_for_client();
-  wait_for_input(); 
-  cleanup(); 
+  wait_for_input();
+  cleanup();
 }
+

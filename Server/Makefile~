@@ -1,2 +1,6 @@
-server: server.cpp
-	g++ --std=c++0x -Wall -o server server.cpp
+CC = g++
+CFLAGS = --std=c++0x -Wall
+
+build: server.cpp cardlib.cpp
+	$(CC) $(CFLAGS) -o cardlib.o cardlib.cpp
+	$(CC) $(CFLAGS) cardlib.o -o server server.cpp 

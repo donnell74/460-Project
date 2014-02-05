@@ -18,6 +18,7 @@ int DEFAULT_PORT = 51717;
 char LOCALHOST[] = "127.0.0.1";
 const char EXIT = 'x';
 const char MESSAGE = 'm';
+const char CARDS = 'c';
 // last line of ACCEPTED_CHARS is for command chars
 vector<char> ACCEPTED_CHARS = {'1', '2', '3', '4', 
                                'Q', 'W', 'E', 'R',
@@ -132,6 +133,19 @@ void handle_server_msg()
         }
         
         cout << buffer << endl; 
+        break;
+
+      case CARDS:
+        bytes_read = read( client_sock_fd, &buffer, 255 ); 
+        if ( bytes_read == -1 )
+        {
+          die("Lost connection with server.");
+        }
+        
+        if ( DEBUG )
+        {
+          cout << "Recieved card with bitcode: " << buffer << endl;
+        }
         break;
 
       default:

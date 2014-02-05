@@ -64,6 +64,9 @@ struct Deck{
 
 
 Deck* deck_init();
+void shuffleDeck(Deck* deck);
+
+Deck* deck_init();
 
 //Shuffles the deck using Fisher-Yates Shuffle
 void shuffleDeck(Deck* deck);
