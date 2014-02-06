@@ -158,14 +158,16 @@ void wait_for_client ()
 
 //Creates the array of cards from playing_deck
 //to send to client
-vector<char> create_array ( int cards_needed )
+string create_array ( int cards_needed )
 {
-  vector<char> card_array;
+  string card_array;
 
   for ( int i=0; i<cards_needed; i++ )
     {
       Card *ncard = draw( deck );
-      card_array.push_back( ncard->bitcode );
+      card_array += ncard->bitcode;
+
+      //Add card to playing deck
       playing_deck->cards.push_back( ncard );
     }
   
@@ -231,15 +233,17 @@ void handle_input()
 
     case 'P':
       {
-	vector<char> card_array;
+	string card_array;
 	int cards_needed;
 
 	cout << "cards needed?" <<endl;
 	cin >> cards_needed;
 	
 	card_array = create_array( cards_needed );
+	cout << card_array <<endl;
+
 	cout << "Bitcodes for playing_deck: " << endl;
-        
+      
 	for ( auto card_it : playing_deck->cards )
         {
           cout << card_it->bitcode << endl;
