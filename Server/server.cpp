@@ -10,21 +10,10 @@
 #include <arpa/inet.h>
 #include <poll.h>
 /* Dependencies */
+#include "networking.h"
 #include "cardlib.h"
 using namespace std;
 
-/* structs - move to header file later */
-struct Client
-{
-  int sock_fd;  
-  sockaddr_in addr;
-};
-
-/* Constants */
-int DEBUG = 1;
-int DEFAULT_PORT = 51717;
-char LOCALHOST[] = "127.0.0.1";
-int MAXCLIENTS = 25;
 
 /* Globals */
 int server_sock_fd = 0;

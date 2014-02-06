@@ -1,5 +1,3 @@
 CC = g++
-CFLAGS = --std=c++0x -Wall
-
-build:
+CFLAGS = --std=c++0x -Wall -c
 
