@@ -25,6 +25,7 @@ int DEBUG = 1;
 int DEFAULT_PORT = 51717;
 char LOCALHOST[] = "127.0.0.1";
 int MAXCLIENTS = 25;
+string TERM_STR = "XX";
 
 /* Globals */
 int server_sock_fd = 0;
@@ -57,6 +58,7 @@ void die ( string error_msg )
 void sendMessage( int sock_fd, char type, string msg )
 {
   msg.insert(msg.begin(), type); // makes calls to sendMessage more readable
+  msg.append( TERM_STR ); 
   int bytes_sent = write( sock_fd, msg.c_str(), msg.size()); 
   if ( bytes_sent < 0 )
   {
@@ -151,7 +153,7 @@ void wait_for_client ()
     struct pollfd client_sock_fd = {client_it->sock_fd, POLLIN, 0};
     poll_fds.push_back(client_sock_fd);
     sendMessage( client_it->sock_fd, 'm', "You have been connected.");
-    sendMessage( client_it->sock_fd, 'c', "" + deck->cards[0]->bitcode );
+    //sendMessage( client_it->sock_fd, 'c', "" + deck->cards[0]->bitcode );
   }
 }
 

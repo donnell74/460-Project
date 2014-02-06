@@ -16,6 +16,7 @@ using namespace std;
 int DEBUG = 1;
 int DEFAULT_PORT = 51717;
 char LOCALHOST[] = "127.0.0.1";
+string TERM_STR = "XX";
 const char EXIT = 'x';
 const char MESSAGE = 'm';
 const char CARDS = 'c';
@@ -28,7 +29,7 @@ vector<char> ACCEPTED_CHARS = {'1', '2', '3', '4',
 
 /* Globals */
 int client_sock_fd = 0;
-char buffer[256]; // global so not redefined every handle event
+string past_data_read = "";
 
 void die ( string error_msg )
 {
@@ -106,45 +107,35 @@ void handle_input()
 
 void handle_server_msg()
 {
-  char type = 0;
   int bytes_read = 0;
+  char buffer[1024];
+  int pos_found = 0;
+  string msg = "";
 
-  bytes_read = read( client_sock_fd, &type, 1);
+  bytes_read = read( client_sock_fd, &buffer, 1023);
   if ( bytes_read != -1 )
   {
-    switch( type )
+    past_data_read.append( buffer );
+    pos_found = past_data_read.find( TERM_STR );
+    msg = past_data_read.substr( 0, pos_found );
+    past_data_read = past_data_read.substr( pos_found + 2 );
+
+    switch( msg.front() )
     {
       case EXIT:
-        bytes_read = read( client_sock_fd, &buffer, 255 );
-        if ( bytes_read == -1 )
-        {
-          die("Lost connection with server.");
-        }
-
-        cout << buffer << endl;
+        cout << msg.substr( 1 ) << endl;
         cleanup();
         break;
 
       case MESSAGE:
-        bytes_read = read( client_sock_fd, &buffer, 255 ); 
-        if ( bytes_read == -1 )
-        {
-          die("Lost connection with server.");
-        }
-        
-        cout << buffer << endl; 
+        cout << "Message Recieved: " << endl;
+        cout << msg.substr( 1 ) << endl; 
         break;
 
       case CARDS:
-        bytes_read = read( client_sock_fd, &buffer, 255 ); 
-        if ( bytes_read == -1 )
-        {
-          die("Lost connection with server.");
-        }
-        
         if ( DEBUG )
         {
-          cout << "Recieved card with bitcode: " << buffer << endl;
+          cout << "Recieved card with bitcode: " << msg.substr( 1 ) << endl;
         }
         break;
 
