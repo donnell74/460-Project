@@ -185,20 +185,20 @@ void handle_input()
 
     case 'D':
       {
-        displayDeck(deck);
+        display_deck(deck);
       }
       break;
       
     case 'S':
       {
         cout<<"shuffling..."<<endl;
-        shuffleDeck(deck);
+        shuffle_deck(deck);
       }
       break;
 
     case 'A':
       {
-        memoryAddresses(deck);
+        memory_addresses(deck);
       }
       break;
     

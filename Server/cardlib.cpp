@@ -21,21 +21,21 @@ Deck* deck_init()
   colors [2] = "blue";
   */
 
-  for(int i=0; i<3; i++)
+  for ( int i=0; i<3; i++ )
   {
-    for(int j=0; j<3; j++)
+    for ( int j=0; j<3; j++ )
     {
-      for(int k=0; k<3; k++)
+      for ( int k=0; k<3; k++ )
       {
-        for(int l=0; l<3; l++)
+        for ( int l=0; l<3; l++ ) 
         {
           Card* ncard = new Card;
-          ncard->number = static_cast<Number>(i);
-          ncard->symbol = static_cast<Symbol>(j);
-          ncard->shade = static_cast<Shade>(k);
-          ncard->color = static_cast<Color>(l);
-          ncard->bitcode = (i << 6) | (j << 4) | (k << 2) | l;
-          ndeck->cards.push_back(ncard);
+          ncard->number = static_cast<Number>( i );
+          ncard->symbol = static_cast<Symbol>( j );
+          ncard->shade = static_cast<Shade>( k );
+          ncard->color = static_cast<Color>( l );
+          ncard->bitcode = ( i << 6 ) | ( j << 4 ) | ( k << 2 ) | l;
+          ndeck->cards.push_back( ncard );
         }
       }
     }
@@ -47,17 +47,17 @@ Deck* deck_init()
 }
 
 //Shuffles the deck using Fisher-Yates Shuffle
-void shuffleDeck(Deck* deck)
+void shuffle_deck( Deck* deck )
 {
    random_device rd;
-  default_random_engine e1(rd());
+  default_random_engine e1( rd() );
   
   //Pointer to Card struct for temporary storage
   Card* temp;
-  for(int i=deck->card_count-1; i>0; i--)
+  for ( int i=deck->card_count-1; i>0; i-- )
   {
-    uniform_int_distribution<int> uniform_dist(0,i);
-    int random_number = uniform_dist(e1);
+    uniform_int_distribution<int> uniform_dist( 0,i );
+    int random_number = uniform_dist( e1 );
 
     temp = CARD_REF;
     CARD_REF = deck->cards[random_number];
@@ -67,45 +67,46 @@ void shuffleDeck(Deck* deck)
 }
 
 //Displays the current contents of a deck struct
-void displayDeck(Deck* deck)
+void display_deck( Deck* deck )
 {
-  if(deck == nullptr)
+  if ( deck == nullptr )
   {
     cout<<"Invalid deck pointer"<<endl;
-    exit(EXIT_FAILURE);
+    exit( EXIT_FAILURE );
   }
 
-  for(int i=0; i<deck->card_count; i++)
+  for ( int i=0; i<deck->card_count; i++ )
   {
     cout<<"Deck["<<i+1<<"]:"<<CARD_REF->number<<" "<<CARD_REF->symbol<<" "<<CARD_REF->shade<<" "<<CARD_REF->color
         << " " << CARD_REF->bitcode << endl;
   }
+
   cout<<"Card Count:"<<deck->card_count<<endl;
   cout<<"x----------------------------------------------x"<<endl;
 }
 
 
-void memoryAddresses(Deck* deck)
+void memory_addresses( Deck* deck )
 {
   //Deck Memory Address
   cout<<"Deck Memory Address:"<<&deck<<endl;
-  for(int i=0; i<deck->card_count; i++)
+  for ( int i=0; i<deck->card_count; i++ )
   {
     cout<<"Deck["<<i+1<<"]"<<deck->cards[i]<<endl;
   }
 }
 
 //Draws a card from the top of the deck
-Card* draw(Deck* deck)
+Card* draw( Deck* deck )
 {
 
-  if(deck == nullptr)
+  if ( deck == nullptr )
     {
       cout<<"Invalid deck pointer passed to draw function"<<endl;
-      exit(EXIT_FAILURE);
+      exit( EXIT_FAILURE );
     }
 
-  if(deck->card_count == 0)
+  if ( deck->card_count == 0 )
     {
       cout<<"Deck is empty"<<endl;
       return nullptr;
@@ -113,7 +114,7 @@ Card* draw(Deck* deck)
 
     Card* ncard = deck->cards[0];
 
-    deck->cards.erase(deck->cards.begin());
+    deck->cards.erase( deck->cards.begin() );
     deck->card_count -= 1;
     
     return ncard;
