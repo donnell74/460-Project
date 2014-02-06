@@ -25,12 +25,11 @@ int DEBUG = 1;
 int DEFAULT_PORT = 51717;
 char LOCALHOST[] = "127.0.0.1";
 int MAXCLIENTS = 25;
-Deck *DECK = {};
-
 
 /* Globals */
 int server_sock_fd = 0;
-Card *NCARD = {};
+Deck *deck = {};
+Deck *playing_deck = new Deck;
 vector<Client> client_list;
 vector<pollfd> poll_fds {{STDIN_FILENO, POLLIN, 0}};
 
@@ -152,7 +151,7 @@ void wait_for_client ()
     struct pollfd client_sock_fd = {client_it->sock_fd, POLLIN, 0};
     poll_fds.push_back(client_sock_fd);
     sendMessage( client_it->sock_fd, 'm', "You have been connected.");
-    sendMessage( client_it->sock_fd, 'c', "" + DECK->cards[0]->bitcode );
+    sendMessage( client_it->sock_fd, 'c', "" + deck->cards[0]->bitcode );
   }
 }
 
@@ -163,8 +162,8 @@ void display_options ( )
   cout << "D. Display deck" << endl;
   cout << "S. Shuffle deck" << endl;
   cout << "A. Memory Addresses" << endl;
-  //Added key binding 'W' to draw function
   cout << "W. Draw card"<< endl;
+  cout << "P. Print Playing Cards" << endl;
 }
 
 
@@ -175,30 +174,52 @@ void handle_input()
 
   cin >> inp;
   type = inp[0];
-  cout << "Type: " << type << endl;
+  cout << type << endl;
   switch( toupper( type ) )
   {
     case 'Q':
-      cleanup();
+      {
+        cleanup();
+      }
+      break;
 
     case 'D':
-      displayDeck(DECK);
+      {
+        displayDeck(deck);
+      }
       break;
       
     case 'S':
-      cout<<"shuffling..."<<endl;
-      shuffleDeck(DECK);
+      {
+        cout<<"shuffling..."<<endl;
+        shuffleDeck(deck);
+      }
       break;
 
     case 'A':
-      memoryAddresses(DECK);
+      {
+        memoryAddresses(deck);
+      }
       break;
     
     case 'W':
-      NCARD = draw(DECK);
-      cout<<"Drew card:"<<endl;
-      cout<<"Symbol:"<<NCARD->symbol<<" Shade:"<<NCARD->shade<<" Color:"<<NCARD->color<<" Number:"<<NCARD->number<<endl;
-      NCARD = nullptr;
+      {
+        Card *ncard = draw( deck );
+        playing_deck->cards.push_back( ncard );
+        
+        cout<<"Drew card:"<<endl;
+        cout<<"Symbol:"<<ncard->symbol<<" Shade:"<<ncard->shade<<" Color:"<<ncard->color<<" Number:"<<ncard->number<<endl;
+      }
+      break;
+
+    case 'P':
+      {
+        cout << "Bitcodes for playing_deck: " << endl;
+        for ( auto card_it : playing_deck->cards )
+        {
+          cout << card_it->bitcode << endl;
+        }
+      }
       break;
 
     default:
@@ -309,7 +330,7 @@ void wait_for_input ()
 int main(int argc, char* argv[])
 {
   //Initialize new deck struct
-  DECK = deck_init();
+  deck = deck_init();
   
   if ( argc ==1 || argc > 3 )
   {

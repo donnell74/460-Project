@@ -113,12 +113,7 @@ Card* draw(Deck* deck)
 
     Card* ncard = deck->cards[0];
 
-    //Move each card pointer up an element in the deck
-    for(int i=1; i<deck->card_count; i++)
-      {
-	deck->cards[i-1] = deck->cards[i];
-      }
-    
+    deck->cards.erase(deck->cards.begin());
     deck->card_count -= 1;
     
     return ncard;
