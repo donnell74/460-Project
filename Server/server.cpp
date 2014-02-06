@@ -145,6 +145,25 @@ void wait_for_client ()
 }
 
 
+//Creates the array of cards from playing_deck
+//to send to client
+string create_array ( int cards_needed )
+{
+  string card_array;
+
+  for ( int i=0; i<cards_needed; i++ )
+    {
+      Card *ncard = draw( deck );
+      card_array += ncard->bitcode;
+
+      //Add card to playing deck
+      playing_deck->cards.push_back( ncard );
+    }
+  
+  return card_array;
+}
+
+
 void display_options ( )
 {
   cout << "Q. Quit" << endl;
@@ -196,15 +215,25 @@ void handle_input()
         Card *ncard = draw( deck );
         playing_deck->cards.push_back( ncard );
         
-        cout<<"Drew card:"<<endl;
-        cout<<"Symbol:"<<ncard->symbol<<" Shade:"<<ncard->shade<<" Color:"<<ncard->color<<" Number:"<<ncard->number<<endl;
+        cout << "Drew card:" << endl;
+        cout << "Symbol:" << ncard->symbol << " Shade:" << ncard->shade << " Color:" << ncard->color << " Number:" << ncard->number << endl;
       }
       break;
 
     case 'P':
       {
-        cout << "Bitcodes for playing_deck: " << endl;
-        for ( auto card_it : playing_deck->cards )
+	string card_array;
+	int cards_needed;
+
+	cout << "cards needed?" <<endl;
+	cin >> cards_needed;
+	
+	card_array = create_array( cards_needed );
+	cout << card_array <<endl;
+
+	cout << "Bitcodes for playing_deck: " << endl;
+      
+	for ( auto card_it : playing_deck->cards )
         {
           cout << card_it->bitcode << endl;
         }
@@ -313,7 +342,6 @@ void wait_for_input ()
     }
   }
 }
-
 
 
 int main(int argc, char* argv[])
