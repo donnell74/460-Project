@@ -45,7 +45,8 @@ as an int, a symbol, shade, color,
 each represented as strings and a bitcode
 to ID each card 
 */
-struct Card{
+struct Card
+{
   enum Number number;
   enum Symbol symbol;
   enum Shade shade;
@@ -58,7 +59,8 @@ Deck contains a vector of card structs
 and a count of the current cards in 
 the deck*/
 
-struct Deck{
+struct Deck
+{
   int card_count;
   vector<Card*>cards;
 };
@@ -67,15 +69,15 @@ struct Deck{
 Deck* deck_init();
 
 //Shuffles the deck using Fisher-Yates Shuffle
-void shuffleDeck(Deck* deck);
+void shuffle_deck( Deck* deck );
 
 //Displays the current contents of a deck struct
-void displayDeck(Deck* deck);
+void display_deck( Deck* deck );
 
 //Draw function to draw a card from the deck
-Card* draw(Deck* deck);
+Card* draw( Deck* deck );
 
 //Display memory addresses for cards in the deck
-void memoryAddresses(Deck* deck);
+void memory_addresses( Deck* deck );
 
 #endif /* CARDLIB_H */

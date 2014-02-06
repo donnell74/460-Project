@@ -10,22 +10,9 @@
 #include <arpa/inet.h>
 #include <poll.h>
 /* Dependencies */
+#include "networking.h"
 #include "cardlib.h"
 using namespace std;
-
-/* structs - move to header file later */
-struct Client
-{
-  int sock_fd;  
-  sockaddr_in addr;
-};
-
-/* Constants */
-int DEBUG = 1;
-int DEFAULT_PORT = 51717;
-char LOCALHOST[] = "127.0.0.1";
-int MAXCLIENTS = 25;
-string TERM_STR = "XX";
 
 /* Globals */
 int server_sock_fd = 0;
@@ -158,6 +145,25 @@ void wait_for_client ()
 }
 
 
+//Creates the array of cards from playing_deck
+//to send to client
+string create_array ( int cards_needed )
+{
+  string card_array;
+
+  for ( int i=0; i<cards_needed; i++ )
+    {
+      Card *ncard = draw( deck );
+      card_array += ncard->bitcode;
+
+      //Add card to playing deck
+      playing_deck->cards.push_back( ncard );
+    }
+  
+  return card_array;
+}
+
+
 void display_options ( )
 {
   cout << "Q. Quit" << endl;
@@ -187,20 +193,20 @@ void handle_input()
 
     case 'D':
       {
-        displayDeck(deck);
+        display_deck(deck);
       }
       break;
       
     case 'S':
       {
         cout<<"shuffling..."<<endl;
-        shuffleDeck(deck);
+        shuffle_deck(deck);
       }
       break;
 
     case 'A':
       {
-        memoryAddresses(deck);
+        memory_addresses(deck);
       }
       break;
     
@@ -209,15 +215,25 @@ void handle_input()
         Card *ncard = draw( deck );
         playing_deck->cards.push_back( ncard );
         
-        cout<<"Drew card:"<<endl;
-        cout<<"Symbol:"<<ncard->symbol<<" Shade:"<<ncard->shade<<" Color:"<<ncard->color<<" Number:"<<ncard->number<<endl;
+        cout << "Drew card:" << endl;
+        cout << "Symbol:" << ncard->symbol << " Shade:" << ncard->shade << " Color:" << ncard->color << " Number:" << ncard->number << endl;
       }
       break;
 
     case 'P':
       {
-        cout << "Bitcodes for playing_deck: " << endl;
-        for ( auto card_it : playing_deck->cards )
+	string card_array;
+	int cards_needed;
+
+	cout << "cards needed?" <<endl;
+	cin >> cards_needed;
+	
+	card_array = create_array( cards_needed );
+	cout << card_array <<endl;
+
+	cout << "Bitcodes for playing_deck: " << endl;
+      
+	for ( auto card_it : playing_deck->cards )
         {
           cout << card_it->bitcode << endl;
         }
@@ -326,7 +342,6 @@ void wait_for_input ()
     }
   }
 }
-
 
 
 int main(int argc, char* argv[])
