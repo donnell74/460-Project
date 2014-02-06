@@ -38,6 +38,7 @@ enum Color
   PURPLE,
   GREEN
 };
+
 /* Card structure
 Each card has a number, represented
 as an int, a symbol, shade, color, 
@@ -71,6 +72,10 @@ void shuffleDeck(Deck* deck);
 //Displays the current contents of a deck struct
 void displayDeck(Deck* deck);
 
+//Draw function to draw a card from the deck
+Card* draw(Deck* deck);
 
+//Display memory addresses for cards in the deck
 void memoryAddresses(Deck* deck);
+
 #endif /* CARDLIB_H */

@@ -49,7 +49,7 @@ Deck* deck_init()
 //Shuffles the deck using Fisher-Yates Shuffle
 void shuffleDeck(Deck* deck)
 {
-  random_device rd;
+   random_device rd;
   default_random_engine e1(rd());
   
   //Pointer to Card struct for temporary storage
@@ -80,7 +80,7 @@ void displayDeck(Deck* deck)
     cout<<"Deck["<<i+1<<"]:"<<CARD_REF->number<<" "<<CARD_REF->symbol<<" "<<CARD_REF->shade<<" "<<CARD_REF->color
         << " " << CARD_REF->bitcode << endl;
   }
-
+  cout<<"Card Count:"<<deck->card_count<<endl;
   cout<<"x----------------------------------------------x"<<endl;
 }
 
@@ -93,4 +93,33 @@ void memoryAddresses(Deck* deck)
   {
     cout<<"Deck["<<i+1<<"]"<<deck->cards[i]<<endl;
   }
+}
+
+//Draws a card from the top of the deck
+Card* draw(Deck* deck)
+{
+
+  if(deck == nullptr)
+    {
+      cout<<"Invalid deck pointer passed to draw function"<<endl;
+      exit(EXIT_FAILURE);
+    }
+
+  if(deck->card_count == 0)
+    {
+      cout<<"Deck is empty"<<endl;
+      return nullptr;
+    }
+
+    Card* ncard = deck->cards[0];
+
+    //Move each card pointer up an element in the deck
+    for(int i=1; i<deck->card_count; i++)
+      {
+	deck->cards[i-1] = deck->cards[i];
+      }
+    
+    deck->card_count -= 1;
+    
+    return ncard;
 }

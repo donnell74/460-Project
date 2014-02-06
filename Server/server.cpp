@@ -27,8 +27,10 @@ char LOCALHOST[] = "127.0.0.1";
 int MAXCLIENTS = 25;
 Deck *DECK = {};
 
+
 /* Globals */
 int server_sock_fd = 0;
+Card *NCARD = {};
 vector<Client> client_list;
 vector<pollfd> poll_fds {{STDIN_FILENO, POLLIN, 0}};
 
@@ -161,6 +163,8 @@ void display_options ( )
   cout << "D. Display deck" << endl;
   cout << "S. Shuffle deck" << endl;
   cout << "A. Memory Addresses" << endl;
+  //Added key binding 'W' to draw function
+  cout << "W. Draw card"<< endl;
 }
 
 
@@ -190,6 +194,13 @@ void handle_input()
       memoryAddresses(DECK);
       break;
     
+    case 'W':
+      NCARD = draw(DECK);
+      cout<<"Drew card:"<<endl;
+      cout<<"Symbol:"<<NCARD->symbol<<" Shade:"<<NCARD->shade<<" Color:"<<NCARD->color<<" Number:"<<NCARD->number<<endl;
+      NCARD = nullptr;
+      break;
+
     default:
       break;
   }
