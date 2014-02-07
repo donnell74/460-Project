@@ -23,6 +23,5 @@ int DEBUG = 1;
 int DEFAULT_PORT = 51717;
 char LOCALHOST[] = "127.0.0.1";
 int MAXCLIENTS = 25;
-string TERM_STR = "XX";
 
 #endif /* NETWORKING_H */
