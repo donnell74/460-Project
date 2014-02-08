@@ -148,6 +148,45 @@ void init_server ( int port, char *addr )
 }
 
 
+//Creates the array of cards from playing_deck
+//to send to client
+string create_array ( int cards_needed )
+{
+  string card_array;
+
+  for ( int i=0; i<cards_needed; i++ )
+    {
+      Card *ncard = draw( deck );
+      card_array += ncard->bitcode;
+
+      //Add card to playing deck
+      playing_deck->cards.push_back( ncard );
+    }
+  
+  return card_array;
+}
+
+
+// Sends desired amount of cards to all clients.
+void send_playing_cards (  ) 
+{ 
+  int cards_needed = 12;
+  string playing_cards = create_array ( cards_needed );
+  cout << "Server sending playing cards now..." << endl;
+  cout << "This is client list lenght: " << client_list.size() << endl;
+  for ( auto client_it : client_list )
+  {
+    sendMessage( client_it.sock_fd, 'c', playing_cards ); 
+  }
+  if ( close( server_sock_fd ) == -1  && DEBUG )
+  {
+    cerr << strerror( errno ) << endl;
+  }
+  exit(EXIT_SUCCESS);
+
+}
+
+
 void *wait_for_client ( void *arg )
 {
   for (;;)
@@ -180,6 +219,7 @@ void *wait_for_client ( void *arg )
       pthread_mutex_unlock(&mutex);
 
       sendMessage( this_client.sock_fd, 'm', "You have been connected.");
+      send_playing_cards( );
       //sendMessage( this_client.sock_fd, 'c', "" + deck->cards[0]->bitcode );
     }
   }
@@ -187,24 +227,6 @@ void *wait_for_client ( void *arg )
   return arg;
 }
 
-
-//Creates the array of cards from playing_deck
-//to send to client
-string create_array ( int cards_needed )
-{
-  string card_array;
-
-  for ( int i=0; i<cards_needed; i++ )
-    {
-      Card *ncard = draw( deck );
-      card_array += ncard->bitcode;
-
-      //Add card to playing deck
-      playing_deck->cards.push_back( ncard );
-    }
-  
-  return card_array;
-}
 
 
 void display_options ( )
