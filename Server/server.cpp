@@ -178,12 +178,6 @@ void send_playing_cards (  )
   {
     sendMessage( client_it.sock_fd, 'c', playing_cards ); 
   }
-  if ( close( server_sock_fd ) == -1  && DEBUG )
-  {
-    cerr << strerror( errno ) << endl;
-  }
-  exit(EXIT_SUCCESS);
-
 }
 
 
