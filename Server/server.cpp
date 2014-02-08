@@ -19,8 +19,8 @@ using namespace std;
 
 /* Globals */
 int server_sock_fd = 0;
-Deck *deck = {};
-Deck *playing_deck = new Deck;
+Deck *deck;
+Deck *playing_deck = new Deck(1);
 vector<Client> client_list;
 vector<pollfd> poll_fds {{STDIN_FILENO, POLLIN, 0}};
 pthread_mutex_t mutex;
@@ -196,11 +196,11 @@ string create_array ( int cards_needed )
 
   for ( int i=0; i<cards_needed; i++ )
     {
-      Card *ncard = draw( deck );
+      Card *ncard = deck->draw();
       card_array += ncard->bitcode;
 
       //Add card to playing deck
-      playing_deck->cards.push_back( ncard );
+      playing_deck->add_card( ncard );
     }
   
   return card_array;
@@ -236,27 +236,27 @@ void handle_input()
 
     case 'D':
       {
-        display_deck(deck);
+        deck->display( 0 );
       }
       break;
       
     case 'S':
       {
         cout<<"shuffling..."<<endl;
-        shuffle_deck(deck);
+        deck->shuffle();
       }
       break;
 
     case 'A':
       {
-        memory_addresses(deck);
+        deck->mem_display();
       }
       break;
     
     case 'W':
       {
-        Card *ncard = draw( deck );
-        playing_deck->cards.push_back( ncard );
+        Card *ncard = deck->draw();
+        playing_deck->add_card( ncard );
         
         cout << "Drew card:" << endl;
         cout << "Symbol:" << ncard->symbol << " Shade:" << ncard->shade << " Color:" << ncard->color << " Number:" << ncard->number << endl;
@@ -274,12 +274,7 @@ void handle_input()
 	card_array = create_array( cards_needed );
 	cout << card_array <<endl;
 
-	cout << "Bitcodes for playing_deck: " << endl;
-      
-	for ( auto card_it : playing_deck->cards )
-        {
-          cout << card_it->bitcode << endl;
-        }
+	playing_deck->display( 1 );
       }
       break;
 
@@ -362,7 +357,7 @@ void wait_for_input ()
     else
     {
 
-      if ( ( poll_fds[0].revents & POLLIN ) != 0 )
+        if ( ( poll_fds[0].revents & POLLIN ) != 0 )
       {
         handle_input();
       }
@@ -396,9 +391,8 @@ void wait_for_input ()
 
 int main(int argc, char* argv[])
 {
-  //Initialize new deck struct
-  deck = deck_init();
-  
+  deck = new Deck();
+
   if ( argc ==1 || argc > 3 )
   {
     die("Usage: ./server <port>");
