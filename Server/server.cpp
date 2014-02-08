@@ -1,3 +1,4 @@
+#define _POSIX_SOURCE
 /* Cpp inlcudes */
 #include <iostream>
 #include <vector>
@@ -9,6 +10,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <poll.h>
+#include <signal.h>
 /* Dependencies */
 #include "networking.h"
 #include "cardlib.h"
@@ -57,15 +59,26 @@ void sendMessage( int sock_fd, char type, string msg )
 void cleanup ()
 {
   cout << "Server going down (as well as all clients)." << endl;
-  for ( auto client_it : client_list )
+  // client list is empty or we quit while creating first client connection
+  if ( ! client_list.empty() && ( client_list.front().sock_fd != 0 ) )
   {
-    sendMessage( client_it.sock_fd, 'x', "You have been disconnected"); 
+    for ( auto client_it : client_list )
+    {
+      sendMessage( client_it.sock_fd, 'x', "You have been disconnected"); 
+    }
   }
   if ( close( server_sock_fd ) == -1  && DEBUG )
   {
     cerr << strerror( errno ) << endl;
   }
   exit(EXIT_SUCCESS);
+}
+
+
+void sig_wrap_cleanup( int sig )
+{
+  // wrapper for sigaction to pass int sig which is never used
+  cleanup();
 }
 
 
@@ -94,6 +107,13 @@ void init_server ( int port, char *addr )
     die("Error converting addr during server initialization. ");
   }  
 
+  int yes=1;
+  
+  // lose the pesky "Address already in use" error message
+  if (setsockopt(server_sock_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
+      die("setsockopt");
+  } 
+  
   // bind socket to the server ip
   if ( bind( server_sock_fd, 
              (struct sockaddr *) &server_addr,
@@ -112,6 +132,12 @@ void init_server ( int port, char *addr )
 
   // output that it is listening
   cout << "Listening on port " << addr << endl;
+
+  // bind TERM to cleanup
+  struct sigaction action = {};
+
+  action.sa_handler = sig_wrap_cleanup;
+  sigaction(SIGINT, &action, nullptr);
 }
 
 
