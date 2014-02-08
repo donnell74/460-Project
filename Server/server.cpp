@@ -49,7 +49,6 @@ void sendMessage( int sock_fd, char type, string msg )
 {
   msg.insert(msg.begin(), type); // makes calls to sendMessage more readable
   msg.append( TERM_STR ); 
-  cout << msg << " : " << msg.size() << endl;
   int bytes_sent = write( sock_fd, msg.c_str(), msg.size()); 
   if ( bytes_sent < 0 )
   {
@@ -93,7 +92,6 @@ void sig_wrap_cleanup( int sig )
 
 void init_server ( int port, char *addr )
 {
-  cout << "Entering init_server." << endl;
   // create socket for server
   server_sock_fd = socket( AF_INET, SOCK_STREAM, 0 );
   if ( server_sock_fd < 0 )
@@ -146,7 +144,7 @@ void init_server ( int port, char *addr )
   struct sigaction action = {};
 
   action.sa_handler = sig_wrap_cleanup;
-  sigaction(SIGINT, &action, nullptr);
+  sigaction( SIGINT, &action, nullptr );
 }
 
 
@@ -175,7 +173,6 @@ void *wait_for_client ( void *arg )
       // add poll fd and send message
       struct pollfd client_sock_fd = {this_client.sock_fd, POLLIN, 0};
 
-      cout << poll_fds.capacity() << endl;
       // CRITICAL SECTION
       pthread_mutex_lock(&mutex);
       poll_fds.push_back(client_sock_fd);
@@ -186,6 +183,8 @@ void *wait_for_client ( void *arg )
       //sendMessage( this_client.sock_fd, 'c', "" + deck->cards[0]->bitcode );
     }
   }
+
+  return arg;
 }
 
 

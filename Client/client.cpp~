@@ -1,15 +1,18 @@
+#define _POSIX_SOURCE
 /* cpp includes */
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <unistd.h>
+#include <sys/unistd.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <arpa/inet.h>
 #include <poll.h>
 #include <netdb.h>
+#include <sys/fcntl.h>
+#include <signal.h>
 using namespace std;
 
 /* Constants */
@@ -45,6 +48,13 @@ void die ( string error_msg )
   // close socket to server
   close( client_sock_fd ); 
   exit(EXIT_FAILURE);
+}
+
+
+void sig_wrap_cleanup( int sig )
+{
+  // wrapper for sigaction to pass int to sig which is never used
+  cleanup();
 }
 
 
@@ -111,66 +121,53 @@ void handle_input()
 
 void handle_server_msg()
 {
-  int bytes_read = 0;
-  char buffer[1024];
   int pos_found = 0;
   string msg = "";
+
+  pos_found = past_data_read.find( TERM_STR );
+  msg = past_data_read.substr( 0, pos_found );
+  past_data_read = past_data_read.substr( pos_found + 2 );
+
+  switch( msg.front() )
+  {
+    case EXIT:
+      cout << msg.substr( 1 ) << endl;
+      cleanup();
+      break;
+
+    case MESSAGE:
+      cout << "Message Recieved: " << endl;
+      cout << msg.substr( 1 ) << endl; 
+      break;
+
+    case CARDS:
+      if ( DEBUG )
+      {
+        cout << "Recieved card with bitcode: " << msg.substr( 1 ) << endl;
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  if ( ! past_data_read.empty() )
+  {
+    handle_server_msg ();
+  }
+}
+
+
+void read_server_msg()
+{
+  int bytes_read = 0;
+  char buffer[1024];
 
   bytes_read = read( client_sock_fd, &buffer, 1023);
   if ( bytes_read != -1 )
   {
-    /* THIS CODE SUCKS PLEASE REPLACE ME */
     past_data_read.append( buffer );
-    cout << past_data_read << endl;
-    pos_found = past_data_read.find( TERM_STR );
-    msg = past_data_read.substr( 0, pos_found );
-    past_data_read = past_data_read.substr( pos_found + 2 );
-    int good_first_char = 0;
-    while ( ! good_first_char )
-    {
-      switch( past_data_read.front() )
-      {
-        case EXIT:
-          good_first_char = 1;
-          break;
-
-        case MESSAGE:
-          good_first_char = 1;
-          break;
-
-        case CARDS:
-          good_first_char = 1;
-          break;
-
-        default:
-          past_data_read = past_data_read.substr(1);
-      }
-    }
-    cout << past_data_read.length() << endl;
-    /* END OF SUCKY CODE */
-
-    switch( msg.front() )
-    {
-      case EXIT:
-        cout << msg.substr( 1 ) << endl;
-        cleanup();
-        break;
-
-      case MESSAGE:
-        cout << "Message Recieved: " << endl;
-        cout << msg.substr( 1 ) << endl; 
-        break;
-
-      case CARDS:
-        if ( DEBUG )
-        {
-          cout << "Recieved card with bitcode: " << msg.substr( 1 ) << endl;
-        }
-        break;
-
-      default:
-        break;
-    }
+    handle_server_msg();
   }
   else
   {
@@ -185,7 +182,7 @@ void game_loop ()
 
   for ( ;; )
   {
-    if ( poll( poll_fds, 2, -1 ) == -1 )
+    if ( poll( poll_fds, 2, 1 ) == -1 )
     {
       die("Problem with input.");
     }
@@ -198,11 +195,12 @@ void game_loop ()
 
       if ( ( poll_fds[1].revents & POLLIN ) != 0 )
       {
-        handle_server_msg();
+        read_server_msg();
       } 
     }
   }
 }
+
 
 void init_client( int port, char *addr )
 {
@@ -234,6 +232,11 @@ void init_client( int port, char *addr )
     die("Cannot connect to server.");
   }
 
+  // bind TERM to cleanup
+  struct sigaction action = {};
+
+  action.sa_handler = sig_wrap_cleanup;
+  sigaction( SIGINT, &action, nullptr );
 }
 
 
