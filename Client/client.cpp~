@@ -50,7 +50,11 @@ void die ( string error_msg )
 
 void cleanup()
 {
-  close( client_sock_fd );
+  cout << "Client has closed" << endl;
+  if ( close( client_sock_fd ) < 0 )
+  {
+    die ( "Failed to close" );
+  }
   exit(EXIT_SUCCESS);
 }
 
@@ -115,10 +119,35 @@ void handle_server_msg()
   bytes_read = read( client_sock_fd, &buffer, 1023);
   if ( bytes_read != -1 )
   {
+    /* THIS CODE SUCKS PLEASE REPLACE ME */
     past_data_read.append( buffer );
+    cout << past_data_read << endl;
     pos_found = past_data_read.find( TERM_STR );
     msg = past_data_read.substr( 0, pos_found );
-    past_data_read = past_data_read.substr( pos_found + 4 );
+    past_data_read = past_data_read.substr( pos_found + 2 );
+    int good_first_char = 0;
+    while ( ! good_first_char )
+    {
+      switch( past_data_read.front() )
+      {
+        case EXIT:
+          good_first_char = 1;
+          break;
+
+        case MESSAGE:
+          good_first_char = 1;
+          break;
+
+        case CARDS:
+          good_first_char = 1;
+          break;
+
+        default:
+          past_data_read = past_data_read.substr(1);
+      }
+    }
+    cout << past_data_read.length() << endl;
+    /* END OF SUCKY CODE */
 
     switch( msg.front() )
     {

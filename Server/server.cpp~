@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <poll.h>
 #include <signal.h>
+#include <pthread.h>
 /* Dependencies */
 #include "networking.h"
 #include "cardlib.h"
@@ -22,7 +23,7 @@ Deck *deck = {};
 Deck *playing_deck = new Deck;
 vector<Client> client_list;
 vector<pollfd> poll_fds {{STDIN_FILENO, POLLIN, 0}};
-
+pthread_mutex_t mutex;
 
 void die ( string error_msg )
 {
@@ -60,18 +61,24 @@ void cleanup ()
 {
   cout << "Server going down (as well as all clients)." << endl;
   // client list is empty or we quit while creating first client connection
-  cout << (client_list.front().sock_fd == 0) << endl;
   if ( ! client_list.empty() && ( client_list.front().sock_fd != 0 ) )
   {
     for ( auto client_it : client_list )
     {
+      cout << "Closing client " << client_it.sock_fd << endl;
       sendMessage( client_it.sock_fd, 'x', "You have been disconnected"); 
     }
   }
+  
+  cout << "All clients should be closed." << endl;
+  cout << "Now closing server." << endl;
+
   if ( close( server_sock_fd ) == -1  && DEBUG )
   {
     cerr << strerror( errno ) << endl;
   }
+
+  cout << "Server should now be closed." << endl;
   exit(EXIT_SUCCESS);
 }
 
@@ -142,32 +149,41 @@ void init_server ( int port, char *addr )
 }
 
 
-void wait_for_client ()
+void *wait_for_client ( void *arg )
 {
-  // will need to be edited for mulithreading
-  // currently just connects one client
-  // insert at begining because it doesn't matter position of client in 
-  // list but placing in front is faster
-  auto client_it = client_list.emplace( client_list.begin(), Client{});
-  // emplace might be replacing, check when implementing multiple client
-  socklen_t client_len = sizeof (client_it->addr);
-  client_it->sock_fd = accept(server_sock_fd,
-                                  (struct sockaddr *) &client_it->addr,
-                                  &client_len );
-
-  if ( client_it->sock_fd < 0 )
+  for (;;)
   {
-    die("Error on accept. ");
-  }
-  else
-  {
-    cout << "Connected new client." << endl;
+    // will need to be edited for mulithreading
+    // currently just connects one client
+    // auto client_it = client_list.push_back( client_list.begin(), Client{});
+    // emplace might be replacing, check when implementing multiple client
+    Client this_client = {};
+    socklen_t client_len = sizeof (this_client.addr);
+    this_client.sock_fd = accept(server_sock_fd,
+                                    (struct sockaddr *) &this_client.addr,
+                                    &client_len );
 
-    // add poll fd and send message
-    struct pollfd client_sock_fd = {client_it->sock_fd, POLLIN, 0};
-    poll_fds.push_back(client_sock_fd);
-    sendMessage( client_it->sock_fd, 'm', "You have been connected.");
-    //sendMessage( client_it->sock_fd, 'c', "" + deck->cards[0]->bitcode );
+    if ( this_client.sock_fd < 0 )
+    {
+      die("Error on accept. ");
+    }
+    else
+    {
+      cout << "Connected new client." << endl;
+
+      // add poll fd and send message
+      struct pollfd client_sock_fd = {this_client.sock_fd, POLLIN, 0};
+
+      cout << poll_fds.capacity() << endl;
+      // CRITICAL SECTION
+      pthread_mutex_lock(&mutex);
+      poll_fds.push_back(client_sock_fd);
+      client_list.push_back( this_client );
+      pthread_mutex_unlock(&mutex);
+
+      sendMessage( this_client.sock_fd, 'm', "You have been connected.");
+      //sendMessage( this_client.sock_fd, 'c', "" + deck->cards[0]->bitcode );
+    }
   }
 }
 
@@ -296,7 +312,6 @@ void disconnect_client( int client_sock_fd )
   // even if close fails, server acts if client has died
   // as of this point
   sendMessage( client_sock_fd, 'x', "You have been disconnected"); 
-  close( client_sock_fd );
   cout << "Client with fd of " << client_sock_fd << " has disconnected." << endl;
 }
 
@@ -329,12 +344,18 @@ void recieve_input( int client_sock_fd )
 }
 
 
+void reload_poll_fds ( )
+{
+  // this function does nothing
+}
+
+
 void wait_for_input ()
 {
   for ( ;; )
   {
     // &poll_fds[0] can cause problems on reallocation
-    if ( poll( &poll_fds[0], poll_fds.size(), -1 ) == -1 )
+    if ( poll( &poll_fds[0], poll_fds.size(), 1 ) == -1 )
     {
       die("Problem with input.");
     }    
@@ -346,18 +367,20 @@ void wait_for_input ()
         handle_input();
       }
 
-      if ( ( poll_fds[1].revents & POLLIN ) != 0 )
-      {
-        // probally handle new connection?
-      }
-
+      // POLLRDHUP
       if ( poll_fds.size() > 2 )
       {
         for ( auto poll_fd_it : poll_fds )
         {
-          if ( poll_fd_it.fd < 4 )
+          if ( poll_fd_it.fd < 3 || poll_fd_it.fd == server_sock_fd )
           {
             continue;
+          }
+
+          if ( ( poll_fd_it.revents & POLLRDHUP ) != 0 )
+          {
+            // client hung up
+            disconnect_client( poll_fd_it.fd );
           }
 
           if ( ( poll_fd_it.revents & POLLIN ) != 0 )
@@ -393,7 +416,13 @@ int main(int argc, char* argv[])
     }
   }
 
-  wait_for_client();
+  pthread_t thread;
+  if ( pthread_create( &thread, NULL, wait_for_client, nullptr ) != 0 )
+  {
+    die( "Couldn't start wait for client" );
+  }
+  pthread_detach( thread );
+
   wait_for_input();
   cleanup();
 }
