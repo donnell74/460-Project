@@ -4,7 +4,7 @@
 #ifndef CARDLIB_H
 #define CARDLIB_H
 #define MAX_DECK_SIZE 81
-#define CARD_REF deck->cards[i]
+
 
 using namespace std;
 
@@ -54,18 +54,20 @@ struct Card
   char bitcode;
 };
 
+
 /*Deck structure to hold card structs
 Deck contains a vector of card structs
 and a count of the current cards in 
-the deck*/
+the deck
 
 struct Deck
 {
   int card_count;
   vector<Card*>cards;
 };
+*/
 
-
+/*
 Deck* deck_init();
 
 //Shuffles the deck using Fisher-Yates Shuffle
@@ -79,5 +81,43 @@ Card* draw( Deck* deck );
 
 //Display memory addresses for cards in the deck
 void memory_addresses( Deck* deck );
+*/
 
+/*Deck class
+Member functions:
+-Deck() - Deck initializer
+-~Deck() - Deck deconstructor
+-bool empty() - returns true if cards is empty
+-int count() - returns count of cards in deck
+-void display() - displays current cards in the deck
+-void shuffle() - shuffles cards in deck
+-void mem_display() - displays addresses of cards and deck in memory
+-Card* draw() - draws the first card from the deck
+-void add_card(Card*) - pushes card pointer to end of deck
+Fields:
+Private:
+-vector<Card*>cards - vector of card structs the deck contains
+-int top - index for a virtual top
+-int count - keeps count of cards in deck
+*/
+
+class Deck
+{
+ private:
+  vector < Card* > cards;
+  int top;
+  int _count;
+
+ public:
+  Deck();
+  Deck( int code );
+  ~Deck();
+  bool empty( int code );
+  int count( int code );
+  void mem_display();
+  void display( int code );
+  void shuffle();
+  Card* draw();
+  void add_card( Card* ncard );
+};
 #endif /* CARDLIB_H */
