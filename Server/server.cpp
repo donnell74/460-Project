@@ -156,11 +156,12 @@ string create_array ( int cards_needed )
 
   for ( int i=0; i<cards_needed; i++ )
     {
-      Card *ncard = draw( deck );
-      card_array += ncard->bitcode;
+      Card *ncard = deck->draw( );
+      card_array += ncard->bitcode + 31;
+      cout << ncard->bitcode + 31 << endl;
 
       //Add card to playing deck
-      playing_deck->cards.push_back( ncard );
+      playing_deck->add_card( ncard );
     }
   
   return card_array;
@@ -171,12 +172,10 @@ string create_array ( int cards_needed )
 void send_playing_cards (  ) 
 { 
   int cards_needed = 12;
-  string playing_cards = create_array ( cards_needed );
-  cout << "Server sending playing cards now..." << endl;
-  cout << "This is client list lenght: " << client_list.size() << endl;
+  string cards_to_send = create_array ( cards_needed );
   for ( auto client_it : client_list )
   {
-    sendMessage( client_it.sock_fd, 'c', playing_cards ); 
+    sendMessage( client_it.sock_fd, 'c', cards_to_send ); 
   }
 }
 
@@ -220,27 +219,6 @@ void *wait_for_client ( void *arg )
 
   return arg;
 }
-
-
-
-//Creates the array of cards from playing_deck
-//to send to client
-string create_array ( int cards_needed )
-{
-  string card_array;
-
-  for ( int i=0; i<cards_needed; i++ )
-    {
-      Card *ncard = deck->draw();
-      card_array += ncard->bitcode;
-
-      //Add card to playing deck
-      playing_deck->add_card( ncard );
-    }
-  
-  return card_array;
-}
-
 
 
 void display_options ( )

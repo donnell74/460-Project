@@ -124,6 +124,7 @@ void handle_server_msg()
   int pos_found = 0;
   string msg = "";
 
+  cout << "DATA: " << past_data_read << endl;
   pos_found = past_data_read.find( TERM_STR );
   msg = past_data_read.substr( 0, pos_found );
   past_data_read = past_data_read.substr( pos_found + 2 );
@@ -143,7 +144,12 @@ void handle_server_msg()
     case CARDS:
       if ( DEBUG )
       {
-        cout << "Recieved card with bitcode: " << msg.substr( 1 ) << endl;
+	cout << "CARDS NOM NOM NOM" << endl;
+	cout << "Size: " << msg.size() << endl;
+	for ( int i = 1; i < (int) msg.size(); ++i )
+	{
+          cout << "Recieved card with bitcode: " << int( msg[i] ) << endl;
+	}
       }
       break;
 
@@ -161,7 +167,7 @@ void handle_server_msg()
 void read_server_msg()
 {
   int bytes_read = 0;
-  char buffer[1024];
+  char buffer[1024] = {};
 
   bytes_read = read( client_sock_fd, &buffer, 1023);
   if ( bytes_read != -1 )
