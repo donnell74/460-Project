@@ -3,23 +3,13 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/unistd.h>
-#include <netinet/in.h>
 #include <string.h>
-#include <arpa/inet.h>
-#include <poll.h>
-#include <netdb.h>
-#include <sys/fcntl.h>
-#include <signal.h>
+
+/* local includes */
+#include "networking.h"
 using namespace std;
 
 /* Constants */
-int DEBUG = 1;
-int DEFAULT_PORT = 51717;
-char LOCALHOST[] = "127.0.0.1";
-string TERM_STR = "XX";
 const char EXIT = 'x';
 const char MESSAGE = 'm';
 const char CARDS = 'c';
@@ -29,43 +19,13 @@ vector<char> ACCEPTED_CHARS = {'1', '2', '3', '4',
                                'A', 'S', 'D', 'F', 
                                'Z', 'X', 'C', 'V',
                                'U', 'I', 'T'}; 
-
-/* Globals */
-int client_sock_fd = 0;
-string past_data_read = "";
-
-void die ( string error_msg )
-{
-  // standardize error_msg so no extra new lines
-  error_msg.erase(error_msg.find_last_not_of(" \n\r\t")+1); 
-  cerr << error_msg << endl;
-
-  if ( DEBUG )
-  {
-    cerr << strerror(errno) << endl;
-  }
-  
-  // close socket to server
-  close( client_sock_fd ); 
-  exit(EXIT_FAILURE);
-}
-
-
-void cleanup()
-{
-  cout << "Client has closed" << endl;
-  if ( close( client_sock_fd ) < 0 )
-  {
-    die ( "Failed to close" );
-  }
-  exit(EXIT_SUCCESS);
-}
+Client *my_client;
 
 
 void sig_wrap_cleanup( int sig )
 {
   // wrapper for sigaction to pass int to sig which is never used
-  cleanup();
+  my_client->cleanup();
 }
 
 
@@ -73,7 +33,6 @@ void handle_input()
 {
   string inp = "";
   cin >> inp;
-  int bytes_sent = -1;
   cin.get(); // remove newline
 
   if ( inp.size() < (size_t) 3 )
@@ -103,37 +62,19 @@ void handle_input()
     cout << "Repeats are not allowed." << endl;
   }
 
-  bytes_sent = write( client_sock_fd, (inp.substr(0,3)).c_str(), 3 );
-  if ( bytes_sent < 0 )
-  {
-    die( "Unable to send message." );
-  }
-  if ( bytes_sent == 0 )
-  {
-    cout << "No bytes sent." << endl;
-  }
-  if ( bytes_sent > 0 )
-  {
-    cout << "Sent " << inp << " to server." << endl;
-  }
+  my_client->send_message( inp.substr(0,3) );
 }
 
 
 void handle_server_msg()
 {
-  int pos_found = 0;
-  string msg = "";
-
-  cout << "DATA: " << past_data_read << endl;
-  pos_found = past_data_read.find( TERM_STR );
-  msg = past_data_read.substr( 0, pos_found );
-  past_data_read = past_data_read.substr( pos_found + 2 );
+  string msg = my_client->get_next_msg();
 
   switch( msg.front() )
   {
     case EXIT:
       cout << msg.substr( 1 ) << endl;
-      cleanup();
+      my_client->cleanup();
       break;
 
     case MESSAGE:
@@ -157,115 +98,40 @@ void handle_server_msg()
       break;
   }
 
-  if ( ! past_data_read.empty() )
+  if ( ! my_client->get_past_data_read().empty() )
   {
     handle_server_msg ();
   }
 }
 
 
-void read_server_msg()
-{
-  int bytes_read = 0;
-  char buffer[1024] = {};
-
-  bytes_read = read( client_sock_fd, &buffer, 1023);
-  if ( bytes_read != -1 )
-  {
-    past_data_read.append( buffer );
-    handle_server_msg();
-  }
-  else
-  {
-    die("Something went wrong. Likely that server was closed.");
-  }
-}
-
-
-void game_loop ()
-{
-  struct pollfd poll_fds[] = {{STDIN_FILENO, POLLIN, 0}, {client_sock_fd, POLLIN, 0}};
-
-  for ( ;; )
-  {
-    if ( poll( poll_fds, 2, 1 ) == -1 )
-    {
-      die("Problem with input.");
-    }
-    else
-    {
-      if ( ( poll_fds[0].revents & POLLIN ) != 0 )
-      {
-        handle_input();
-      }
-
-      if ( ( poll_fds[1].revents & POLLIN ) != 0 )
-      {
-        read_server_msg();
-      } 
-    }
-  }
-}
-
-
-void init_client( int port, char *addr )
-{
-  struct sockaddr_in server_addr = {};
-  struct hostent *server;
-
-  client_sock_fd = socket( AF_INET, SOCK_STREAM, 0 );
-  if ( client_sock_fd < 0 )
-  {
-    die("Failed to create socket.");
-  }
-
-  server = gethostbyname( addr );
-  if ( server == nullptr )
-  {
-    die("No such server.");
-  }
-
-  server_addr.sin_family = AF_INET;
-  server_addr.sin_port = htons( port );
-  // convert ip string to binary 
-  if ( inet_pton( AF_INET, addr, &server_addr.sin_addr ) != 1 )
-  {
-    die("Can't convert ip.");
-  }
-
-  if ( connect( client_sock_fd, (struct sockaddr *) &server_addr, sizeof server_addr) == -1 )
-  {
-    die("Cannot connect to server.");
-  }
-
-  // bind TERM to cleanup
-  struct sigaction action = {};
-
-  action.sa_handler = sig_wrap_cleanup;
-  sigaction( SIGINT, &action, nullptr );
-}
-
-
 int main( int argc, char *argv[] )
 {
+  char LOCALHOST[] = "127.0.0.1";
 
   if ( argc == 1 || argc > 3 )
   {
-    die("Usage: ./client <port>");
+    my_client->die("Usage: ./client <port>");
   }
   else
   {
     if ( argc == 2 )
     {
-      init_client( atoi( argv[1] ), LOCALHOST );
+      my_client = new Client( atoi( argv[1] ), LOCALHOST );
     }
     else
     {
-      init_client( atoi( argv[1] ), argv[2] );
+      my_client = new Client( atoi( argv[1] ), argv[2] );
     }  
     
-    game_loop();
+    // bind TERM to cleanup
+    struct sigaction action = {};
+
+    action.sa_handler = sig_wrap_cleanup;
+    sigaction( SIGINT, &action, nullptr );
+
+    my_client->wait_for_input();
+    my_client->cleanup();
   }
 
-  cleanup();
 }

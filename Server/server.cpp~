@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
   pthread_t thread;
   if ( pthread_create( &thread, NULL, wait_for_client_wrap, nullptr ) != 0 )
   {
-    die( "Couldn't start wait for client" );
+    my_server->die( "Couldn't start wait for client" );
   }
   pthread_detach( thread );
 

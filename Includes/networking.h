@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <string.h>
+#include <netdb.h>
 #define NETWORKING_H
 #define DEBUG 1
 #define MAXCLIENTS 25
@@ -29,6 +30,7 @@ struct Client_t
   sockaddr_in addr;
 };
 
+/* Function required by user to implement  */
 void handle_input();
 
 class Server
@@ -53,4 +55,27 @@ class Server
     void wait_for_input ();
 };
       
+/* Function required by user to implement  */
+void handle_server_msg ();
+
+class Client
+{
+  private:
+    /* Globals */
+    int client_sock_fd;
+    string past_data_read;
+
+  public:
+    Client( int, char * );
+    ~Client();
+    void die ( string );
+    void cleanup();
+    void read_server_msg();
+    void wait_for_input ();
+    void send_message( string );
+    string get_past_data_read();
+    void set_past_data_read( string );
+    string get_next_msg ();
+};
+
 #endif /* NETWORKING_H */

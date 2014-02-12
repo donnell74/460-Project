@@ -19,6 +19,13 @@ Deck *playing_deck = new Deck(1);
 Server *my_server;
 pthread_mutex_t mutex;
 
+
+/* Never used, hear because of other bad code */
+void handle_server_msg ()
+{
+  return;
+}
+
 //Creates the array of cards from playing_deck
 //to send to client
 string create_array ( int cards_needed )

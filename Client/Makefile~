@@ -1,2 +1,5 @@
-client: client.cpp
-	g++ --std=c++0x -Wall -o client client.cpp
+CC = g++
+CFLAGS = --std=c++0x -Wall
+
+build: client.cpp
+	$(CC) $(CFLAGS) -o client client.cpp
