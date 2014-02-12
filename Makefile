@@ -1,5 +1,5 @@
 CFLAGS = -C 
-DIRS = Server Client Includes
+DIRS = Server Client
 
 build:
 	for each_dir in $(DIRS); do \

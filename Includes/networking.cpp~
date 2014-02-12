@@ -83,7 +83,7 @@ Server::Server ( int port, char *addr )
 
 Server::~Server()
 {
-  cleanup();
+  this->cleanup();
 }
 
 
@@ -114,7 +114,7 @@ void Server::cleanup ()
     for ( auto client_it : client_list )
     {
       cout << "Closing client " << client_it.sock_fd << endl;
-      sendMessage( client_it.sock_fd, 'x', "You have been disconnected"); 
+      this->sendMessage( client_it.sock_fd, 'x', "You have been disconnected"); 
     }
   }
   
@@ -163,7 +163,7 @@ void Server::wait_for_client ( )
       client_list.push_back( this_client );
       pthread_mutex_unlock(&mutex);
 
-      sendMessage( this_client.sock_fd, 'm', "You have been connected.");
+      this->sendMessage( this_client.sock_fd, 'm', "You have been connected.");
     }
   }
 
@@ -191,8 +191,8 @@ void Server::disconnect_client( int client_sock_fd )
   }
 
   // even if close fails, server acts if client has died
-  // as of point
-  sendMessage( client_sock_fd, 'x', "You have been disconnected"); 
+  // as of this->point
+  this->sendMessage( client_sock_fd, 'x', "You have been disconnected"); 
   cout << "Client with fd of " << client_sock_fd << " has disconnected." << endl;
 }
 
@@ -207,7 +207,7 @@ void Server::recieve_input( int client_sock_fd )
   {
     if ( strcmp( buffer, "QUI" ) == 0 )
     {
-      disconnect_client( client_sock_fd );
+      this->disconnect_client( client_sock_fd );
     }
     else
     {
@@ -255,12 +255,12 @@ void Server::wait_for_input ()
           if ( ( poll_fd_it.revents & POLLRDHUP ) != 0 )
           {
             // client hung up
-            disconnect_client( poll_fd_it.fd );
+            this->disconnect_client( poll_fd_it.fd );
           }
 
           if ( ( poll_fd_it.revents & POLLIN ) != 0 )
           {
-            recieve_input( poll_fd_it.fd );
+            this->recieve_input( poll_fd_it.fd );
           }
         }
       }
