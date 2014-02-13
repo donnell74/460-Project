@@ -19,31 +19,64 @@ Deck *playing_deck = new Deck(1);
 Server *my_server;
 pthread_mutex_t mutex;
 
-//Creates the array of cards from playing_deck
-//to send to client
-string create_array ( int cards_needed )
+
+/* Never used, hear because of other bad code */
+void handle_server_msg ()
 {
-  string card_array;
-
-  for ( int i=0; i<cards_needed; i++ )
-    {
-      Card *ncard = deck->draw( );
-      card_array += ncard->bitcode + 31;
-      cout << ncard->bitcode + 31 << endl;
-
-      //Add card to playing deck
-      playing_deck->add_card( ncard );
-    }
-  
-  return card_array;
+  return;
 }
 
+
+//Maps cards to index of playing card deck
+//Returns index on success and -1 on error
+int map_card ( char key )
+{
+  switch ( key )
+    {
+    case '1':
+      return 0;
+    case '2':
+      return 1;
+    case '3':
+      return 2;
+    case '4':
+      return 3;
+    case 'Q':
+      return 4;
+    case 'W':
+      return 5;
+    case 'E':
+      return 6;
+    case 'R':
+      return 7;
+    case 'A':
+      return 8;
+    case 'S':
+      return 9;
+    case 'D':
+      return 10;
+    case 'F':
+      return 11;
+/*Required if client list is extended to 16
+    case 'Z':
+      return 12;
+    case 'X':  
+      return 13;
+    case 'C':
+      return 14;
+    case 'V':
+      return 15;
+*/
+    default:
+      return -1;
+    }
+}
 
 // Sends desired amount of cards to all clients.
 void send_playing_cards (  ) 
 { 
   int cards_needed = 12;
-  string cards_to_send = create_array ( cards_needed );
+  string cards_to_send = create_playing_cards ( cards_needed, deck, playing_deck );
   for ( auto client_it : my_server->get_client_list() )
   {
     my_server->sendMessage( client_it.sock_fd, 'c', cards_to_send ); 
@@ -51,6 +84,82 @@ void send_playing_cards (  )
 }
 
 
+<<<<<<< HEAD
+=======
+void respond_to_client ( int client_sock_fd, char* guess )
+{
+ 
+  sendMessage( client_sock_fd, 'm', "Checking guess.." ); 
+  
+  //Set to check
+  vector<Card*>cset;
+  
+ 
+  cset.push_back( playing_deck->get_card( map_card( guess[0] ) ) );
+  cset.push_back( playing_deck->get_card( map_card( guess[1] ) ) );
+  cset.push_back( playing_deck->get_card( map_card( guess[2] ) ) );
+
+  //Display set info -- Testing purposes
+  display_card( cset[0] );
+  display_card( cset[1] );
+  display_card( cset[2] );
+  
+
+  //Client Guess - True
+  if ( check_set ( cset ) )
+    {
+      sendMessage( client_sock_fd, 'm',  "This is where Greg does the truth magic" );
+    }
+
+  //Client Guess - False
+  else
+    {
+      sendMessage( client_sock_fd, 'm', "Naw client, thats not a set" );
+    }
+}
+
+
+void *wait_for_client ( void *arg )
+{
+  for (;;)
+  {
+    // will need to be edited for mulithreading
+    // currently just connects one client
+    // auto client_it = client_list.push_back( client_list.begin(), Client{});
+    // emplace might be replacing, check when implementing multiple client
+    Client this_client = {};
+    socklen_t client_len = sizeof (this_client.addr);
+    this_client.sock_fd = accept(server_sock_fd,
+                                    (struct sockaddr *) &this_client.addr,
+                                    &client_len );
+
+    if ( this_client.sock_fd < 0 )
+    {
+      die("Error on accept. ");
+    }
+    else
+    {
+      cout << "Connected new client." << endl;
+
+      // add poll fd and send message
+      struct pollfd client_sock_fd = {this_client.sock_fd, POLLIN, 0};
+
+      // CRITICAL SECTION
+      pthread_mutex_lock(&mutex);
+      poll_fds.push_back(client_sock_fd);
+      client_list.push_back( this_client );
+      pthread_mutex_unlock(&mutex);
+
+      sendMessage( this_client.sock_fd, 'm', "You have been connected.");
+      send_playing_cards( );
+      //sendMessage( this_client.sock_fd, 'c', "" + deck->cards[0]->bitcode );
+    }
+  }
+
+  return arg;
+}
+
+>>>>>>> d65858d05522cef530f0acf51cda02dd73c8f8b6
 
 void display_options ( )
 {
@@ -109,19 +218,19 @@ void handle_input()
       break;
 
     case 'P':
-    {
-      string card_array;
-      int cards_needed;
+      {
+        string card_array;
+        int cards_needed;
 
-      cout << "cards needed?" <<endl;
-      cin >> cards_needed;
-      
-      card_array = create_array( cards_needed );
-      cout << card_array <<endl;
+        cout << "cards needed?" <<endl;
+        cin >> cards_needed;
+        
+        card_array = create_playing_cards( cards_needed, deck, playing_deck );
+        cout << card_array << endl;
 
-      playing_deck->display( 1 );
-    }
-    break;
+        playing_deck->display( 1 );
+      }
+      break;
 
     default:
       break;
@@ -147,6 +256,10 @@ int main(int argc, char* argv[])
 {
   deck = new Deck();
   char LOCALHOST[] = "127.0.0.1";
+  
+  //Shuffle Deck 
+  deck->shuffle();
+  deck->shuffle();
 
   if ( argc ==1 || argc > 3 )
   {

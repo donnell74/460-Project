@@ -1,6 +1,12 @@
 #include "cardlib.h"
-#include<vector>
+#include <vector>
+#include <iostream>
+using namespace std;
 
+void display_card(Card* ncard)
+{
+  cout<<" Number:" << ncard->number << " Symbol:" << ncard->symbol << " Shade:" << ncard->shade << " Color:" << ncard->color << "Bitcode:" << ncard->bitcode << endl;
+}
 
 
 Deck::Deck()
@@ -30,10 +36,12 @@ Deck::Deck()
   _count = cards.size();
 }
 
-Deck::Deck(int code)
+
+Deck::Deck( int code )
 {
   //Construct deck object
 }
+
 
 Deck::~Deck()
 {
@@ -58,15 +66,31 @@ int Deck::count( int code )
   return cards.size(); 
 }
 
-
-void Deck::display(int code)
+Card* Deck::get_card( int index )
 {
+  return cards[index];
+}
+
+
+vector<Card*> Deck::get_cards()
+{
+  return cards;
+}
+
+
+void Deck::display( int code )
+{
+  if( !empty( code ) )
+
+    {
+
   int limit, initial_count;
 
   if ( code == 0 )
     {
-      limit = _count;
+
       initial_count = top;
+      limit = top + _count;
     }
 
   else
@@ -75,33 +99,53 @@ void Deck::display(int code)
       initial_count = 0;
   }
 
+  int j = 0;
   for ( int i=initial_count; i<limit; i++ )
   {
-    cout << "Deck[" << i << "] Number:" << cards[i]->number << " Symbol:" << cards[i]->symbol << " Shade:" << cards[i]->shade << " Color:" << cards[i]->color << "Bitcode:" << cards[i]->bitcode << endl;
+    cout << "Deck[" << j << "] Number:" << cards[i]->number << " Symbol:" << cards[i]->symbol << " Shade:" << cards[i]->shade << " Color:" << cards[i]->color << "Bitcode:" << cards[i]->bitcode << endl;
+    j++;
   }
 
   cout << "Card Count:" << count( code ) << endl;
   cout << "x----------------------------------------------x"<<endl;
+  cout<<"top:"<<top<<endl;
+  cout<<"virtual count:"<<_count<<endl;
+
+    }
+  else
+    {
+      cout << "Deck is empty" << endl;
+    }
 }
+
 
 void Deck::shuffle()
 {
-  random_device rd;
-  default_random_engine e1( rd() );
+  if( !empty( 0 ) )
+    {
+      random_device rd;
+      default_random_engine e1( rd() );
   
-  //Pointer to Card struct for temporary storage
-  Card* temp;
-  for ( int i = _count -1; i>top; i-- )
-  {
-    uniform_int_distribution<int> uniform_dist( 0,i );
-    int random_number = uniform_dist( e1 );
+      //Pointer to Card struct for temporary storage
+      Card* temp;
+      for ( int i = _count -1; i>top; i-- )
+	{
+	  uniform_int_distribution<int> uniform_dist( 0,i );
+	  int random_number = uniform_dist( e1 );
 
-    temp = cards[i];
-    cards[i] = cards[random_number];
-    cards[random_number] = temp;
-  }
+	  temp = cards[i];
+	  cards[i] = cards[random_number];
+	  cards[random_number] = temp;
+	}
+    }
+
+  else
+    {
+      cout << "Deck is empty" <<endl;
+    }
 
 }
+
 
 void Deck::mem_display( )
 {
@@ -112,25 +156,43 @@ void Deck::mem_display( )
   }
 }
 
+
 Card* Deck::draw()
 {
-  if ( count(0) == 0 )
-    {
-      cout<<"Deck is empty"<<endl;
-      return nullptr;
-    }
+  Card* ncard = cards[top];
+  top+=1;
+  _count-=1;
+  return ncard;
+}
 
-    Card* ncard = cards[top];
-    top+=1;
-    _count-=1;
-    return ncard;
-    
+void Deck::remove_card( int index )
+{
+  //Should only be called on playing deck
+  cards.erase( cards.begin() + index );
+  cout << "Removed card at index " << index << endl;
+}
+
+void Deck::replace_card( int index, Card* ncard )
+{
+  //Replaces card in index with new card pointer
+  cout << "Replacing ";
+  display_card( cards[index] );
+  cout << "With:";
+  display_card( ncard );
+
+  cards[index] = ncard;
+}
+
+void Deck::clear_cards()
+{
+  cards.clear();
 }
 
 void Deck::add_card( Card* ncard )
 {
   cards.push_back( ncard );
 }
+
 
 bool Deck::empty( int code )
 {
@@ -276,3 +338,169 @@ Card* draw( Deck* deck )
     return ncard;
 }
 */
+
+//Boolean comparison card set functions
+//Difference comparisons
+bool color_differs( vector<Card*>set )
+{
+  //Returns false if all colors are the same
+  return set[0]->color != set[1]->color && set[0]->color != set[2]->color && set[1]->color != set[2]->color; 
+}
+
+
+bool symbol_differs( vector<Card*>set )
+{
+  //Returns false if all symbols are the same
+  return set[0]->symbol != set[1]->symbol && set[0]->symbol != set[2]->symbol && set[1]->symbol != set[2]->symbol; 
+}
+
+
+bool shade_differs( vector<Card*>set )
+{
+  //Returns false if all shades are the same
+  return set[0]->shade != set[1]->shade && set[0]->shade != set[2]->shade && set[1]->shade != set[2]->shade;
+}
+
+
+bool number_differs( vector<Card*>set )
+{
+  //Returns false if at least two numbers are the same
+  return set[0]->number != set[1]->number && set[0]->number != set[2]->number && set[1]->number != set[2]->number;
+}
+
+
+//Same comparisons
+bool color_same( vector<Card*>set )
+{
+  //Returns false if all colors are not the same
+  return set[0]->color == set[1]->color && set[0]->color == set[2]->color && set[1]->color == set[2]->color;
+}
+
+bool symbol_same( vector<Card*>set )
+{
+  //Returns false if all symbols aren't the same
+  return set[0]->symbol == set[1]->symbol && set[0]->symbol == set[2]->symbol && set[1]->symbol == set[2]->symbol;
+}
+
+bool shade_same( vector<Card*>set )
+{
+  //Returns false if all shades arent the same
+  return set[0]->shade == set[1]->shade && set[0]->shade == set[2]->shade && set[1]->shade == set[2]->shade;
+}
+
+bool number_same( vector<Card*>set )
+{
+  //Returns false if all numbers arent the same
+  return set[0]->number == set[1]->number && set[0]->number == set[2]->number && set[1]->number == set[2]->number;
+}
+
+//Checks if array of sent cards is set
+bool check_set ( vector<Card*>set )
+{
+  /*Logic - set must meet all conditions to be a valid set
+  They all have the same number, or they have three different numbers.
+  They all have the same symbol, or they have three different symbols.
+  They all have the same shading, or they have three different shadings.
+  They all have the same color, or they have three different colors.*/
+  
+  if( ( number_same( set ) || number_differs( set ) ) && ( symbol_same( set ) || symbol_differs( set ) ) && ( shade_same( set ) || shade_differs( set ) ) && ( color_same( set ) || color_differs( set ) ) )
+    {
+     return true;
+    }
+    
+  else{
+    return false;
+  }
+  
+}
+
+void set_auxillary ( )
+{
+  string attr[] = {"color", "symbol", "shade", "number"};
+  string prompts[] = {"Color:  red - 0\n\tpurple - 1\n\tgreen - 2","symbol: cross - 0\n\tsquare - 1\n\tslash - 2", "shade:  circle - 0\n\tat - 1\n\tspace - 2","Number: one - 0\n\ttwo - 1\n\tthree - 2"};
+ 
+
+  vector<Card*>set;
+  int mcards = 3;
+  
+  for( int j=0; j<mcards; j++ )
+    {
+      int ins[4];
+      Card* ncard = new Card;
+      for ( int i=0; i<4; i++ )
+	{
+	  cout << prompts[i] << endl;
+	  cout << "Card "<< j+1 << " " << attr[i] << ":" << endl;
+	  cin >> ins[i];
+	}
+      ncard->color = static_cast<Color>( ins[0] );
+      ncard->symbol = static_cast<Symbol>( ins[1] );
+      ncard->shade = static_cast<Shade>( ins[2] );
+      ncard->number = static_cast<Number>( ins[3] );
+      set.push_back( ncard );
+      cout << "card_color:" << set[j]->color << endl;
+      cout << "card_symbol:" << set[j]->symbol << endl;
+      cout << "card_shade:" << set[j]->shade << endl;
+      cout << "card_number:" << set[j]->number << endl;
+
+    }
+
+      
+
+  if( check_set( set ) )
+    {
+      cout << "These cards form a valid set" << endl;
+    }
+
+  else
+    {
+      cout << "Cards do not form a valid set" << endl;
+    }
+}
+
+string create_playing_cards( int cards_needed, Deck* deck, Deck* playing_deck)
+{
+  string card_array;
+
+  for ( int i=0; i<cards_needed; i++ )
+    {
+      Card* ncard = deck->draw();
+      card_array += ncard->bitcode;
+      cout << ncard->bitcode +31 << endl;
+      //Add card to playing deck
+      playing_deck->add_card( ncard );
+    }
+
+  return card_array;
+}
+
+vector<Set*>find_sets ( vector<Card*>cards )
+{
+  vector<Card*>test_set;
+  vector<Set*>_sets;
+  
+  for ( int i = 0; i<cards.size(); i++ )
+    {
+      for ( int j = i+1; j<cards.size(); j++)
+	{
+	  for ( int k = j+1; k<cards.size(); k++ )
+	    {
+	      test_set.push_back( cards[i] );
+	      test_set.push_back( cards[j] );
+	      test_set.push_back( cards[k] );
+	      
+	      if ( check_set ( test_set ) )
+		{
+		  Set* nset = new Set;
+		  nset->x = i;
+		  nset->y = j;
+		  nset->z = k;
+		  _sets.push_back(nset);
+		}
+	      test_set.clear();
+	    }
+	}
+    }
+  
+  return _sets;
+}

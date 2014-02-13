@@ -20,43 +20,68 @@ Server *my_server;
 pthread_mutex_t mutex;
 
 
-/* Never used, hear because of other bad code */
+/* Never used, here because of other bad code */
 void handle_server_msg ()
 {
   return;
 }
 
-//Creates the array of cards from playing_deck
-//to send to client
-string create_array ( int cards_needed )
+
+//Maps cards to index of playing card deck
+//Returns index on success and -1 on error
+int map_card ( char key )
 {
-  string card_array;
-
-  for ( int i=0; i<cards_needed; i++ )
+  switch ( key )
     {
-      Card *ncard = deck->draw( );
-      card_array += ncard->bitcode + 31;
-      cout << ncard->bitcode + 31 << endl;
-
-      //Add card to playing deck
-      playing_deck->add_card( ncard );
+    case '1':
+      return 0;
+    case '2':
+      return 1;
+    case '3':
+      return 2;
+    case '4':
+      return 3;
+    case 'Q':
+      return 4;
+    case 'W':
+      return 5;
+    case 'E':
+      return 6;
+    case 'R':
+      return 7;
+    case 'A':
+      return 8;
+    case 'S':
+      return 9;
+    case 'D':
+      return 10;
+    case 'F':
+      return 11;
+/*Required if client list is extended to 16
+    case 'Z':
+      return 12;
+    case 'X':  
+      return 13;
+    case 'C':
+      return 14;
+    case 'V':
+      return 15;
+*/
+    default:
+      return -1;
     }
-  
-  return card_array;
 }
-
 
 // Sends desired amount of cards to all clients.
 void send_playing_cards (  ) 
 { 
   int cards_needed = 12;
-  string cards_to_send = create_array ( cards_needed );
+  string cards_to_send = create_playing_cards ( cards_needed, deck, playing_deck );
   for ( auto client_it : my_server->get_client_list() )
   {
     my_server->sendMessage( client_it.sock_fd, 'c', cards_to_send ); 
   }
 }
-
 
 
 void display_options ( )
@@ -116,19 +141,19 @@ void handle_input()
       break;
 
     case 'P':
-    {
-      string card_array;
-      int cards_needed;
+      {
+        string card_array;
+        int cards_needed;
 
-      cout << "cards needed?" <<endl;
-      cin >> cards_needed;
-      
-      card_array = create_array( cards_needed );
-      cout << card_array <<endl;
+        cout << "cards needed?" <<endl;
+        cin >> cards_needed;
+        
+        card_array = create_playing_cards( cards_needed, deck, playing_deck );
+        cout << card_array << endl;
 
-      playing_deck->display( 1 );
-    }
-    break;
+        playing_deck->display( 1 );
+      }
+      break;
 
     default:
       break;
@@ -154,6 +179,10 @@ int main(int argc, char* argv[])
 {
   deck = new Deck();
   char LOCALHOST[] = "127.0.0.1";
+  
+  //Shuffle Deck 
+  deck->shuffle();
+  deck->shuffle();
 
   if ( argc ==1 || argc > 3 )
   {
