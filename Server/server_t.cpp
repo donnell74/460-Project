@@ -147,19 +147,17 @@ void init_server ( int port, char *addr )
   sigaction( SIGINT, &action, nullptr );
 }
 
-/*MOVED TO CARDLIB
-Creates the array of cards from playing_deck
-to send to client
-
+/*
+//Creates the array of cards from playing_deck
+//to send to client
 string create_array ( int cards_needed )
 {
   string card_array;
 
   for ( int i=0; i<cards_needed; i++ )
     {
-      Card *ncard = deck->draw( );
-      card_array += ncard->bitcode + 31;
-      cout << ncard->bitcode + 31 << endl;
+      Card *ncard = deck->draw();
+      card_array += ncard->bitcode;
 
       //Add card to playing deck
       playing_deck->add_card( ncard );
@@ -169,94 +167,23 @@ string create_array ( int cards_needed )
 }
 */
 
-
-//Maps cards to index of playing card deck
-//Returns index on success and -1 on error
-int map_card ( char key )
-{
-  switch ( key )
-    {
-    case '1':
-      return 0;
-    case '2':
-      return 1;
-    case '3':
-      return 2;
-    case '4':
-      return 3;
-    case 'Q':
-      return 4;
-    case 'W':
-      return 5;
-    case 'E':
-      return 6;
-    case 'R':
-      return 7;
-    case 'A':
-      return 8;
-    case 'S':
-      return 9;
-    case 'D':
-      return 10;
-    case 'F':
-      return 11;
-/*Required if client list is extended to 16
-    case 'Z':
-      return 12;
-    case 'X':  
-      return 13;
-    case 'C':
-      return 14;
-    case 'V':
-      return 15;
-*/
-    default:
-      return -1;
-    }
-}
-
 // Sends desired amount of cards to all clients.
 void send_playing_cards (  ) 
 { 
   int cards_needed = 12;
-  string cards_to_send = create_playing_cards ( cards_needed, deck, playing_deck );
+  string playing_cards = create_playing_cards ( cards_needed, deck, playing_deck );
+  cout << "Server sending playing cards now..." << endl;
+  cout << "This is client list lenght: " << client_list.size() << endl;
   for ( auto client_it : client_list )
   {
-    sendMessage( client_it.sock_fd, 'c', cards_to_send ); 
+    sendMessage( client_it.sock_fd, 'c', playing_cards ); 
   }
-}
+  if ( close( server_sock_fd ) == -1  && DEBUG )
+  {
+    cerr << strerror( errno ) << endl;
+  }
+  exit(EXIT_SUCCESS);
 
-
-void respond_to_client ( int client_sock_fd, char* guess )
-{
- 
-  sendMessage( client_sock_fd, 'm', "Checking guess.." ); 
-  
-  //Set to check
-  vector<Card*>cset;
-  
- 
-  cset.push_back( playing_deck->get_card( map_card( guess[0] ) ) );
-  cset.push_back( playing_deck->get_card( map_card( guess[1] ) ) );
-  cset.push_back( playing_deck->get_card( map_card( guess[2] ) ) );
-
-  //Display set info -- Testing purposes
-  display_card( cset[0] );
-  display_card( cset[1] );
-  display_card( cset[2] );
-  
-
-  //Client Guess - True
-  if ( check_set ( cset ) )
-    {
-      sendMessage( client_sock_fd, 'm',  "This is where Greg does the truth magic" );
-    }
-
-  //Client Guess - False
-  else
-    {
-      sendMessage( client_sock_fd, 'm', "Naw client, thats not a set" );
-    }
 }
 
 
@@ -303,14 +230,24 @@ void *wait_for_client ( void *arg )
 
 void display_options ( )
 {
+  cout << "Menu" << endl;
   cout << "Q. Quit" << endl;
   cout << "D. Display deck" << endl;
   cout << "S. Shuffle deck" << endl;
   cout << "A. Memory Addresses" << endl;
-  cout << "W. Draw card"<< endl;
-  cout << "P. Print Playing Cards" << endl;
-}
+  cout << "W. Draw individual card" << endl;
+  cout << "O. Draw multiple cards" << endl;
+  cout << "P. Display Playing Deck" << endl;
+  cout << "L. Remove Card" << endl;
+  cout << "K. Set Options" << endl;
+ }
 
+void set_options ( )
+{
+  cout << "Set Options" << endl;
+  cout << "1. Test Set" << endl;
+  cout << "2. Show all sets" << endl;
+}
 
 void handle_input()
 {
@@ -322,6 +259,10 @@ void handle_input()
   cout << type << endl;
   switch( toupper( type ) )
   {
+    case 'M':
+      display_options();
+      break;
+
     case 'Q':
       {
         cleanup();
@@ -357,7 +298,7 @@ void handle_input()
       }
       break;
 
-    case 'P':
+    case 'O':
       {
 	string card_array;
 	int cards_needed;
@@ -367,13 +308,125 @@ void handle_input()
 	
 	card_array = create_playing_cards( cards_needed, deck, playing_deck );
 	cout << card_array << endl;
-
-	playing_deck->display( 1 );
+	break;
+	
       }
-      break;
+      
 
-    default:
+  case 'P':
+    {
+      playing_deck->display( 1 );
       break;
+    }
+
+  case 'L':
+    {
+      if( !playing_deck->empty( 1 ) )
+	{
+      playing_deck->display( 1 );
+      int cards_needed;
+      
+      cout << "How many cards?" << endl;
+      cin >> cards_needed;
+      
+      if( cards_needed == playing_deck-> count( 1 ) )
+	{
+	  playing_deck->clear_cards();
+	}
+
+      if( cards_needed < playing_deck-> count( 1 ) )
+	{
+      int indexes[cards_needed];
+      
+      for ( int j=0; j < cards_needed; j++)
+	{
+	  cout << "Index " << j << ":";
+	  cin >> indexes[j];
+	}
+      
+      for ( int i=0; i<cards_needed; i++ )
+	{
+	  //Draw card to replace card
+	  Card* ncard = deck->draw();
+	  playing_deck->replace_card( indexes[i], ncard );
+	}
+
+	}
+
+      else
+	{
+	  cout << "Choice cannot be greater than deck card count" << endl;
+	}
+	}
+
+      else
+	{
+	  cout << "Deck is empty" << endl;
+	}
+      break;
+    }
+    
+  case 'K':
+    {
+      int choice;
+      set_options();
+      cin >> choice;
+
+      if( choice < 1 || choice > 2 )
+	{
+	  cout << "Invalid choice" << endl;
+	  break;
+	}
+
+      else
+	{
+	switch(choice)
+	  {
+	  case 1:
+	    {
+	      set_auxillary();
+	      break;
+	    }
+
+	  case 2:
+	    {
+	      vector<Set*>_sets = find_sets(deck->get_cards());
+	      char choice, more;
+	      int j=0;
+	      cout<<_sets.size()<<" possible sets"<<endl;
+	      cout<<"Show sets?(y/n)"<<endl;
+	      cin >> choice;
+	      
+	      if ( choice == 'y' || choice == 'Y')
+		{
+		  for ( int i=0; i<_sets.size(); i++ )
+		    {
+		      cout << "Deck[" << _sets[i]->x << "] Deck[" << _sets[i]->y << "] Deck[" << _sets[i]->z << "]" <<endl;
+		      if ( i%40 == 0 && i>0)
+			{
+			  j+=1;
+			  cout << "Page "<<j<<"/27"<<"More?(y/n)" << endl;
+			  cin >> more;
+			  if ( more == 'n' || more == 'N' )
+			    {
+			      break;
+			    }
+			}
+		    }
+		}
+	      break;
+	    }
+	   
+
+	  default:
+	    break;
+	  }
+	}
+      break;
+    }
+
+  default:
+    break;
   }
 }
 
@@ -421,7 +474,6 @@ void recieve_input( int client_sock_fd )
     {
       cout << "Guess from " << client_sock_fd << " of "
            << buffer << endl;
-      respond_to_client( client_sock_fd, buffer);
     }
   }
   else
@@ -487,10 +539,6 @@ void wait_for_input ()
 int main(int argc, char* argv[])
 {
   deck = new Deck();
-  
-  //Shuffle Deck 
-  deck->shuffle();
-  deck->shuffle();
 
   if ( argc ==1 || argc > 3 )
   {
@@ -520,3 +568,5 @@ int main(int argc, char* argv[])
   cleanup();
 }
 
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

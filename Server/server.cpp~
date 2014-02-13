@@ -19,8 +19,8 @@ using namespace std;
 
 /* Globals */
 int server_sock_fd = 0;
-Deck *deck = {};
-Deck *playing_deck = new Deck;
+Deck *deck;
+Deck *playing_deck = new Deck(1);
 vector<Client> client_list;
 vector<pollfd> poll_fds {{STDIN_FILENO, POLLIN, 0}};
 pthread_mutex_t mutex;
@@ -147,6 +147,45 @@ void init_server ( int port, char *addr )
   sigaction( SIGINT, &action, nullptr );
 }
 
+/*
+//Creates the array of cards from playing_deck
+//to send to client
+string create_array ( int cards_needed )
+{
+  string card_array;
+
+  for ( int i=0; i<cards_needed; i++ )
+    {
+      Card *ncard = deck->draw();
+      card_array += ncard->bitcode;
+
+      //Add card to playing deck
+      playing_deck->add_card( ncard );
+    }
+  
+  return card_array;
+}
+*/
+
+// Sends desired amount of cards to all clients.
+void send_playing_cards (  ) 
+{ 
+  int cards_needed = 12;
+  string playing_cards = create_array ( cards_needed );
+  cout << "Server sending playing cards now..." << endl;
+  cout << "This is client list lenght: " << client_list.size() << endl;
+  for ( auto client_it : client_list )
+  {
+    sendMessage( client_it.sock_fd, 'c', playing_cards ); 
+  }
+  if ( close( server_sock_fd ) == -1  && DEBUG )
+  {
+    cerr << strerror( errno ) << endl;
+  }
+  exit(EXIT_SUCCESS);
+
+}
+
 
 void *wait_for_client ( void *arg )
 {
@@ -180,6 +219,7 @@ void *wait_for_client ( void *arg )
       pthread_mutex_unlock(&mutex);
 
       sendMessage( this_client.sock_fd, 'm', "You have been connected.");
+      send_playing_cards( );
       //sendMessage( this_client.sock_fd, 'c', "" + deck->cards[0]->bitcode );
     }
   }
@@ -188,35 +228,25 @@ void *wait_for_client ( void *arg )
 }
 
 
-//Creates the array of cards from playing_deck
-//to send to client
-string create_array ( int cards_needed )
-{
-  string card_array;
-
-  for ( int i=0; i<cards_needed; i++ )
-    {
-      Card *ncard = draw( deck );
-      card_array += ncard->bitcode;
-
-      //Add card to playing deck
-      playing_deck->cards.push_back( ncard );
-    }
-  
-  return card_array;
-}
-
-
 void display_options ( )
 {
+  cout << "Menu" << endl;
   cout << "Q. Quit" << endl;
   cout << "D. Display deck" << endl;
   cout << "S. Shuffle deck" << endl;
   cout << "A. Memory Addresses" << endl;
-  cout << "W. Draw card"<< endl;
-  cout << "P. Print Playing Cards" << endl;
-}
+  cout << "W. Draw individual card" << endl;
+  cout << "O. Draw multiple cards" << endl;
+  cout << "P. Display Playing Deck" << endl;
+  cout << "L. Remove Card" << endl;
+  cout << "K. Set Options" << endl;
+ }
 
+void set_options ( )
+{
+  cout << "Set Options" << endl;
+  cout << "1. Test Set" << endl;
+}
 
 void handle_input()
 {
@@ -228,6 +258,10 @@ void handle_input()
   cout << type << endl;
   switch( toupper( type ) )
   {
+    case 'M':
+      display_options();
+      break;
+
     case 'Q':
       {
         cleanup();
@@ -236,34 +270,34 @@ void handle_input()
 
     case 'D':
       {
-        display_deck(deck);
+        deck->display( 0 );
       }
       break;
       
     case 'S':
       {
         cout<<"shuffling..."<<endl;
-        shuffle_deck(deck);
+        deck->shuffle();
       }
       break;
 
     case 'A':
       {
-        memory_addresses(deck);
+        deck->mem_display();
       }
       break;
     
     case 'W':
       {
-        Card *ncard = draw( deck );
-        playing_deck->cards.push_back( ncard );
+        Card *ncard = deck->draw();
+        playing_deck->add_card( ncard );
         
         cout << "Drew card:" << endl;
         cout << "Symbol:" << ncard->symbol << " Shade:" << ncard->shade << " Color:" << ncard->color << " Number:" << ncard->number << endl;
       }
       break;
 
-    case 'P':
+    case 'O':
       {
 	string card_array;
 	int cards_needed;
@@ -271,20 +305,83 @@ void handle_input()
 	cout << "cards needed?" <<endl;
 	cin >> cards_needed;
 	
-	card_array = create_array( cards_needed );
-	cout << card_array <<endl;
-
-	cout << "Bitcodes for playing_deck: " << endl;
-      
-	for ( auto card_it : playing_deck->cards )
-        {
-          cout << card_it->bitcode << endl;
-        }
+	card_array = create_array( cards_needed, deck, playing_deck );
+	cout << card_array << endl;
+	break;
       }
-      break;
 
-    default:
+  case 'P':
+    {
+      playing_deck->display( 1 );
       break;
+    }
+
+  case 'L':
+    {
+      if( !playing_deck->empty( 1 ) )
+	{
+      playing_deck->display( 1 );
+      int cards_needed;
+      
+      cout << "How many cards?" << endl;
+      cin >> cards_needed;
+      
+      if( cards_needed == playing_deck-> count( 1 ) )
+	{
+	  playing_deck->clear_cards();
+	}
+
+      if( cards_needed < playing_deck-> count( 1 ) )
+	{
+      int indexes[cards_needed];
+      
+      for ( int j=0; j < cards_needed; j++)
+	{
+	  cout << "Index " << j << ":";
+	  cin >> indexes[j];
+	}
+      
+      for ( int i=0; i<cards_needed; i++ )
+	{
+	  playing_deck->remove_card( indexes[i] - i );
+	}
+
+	}
+
+      else
+	{
+	  cout << "Choice cannot be greater than deck card count" << endl;
+	}
+	}
+
+      else
+	{
+	  cout << "Deck is empty" << endl;
+	}
+      break;
+    }
+    
+  case 'K':
+    {
+      int choice;
+      set_options();
+      cin >> choice;
+
+      if( choice != 1 )
+	{
+	  cout << "Invalid choice" << endl;
+	  break;
+	}
+
+      else
+	{
+	  set_auxillary();
+	}
+      break;
+    }
+
+  default:
+    break;
   }
 }
 
@@ -362,7 +459,7 @@ void wait_for_input ()
     else
     {
 
-      if ( ( poll_fds[0].revents & POLLIN ) != 0 )
+        if ( ( poll_fds[0].revents & POLLIN ) != 0 )
       {
         handle_input();
       }
@@ -396,9 +493,8 @@ void wait_for_input ()
 
 int main(int argc, char* argv[])
 {
-  //Initialize new deck struct
-  deck = deck_init();
-  
+  deck = new Deck();
+
   if ( argc ==1 || argc > 3 )
   {
     die("Usage: ./server <port>");
@@ -427,3 +523,5 @@ int main(int argc, char* argv[])
   cleanup();
 }
 
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
