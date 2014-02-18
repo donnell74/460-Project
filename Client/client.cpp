@@ -7,18 +7,23 @@
 
 /* local includes */
 #include "networking.h"
+#include "cardlib.h"
 using namespace std;
 
 /* Constants */
 const char EXIT = 'x';
 const char MESSAGE = 'm';
 const char CARDS = 'c';
+
 // last line of ACCEPTED_CHARS is for command chars
+//Rev. 'O' and 'N' used for 'nos' command in a no set valid 
+//response
 vector<char> ACCEPTED_CHARS = {'1', '2', '3', '4', 
                                'Q', 'W', 'E', 'R',
                                'A', 'S', 'D', 'F', 
                                'Z', 'X', 'C', 'V',
-                               'U', 'I', 'T'}; 
+                               'O', 'N', 'U', 'I',
+			       'T'}; 
 Client *my_client;
 
 
@@ -61,8 +66,11 @@ void handle_input()
   {
     cout << "Repeats are not allowed." << endl;
   }
-
-  my_client->send_message( inp.substr(0,3) );
+  
+  else
+    {
+      my_client->send_message( inp.substr(0,3) );
+    }
 }
 
 
