@@ -14,8 +14,6 @@
 using namespace std;
 
 /* Globals */
-Deck *deck;
-Deck *playing_deck = new Deck(1);
 Server *my_server;
 pthread_mutex_t mutex;
 
@@ -27,73 +25,25 @@ void handle_server_msg ()
 }
 
 
-//Maps cards to index of playing card deck
-//Returns index on success and -1 on error
-int map_card ( char key )
-{
-  switch ( key )
-    {
-    case '1':
-      return 0;
-    case '2':
-      return 1;
-    case '3':
-      return 2;
-    case '4':
-      return 3;
-    case 'Q':
-      return 4;
-    case 'W':
-      return 5;
-    case 'E':
-      return 6;
-    case 'R':
-      return 7;
-    case 'A':
-      return 8;
-    case 'S':
-      return 9;
-    case 'D':
-      return 10;
-    case 'F':
-      return 11;
-/*Required if client list is extended to 16
-    case 'Z':
-      return 12;
-    case 'X':  
-      return 13;
-    case 'C':
-      return 14;
-    case 'V':
-      return 15;
-*/
-    default:
-      return -1;
-    }
-}
-
-// Sends desired amount of cards to all clients.
-void send_playing_cards (  ) 
-{ 
-  int cards_needed = 12;
-  string cards_to_send = create_playing_cards ( cards_needed, deck, playing_deck );
-  for ( auto client_it : my_server->get_client_list() )
-  {
-    my_server->sendMessage( client_it.sock_fd, 'c', cards_to_send ); 
-  }
-}
-
-
 void display_options ( )
 {
+  cout << "Menu" << endl;
   cout << "Q. Quit" << endl;
   cout << "D. Display deck" << endl;
   cout << "S. Shuffle deck" << endl;
   cout << "A. Memory Addresses" << endl;
-  cout << "W. Draw card"<< endl;
-  cout << "P. Print Playing Cards" << endl;
-}
+  cout << "W. Display possible sets" << endl;
+  cout << "P. Display Playing Deck" << endl;
+  //cout << "K. Set Options" << endl;
+ }
 
+/*void set_options ( )
+{
+  cout << "Set Options" << endl;
+  cout << "1. Test Set" << endl;
+  cout << "2. Show all sets" << endl;
+}
+*/
 
 void handle_input()
 {
@@ -105,61 +55,110 @@ void handle_input()
   cout << type << endl;
   switch( toupper( type ) )
   {
+    case 'M':
+      display_options();
+      break;
+
     case 'Q':
       {
-        my_server->cleanup();
+        my_server->~Server();
       }
       break;
 
     case 'D':
       {
-        deck->display( 0 );
+        my_server->deck->display( 0 );
       }
       break;
       
     case 'S':
       {
         cout<<"shuffling..."<<endl;
-        deck->shuffle();
+        my_server->deck->shuffle();
       }
       break;
 
     case 'A':
       {
-        deck->mem_display();
+        my_server->deck->mem_display();
       }
       break;
     
     case 'W':
       {
-        Card *ncard = deck->draw();
-        playing_deck->add_card( ncard );
-        
-        cout << "Drew card:" << endl;
-        cout << "Symbol:" << ncard->symbol << " Shade:" << ncard->shade << " Color:" << ncard->color << " Number:" << ncard->number << endl;
+	display_sets( my_server->playing_deck->get_cards() );
       }
       break;
+      
+  case 'P':
+    {
+      my_server->playing_deck->display( 1 );
+    }
+    break;
+    /*
+  case 'K':
+    {
+      int choice;
+      set_options();
+      cin >> choice;
 
-    case 'P':
-      {
-        string card_array;
-        int cards_needed;
+      if( choice < 1 || choice > 2 )
+	{
+	  cout << "Invalid choice" << endl;
+	  break;
+	}
 
-        cout << "cards needed?" <<endl;
-        cin >> cards_needed;
-        
-        card_array = create_playing_cards( cards_needed, deck, playing_deck );
-        cout << card_array << endl;
+      else
+	{
+	switch(choice)
+	  {
+	  case 1:
+	    {
+	      set_auxillary();
+	      break;
+	    }
 
-        playing_deck->display( 1 );
-      }
+	  case 2:
+	    {
+	      vector<Set*>_sets = find_sets(my_server->deck->get_cards());
+	      char choice, more;
+	      int j=0;
+	      cout<<_sets.size()<<" possible sets"<<endl;
+	      cout<<"Show sets?(y/n)"<<endl;
+	      cin >> choice;
+	      
+	      if ( choice == 'y' || choice == 'Y')
+		{
+		  for ( unsigned int i=0; i<_sets.size(); i++ )
+		    {
+		      cout << "Deck[" << _sets[i]->x << "] Deck[" << _sets[i]->y << "] Deck[" << _sets[i]->z << "]" <<endl;
+		      if ( i%40 == 0 && i>0)
+			{
+			  j+=1;
+			  cout << "Page "<<j<<"/27"<<"More?(y/n)" << endl;
+			  cin >> more;
+			  if ( more == 'n' || more == 'N' )
+			    {
+			      break;
+			    }
+			}
+		    }
+		}
+	      break;
+	    }
+	   
+
+	  default:
+	    break;
+	  }
+	}
       break;
+      }*/
 
-    default:
-      break;
+  default:
+    break;
   }
 }
-
 
 void *wait_for_client_wrap ( void *arg )
 {
@@ -171,23 +170,20 @@ void *wait_for_client_wrap ( void *arg )
 
 void sig_wrap_cleanup ( int sig )
 {
-  my_server->cleanup();
+  my_server->~Server();
 }
 
 
 int main(int argc, char* argv[])
 {
-  deck = new Deck();
   char LOCALHOST[] = "127.0.0.1";
   
-  //Shuffle Deck 
-  deck->shuffle();
-  deck->shuffle();
 
   if ( argc ==1 || argc > 3 )
   {
-    my_server->die("Usage: ./server <port>");
+   my_server->die("Usage: ./server <port>");
   }
+
   else
   {
     if ( argc == 2) // No port number given
@@ -201,6 +197,14 @@ int main(int argc, char* argv[])
     }
   }
 
+  //Initialize deck and playing deck
+  my_server->deck = new Deck();
+  my_server->playing_deck = new Deck( 1 );
+
+  //Shuffle deck
+  my_server->deck->shuffle();
+  my_server->deck->shuffle();
+
   // bind TERM to cleanup
   struct sigaction action = {};
 
@@ -212,9 +216,11 @@ int main(int argc, char* argv[])
   {
     my_server->die( "Couldn't start wait for client" );
   }
+
   pthread_detach( thread );
 
   my_server->wait_for_input();
+  
   my_server->cleanup();
 }
 
