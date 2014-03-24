@@ -28,6 +28,7 @@ void handle_server_msg ()
 void display_options ( )
 {
   cout << "Menu" << endl;
+  cout << "B. Start Game" << endl;
   cout << "Q. Quit" << endl;
   cout << "D. Display deck" << endl;
   cout << "S. Shuffle deck" << endl;
@@ -55,6 +56,12 @@ void handle_input()
   cout << type << endl;
   switch( toupper( type ) )
   {
+  
+    case 'B':
+      my_server->send_playing_cards( std_indexes );
+      display_sets( my_server->playing_deck->get_cards() );
+      break;
+
     case 'M':
       display_options();
       break;
@@ -95,66 +102,7 @@ void handle_input()
       my_server->playing_deck->display( 1 );
     }
     break;
-    /*
-  case 'K':
-    {
-      int choice;
-      set_options();
-      cin >> choice;
-
-      if( choice < 1 || choice > 2 )
-	{
-	  cout << "Invalid choice" << endl;
-	  break;
-	}
-
-      else
-	{
-	switch(choice)
-	  {
-	  case 1:
-	    {
-	      set_auxillary();
-	      break;
-	    }
-
-	  case 2:
-	    {
-	      vector<Set*>_sets = find_sets(my_server->deck->get_cards());
-	      char choice, more;
-	      int j=0;
-	      cout<<_sets.size()<<" possible sets"<<endl;
-	      cout<<"Show sets?(y/n)"<<endl;
-	      cin >> choice;
-	      
-	      if ( choice == 'y' || choice == 'Y')
-		{
-		  for ( unsigned int i=0; i<_sets.size(); i++ )
-		    {
-		      cout << "Deck[" << _sets[i]->x << "] Deck[" << _sets[i]->y << "] Deck[" << _sets[i]->z << "]" <<endl;
-		      if ( i%40 == 0 && i>0)
-			{
-			  j+=1;
-			  cout << "Page "<<j<<"/27"<<"More?(y/n)" << endl;
-			  cin >> more;
-			  if ( more == 'n' || more == 'N' )
-			    {
-			      break;
-			    }
-			}
-		    }
-		}
-	      break;
-	    }
-	   
-
-	  default:
-	    break;
-	  }
-	}
-      break;
-      }*/
-
+  
   default:
     break;
   }
@@ -179,7 +127,7 @@ int main(int argc, char* argv[])
   char LOCALHOST[] = "127.0.0.1";
   
 
-  if ( argc ==1 || argc > 3 )
+  if ( argc == 1 || argc > 3 )
   {
    my_server->die("Usage: ./server <port>");
   }

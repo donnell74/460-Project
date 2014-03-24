@@ -496,6 +496,6 @@ int map_card ( char key )
       return 15;
 */
     default:
-      return -1;
+      return 0;
     }
 }
