@@ -10,6 +10,7 @@
 #include <stdio.h>
 /* local includes */
 #include "networking.h"
+#include "cardlib.h"
 using namespace std;
 
 /* Constants */
@@ -18,6 +19,7 @@ const char MESSAGE = 'm';
 const char CARDS = 'c';
 
 // last line of ACCEPTED_CHARS is for command chars
+<<<<<<< HEAD
 //vector<char> ACCEPTED_CHARS = {'1', '2', '3', '4', 
 //                               'Q', 'W', 'E', 'R',
 //                               'A', 'S', 'D', 'F', 
@@ -27,6 +29,16 @@ const char CARDS = 'c';
 vector<char> ACCEPTED_CHARS = {'A', 'B', 'C', 'D',
                                'E', 'F', 'G', 'H',
                                'I', 'J', 'K', 'L'}; 
+=======
+//Rev. 'O' and 'N' used for 'nos' command in a no set valid 
+//response
+vector<char> ACCEPTED_CHARS = {'1', '2', '3', '4', 
+                               'Q', 'W', 'E', 'R',
+                               'A', 'S', 'D', 'F', 
+                               'Z', 'X', 'C', 'V',
+                               'O', 'N', 'U', 'I',
+			       'T'}; 
+>>>>>>> 0499b1edba32f4069a3e434ac4fb52542f4ed35f
 Client *my_client;
 
 
@@ -76,6 +88,7 @@ void handle_input()
       refresh();
     }
   }
+<<<<<<< HEAD
 
   string inp( select.begin(), select.end() );
   printw( "%s", inp.data() );
@@ -87,6 +100,13 @@ void handle_input()
   //Send substing in case of left overs.
   //my_client->send_message( inp.substr( 0,3 ) );
   my_client->send_message( inp );
+=======
+  
+  else
+    {
+      my_client->send_message( inp.substr(0,3) );
+    }
+>>>>>>> 0499b1edba32f4069a3e434ac4fb52542f4ed35f
 }
 
 

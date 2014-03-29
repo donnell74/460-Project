@@ -6,8 +6,9 @@
 #define CARDLIB_H
 #define MAX_DECK_SIZE 81
 
-
 using namespace std;
+
+static vector<int>std_indexes = {0,1,2,3,4,5,6,7,8,9,10,11};
 
 // DO NOT CHANGE TO 0
 // change to 0 will cause null byte
@@ -111,7 +112,7 @@ bool symbol_differs( vector<Card*> set );
 bool shade_differs( vector<Card*> set );
 bool number_differs( vector<Card*> set );
 
-//
+
 /*Deck class
 Member functions:
 -Deck() - Deck initializer
@@ -140,7 +141,7 @@ class Deck
   vector < Card* > cards;
   int top;
   int _count;
-
+   
  public:
   Deck();
   Deck( int code );
@@ -148,6 +149,7 @@ class Deck
   bool empty( int code );
   vector <Card*>get_cards();
   int count( int code );
+  void reset_top();
   void mem_display();
   void display( int code );
   void shuffle();
@@ -162,11 +164,28 @@ class Deck
 
 //Creates and returns a string of bitcodes from a deck pointer
 //and adds the cards to a playing deck
-string create_playing_cards( int cards_needed, Deck* deck, Deck* playing_deck);
+string create_playing_cards( vector<int>indexes, Deck* deck, Deck* playing_deck );
 
-//Displays information about a given carrd
+//Displays information about a given card
 void display_card( Card* ncard );
 
-//Finds all the possible set combinations in specified set of cards
-vector<Set*>find_sets ( vector<Card*>cards );
+//Returns a vectpr of possible sets from a given set of cards
+vector<Set*> find_sets ( vector<Card*>cards );
+
+//Returns number of possible sets in a deck and fills the set field 
+int num_sets ( vector<Card*>cards );
+
+//Display the sets returned from find_sets
+void display_sets ( vector<Card*>cards );
+
+//Maps cards to index of playing card deck
+//Returns index on success and -1 on error
+int map_card ( char key );
+
+//Checks client guess
+//Returns indexes of needed cards in the playing deck 
+vector<int> check_guess ( char* guess, Deck* deck, Deck* playing_deck );
+
 #endif /* CARDLIB_H */
+
+

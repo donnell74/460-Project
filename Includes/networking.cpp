@@ -1,5 +1,5 @@
 #include "networking.h"
-
+#include "cardlib.h"
 
 /* Constants */
 
@@ -104,6 +104,72 @@ void Server::sendMessage( int sock_fd, char type, string msg )
   }
 }
 
+// Sends desired amount of cards to all clients.
+void Server::send_playing_cards ( vector<int>indexes )
+{
+  
+  string cards_to_send = create_playing_cards ( indexes, deck, playing_deck );
+  for ( auto client_it : get_client_list() )
+  {
+    sendMessage( client_it.sock_fd, 'c', cards_to_send ); 
+  }
+
+}
+
+//Checks client guess
+vector<int> Server::check_guess ( char* guess, Deck* deck, Deck* playing_deck )
+{
+  vector<int> indexes;
+  
+  //Client guesses 'NOS' -- no valid sets on board
+  if ( strcmp( guess, "NOS" ) == 0 && playing_deck->count( 1 ) == 12 )
+    {
+      if ( num_sets( playing_deck->get_cards() ) == 0)
+	{
+	  //Clear playing deck, reset virtual top of deck, reshuffle, and reinsert cards
+	  playing_deck->clear_cards();
+	  deck->reset_top();
+	  deck->shuffle();
+	  return std_indexes;
+	}
+
+      else 
+	{
+	  return indexes;
+	}
+    }
+ 
+ 
+  //Set to check
+  vector<Card*>cset;
+  
+  int idx_1 = map_card( guess[0] );
+  int idx_2 = map_card( guess[1] );
+  int idx_3 = map_card( guess[2] );
+
+  cset.push_back( playing_deck->get_card( idx_1 ) );
+  cset.push_back( playing_deck->get_card( idx_2 ) );
+  cset.push_back( playing_deck->get_card( idx_3 ) );
+
+  //Display set info -- Testing purposes
+  display_card( cset[0] );
+  display_card( cset[1] );
+  display_card( cset[2] );
+       
+
+
+  if ( check_set ( cset ) )
+    {
+      playing_deck->remove_card( idx_1 );
+      playing_deck->remove_card( idx_2 );
+      playing_deck->remove_card( idx_3 );
+      indexes = { idx_1, idx_2, idx_3 };
+    }
+    
+  return indexes;
+  
+}
+
 
 void Server::cleanup ()
 {
@@ -162,8 +228,9 @@ void Server::wait_for_client ( )
       poll_fds.push_back(client_sock_fd);
       client_list.push_back( this_client );
       pthread_mutex_unlock(&mutex);
-
       sendMessage( this_client.sock_fd, 'm', "You have been connected.");
+      //send_playing_cards( std_indexes );
+      //display_sets ( playing_deck->get_cards() );
     }
   }
 
@@ -197,7 +264,55 @@ void Server::disconnect_client( int client_sock_fd )
 }
 
 
-void Server::recieve_input( int client_sock_fd )
+void Server::respond_to_client ( int client_sock_fd, char* guess )
+{
+
+  sendMessage( client_sock_fd, 'm', "Checking guess.." ); 
+  vector<int>indexes = check_guess( guess, deck, playing_deck );
+
+  switch( indexes.size() )
+    {
+    case 0:
+      sendMessage( client_sock_fd, 'm', "Naw client, thats not a set" );
+      break;
+
+    case 3:
+      //1.)Send correct message to client
+      sendMessage( client_sock_fd, 'm',  "Correct!" );
+
+      if ( !deck->empty( 0 ) )
+	{
+	  send_playing_cards( indexes );
+	}
+     
+
+      //Displays current sets in playing deck -- Testing purposes only
+      display_sets( playing_deck->get_cards() );
+      break;
+				     
+    case 12:
+      sendMessage( client_sock_fd, 'm',  "Correct!" );
+      send_playing_cards( indexes );
+      //Displays current sets in playing deck -- Testing purposes only
+      display_sets( playing_deck->get_cards() );
+      break;
+ 
+    default:
+      break;
+    }
+
+  //Game over
+  if ( deck->empty( 0 ) && num_sets( playing_deck->get_cards() ) == 0 && playing_deck->count( 1 ) < 13 )  
+    {
+      cout<<playing_deck->count(1)<<endl;
+      sendMessage( client_sock_fd, 'm', "Game Over");
+      //Perform end game tasks(disconnect clients, etc.)
+      cleanup();
+    }
+}
+
+
+void Server::receive_input( int client_sock_fd )
 {
   int bytes_read = 0;
   char buffer[4] = {0}; // will only care about first 3 if guess
@@ -213,6 +328,8 @@ void Server::recieve_input( int client_sock_fd )
     {
       cout << "Guess from " << client_sock_fd << " of "
            << buffer << endl;
+      //Respond to client's guess
+      respond_to_client( client_sock_fd, buffer );
     }
   }
   else
@@ -234,6 +351,7 @@ void Server::wait_for_input ()
     {
       die("Problem with input.");
     }    
+
     else
     {
 
@@ -260,7 +378,7 @@ void Server::wait_for_input ()
 
           if ( ( poll_fd_it.revents & POLLIN ) != 0 )
           {
-            recieve_input( poll_fd_it.fd );
+            receive_input( poll_fd_it.fd );
           }
         }
       }

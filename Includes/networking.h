@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <netdb.h>
+#include "cardlib.h"
 #define NETWORKING_H
 #define DEBUG 1
 #define MAXCLIENTS 25
@@ -19,9 +20,6 @@
 #define TERM_STR "XX"
 
 using namespace std;
-
-
-
 
 /* structs */
 struct Client_t
@@ -43,15 +41,20 @@ class Server
     int server_sock_fd;
 
   public:
+    Deck* deck;
+    Deck* playing_deck;
     Server( int, char * );
     ~Server();
     void die ( string );
     vector<Client_t> get_client_list ( );
     void sendMessage( int, char , string );
+    void send_playing_cards ( vector<int> );
+    vector<int>check_guess( char*, Deck*, Deck* );
     void cleanup ();
     void wait_for_client ( );
     void disconnect_client( int );
-    void recieve_input( int );
+    void receive_input( int );
+    void respond_to_client( int, char* );
     void wait_for_input ();
 };
       

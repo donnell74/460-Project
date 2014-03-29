@@ -1,6 +1,8 @@
 #include "cardlib.h"
 #include <vector>
 #include <iostream>
+#include <string.h> 
+
 using namespace std;
 
 void display_card(Card* ncard)
@@ -40,6 +42,11 @@ Deck::Deck()
 Deck::Deck( int code )
 {
   //Construct deck object
+  for ( int i=0; i<12; i++ )
+    {
+      cards.push_back(nullptr);
+    }
+ 
 }
 
 
@@ -57,7 +64,18 @@ int Deck::count( int code )
       return _count;
 
     case 1:
-      return cards.size();
+      {
+	int size = 0;
+	for ( int i=0; i<12; i++ )
+	  {
+	    if ( cards[i] != nullptr )
+	      {
+		size +=1;
+	      }
+	  }
+
+	return size;
+      }
 
     default:
       break;
@@ -65,6 +83,13 @@ int Deck::count( int code )
 
   return cards.size(); 
 }
+
+void Deck::reset_top()
+{
+  top -= 12;
+  _count += 12;
+}
+
 
 Card* Deck::get_card( int index )
 {
@@ -102,23 +127,30 @@ void Deck::display( int code )
   int j = 0;
   for ( int i=initial_count; i<limit; i++ )
   {
-    cout << "Deck[" << j << "] Number:" << cards[i]->number << " Symbol:" << cards[i]->symbol << " Shade:" << cards[i]->shade << " Color:" << cards[i]->color << "Bitcode:" << cards[i]->bitcode << endl;
-    j++;
+    if ( cards[i]!= nullptr )
+      {
+	cout << "Deck[" << j << "] Number:" << cards[i]->number << " Symbol:" << cards[i]->symbol << " Shade:" << cards[i]->shade << " Color:" << cards[i]->color << "Bitcode:" << cards[i]->bitcode << endl;
+	j++;
+      }
   }
 
   cout << "Card Count:" << count( code ) << endl;
   cout << "x----------------------------------------------x"<<endl;
-  cout<<"top:"<<top<<endl;
-  cout<<"virtual count:"<<_count<<endl;
-
+  
+  if ( code == 0 )
+    {
+      cout<<"top:"<<top<<endl;
+      cout<<"virtual count:"<<_count<<endl;
     }
+    }
+    
   else
     {
       cout << "Deck is empty" << endl;
     }
 }
 
-
+ 
 void Deck::shuffle()
 {
   if( !empty( 0 ) )
@@ -168,24 +200,21 @@ Card* Deck::draw()
 void Deck::remove_card( int index )
 {
   //Should only be called on playing deck
-  cards.erase( cards.begin() + index );
+  cards[index] = nullptr;
   cout << "Removed card at index " << index << endl;
 }
 
 void Deck::replace_card( int index, Card* ncard )
 {
-  //Replaces card in index with new card pointer
-  cout << "Replacing ";
-  display_card( cards[index] );
-  cout << "With:";
-  display_card( ncard );
-
   cards[index] = ncard;
 }
 
 void Deck::clear_cards()
 {
-  cards.clear();
+  for ( int i=0; i<12; i++ )
+    {
+      cards[i] = nullptr;
+    }
 }
 
 void Deck::add_card( Card* ncard )
@@ -199,13 +228,28 @@ bool Deck::empty( int code )
   switch( code )
     {
     case 0:
-      if( top == 80)
+      if( top == 81)
 	{
 	  return true;
 	}
       break;
+    
     case 1:
-      return cards.empty();
+      {
+	bool empty = true;
+	
+	for ( auto card_t : cards )
+	  {
+	    if ( card_t != nullptr )
+	      {
+		empty = false;
+	      }
+	  }
+
+	return empty;
+	break;
+      }
+      
  
     default:
       break;
@@ -215,129 +259,6 @@ bool Deck::empty( int code )
 
 
 
-/*
-//Initializer for Deck struct. Returns a deck struct pointer
-Deck* deck_init()
-{
-  Deck* ndeck = new Deck;
-   Not Used but may be useful later
-  string  shade[3];
-  string symbols[3];
-  string colors[3];
-
-  shade[0] = "solid";
-  shade[1] = "striped";
-  shade[2] = "open";
-
-  symbols[0] = "symbol_1";
-  symbols[1] = "symbol_2";
-  symbols[2] = "symbol_3";
-
-  colors[0] = "red";
-  colors[1] = "green";
-  colors [2] = "blue";
-  
-
-  for ( int i=0; i<3; i++ )
-  {
-    for ( int j=0; j<3; j++ )
-    {
-      for ( int k=0; k<3; k++ )
-      {
-        for ( int l=0; l<3; l++ ) 
-        {
-          Card* ncard = new Card;
-          ncard->number = static_cast<Number>( i );
-          ncard->symbol = static_cast<Symbol>( j );
-          ncard->shade = static_cast<Shade>( k );
-          ncard->color = static_cast<Color>( l );
-          ncard->bitcode = ( i << 6 ) | ( j << 4 ) | ( k << 2 ) | l;
-          ndeck->cards.push_back( ncard );
-        }
-      }
-    }
-  }
-  
-  ndeck->card_count = ndeck->cards.size();
-
-  return ndeck;
-}
-*/
-/*
-//Shuffles the deck using Fisher-Yates Shuffle
-void shuffle_deck( Deck* deck )
-{
-   random_device rd;
-  default_random_engine e1( rd() );
-  
-  //Pointer to Card struct for temporary storage
-  Card* temp;
-  for ( int i=deck->card_count-1; i>0; i-- )
-  {
-    uniform_int_distribution<int> uniform_dist( 0,i );
-    int random_number = uniform_dist( e1 );
-
-    temp = CARD_REF;
-    CARD_REF = deck->cards[random_number];
-    deck->cards[random_number] = temp;
-  }
-
-}
-
-//Displays the current contents of a deck struct
-void display_deck( Deck* deck )
-{
-  if ( deck == nullptr )
-  {
-    cout<<"Invalid deck pointer"<<endl;
-    exit( EXIT_FAILURE );
-  }
-
-  for ( int i=0; i<deck->card_count; i++ )
-  {
-    cout<<"Deck["<<i+1<<"]:"<<CARD_REF->number<<" "<<CARD_REF->symbol<<" "<<CARD_REF->shade<<" "<<CARD_REF->color
-        << " " << CARD_REF->bitcode << endl;
-  }
-
-  cout<<"Card Count:"<<deck->card_count<<endl;
-  cout<<"x----------------------------------------------x"<<endl;
-}
-
-
-void memory_addresses( Deck* deck )
-{
-  //Deck Memory Address
-  cout<<"Deck Memory Address:"<<&deck<<endl;
-  for ( int i=0; i<deck->card_count; i++ )
-  {
-    cout<<"Deck["<<i+1<<"]"<<deck->cards[i]<<endl;
-  }
-}
-
-//Draws a card from the top of the deck
-Card* draw( Deck* deck )
-{
-
-  if ( deck == nullptr )
-    {
-      cout<<"Invalid deck pointer passed to draw function"<<endl;
-      exit( EXIT_FAILURE );
-    }
-
-  if ( deck->card_count == 0 )
-    {
-      cout<<"Deck is empty"<<endl;
-      return nullptr;
-    }
-
-    Card* ncard = deck->cards[0];
-    
-    deck->cards.erase( deck->cards.begin() );
-    deck->card_count -= 1;
-    
-    return ncard;
-}
-*/
 
 //Boolean comparison card set functions
 //Difference comparisons
@@ -458,49 +379,123 @@ void set_auxillary ( )
     }
 }
 
-string create_playing_cards( int cards_needed, Deck* deck, Deck* playing_deck)
+string create_playing_cards( vector<int>indexes, Deck* deck, Deck* playing_deck)
 {
+  
   string card_array;
-
-  for ( int i=0; i<cards_needed; i++ )
+  
+  for ( unsigned int i=0; i<indexes.size(); i++ )
     {
       Card* ncard = deck->draw();
       card_array += ncard->bitcode;
       cout << ncard->bitcode +31 << endl;
       //Add card to playing deck
-      playing_deck->add_card( ncard );
+      playing_deck->replace_card( indexes[i], ncard );
     }
-
+ 
   return card_array;
 }
 
-vector<Set*>find_sets ( vector<Card*>cards )
+
+vector<Set*> find_sets ( vector<Card*>cards )
 {
   vector<Card*>test_set;
   vector<Set*>_sets;
   
-  for ( int i = 0; i<cards.size(); i++ )
+  for ( unsigned int i = 0; i<cards.size(); i++ )
     {
-      for ( int j = i+1; j<cards.size(); j++)
+      for ( unsigned int j = i+1; j<cards.size(); j++)
 	{
-	  for ( int k = j+1; k<cards.size(); k++ )
+	  for ( unsigned int k = j+1; k<cards.size(); k++ )
 	    {
-	      test_set.push_back( cards[i] );
-	      test_set.push_back( cards[j] );
-	      test_set.push_back( cards[k] );
-	      
-	      if ( check_set ( test_set ) )
+	      if ( cards[i]!=nullptr && cards[j]!=nullptr && cards[k]!=nullptr )
 		{
-		  Set* nset = new Set;
-		  nset->x = i;
-		  nset->y = j;
-		  nset->z = k;
-		  _sets.push_back(nset);
+		  test_set.push_back( cards[i] );
+		  test_set.push_back( cards[j] );
+		  test_set.push_back( cards[k] );
+	      
+		  if ( check_set ( test_set ) )
+		    {
+		      Set* nset = new Set;
+		      nset->x = i;
+		      nset->y = j;
+		      nset->z = k;
+		      _sets.push_back(nset);
+		    }
+		  test_set.clear();
 		}
-	      test_set.clear();
 	    }
 	}
     }
   
   return _sets;
+}
+
+int num_sets ( vector<Card*>cards )
+{
+
+  vector<Set*>_sets = find_sets( cards );
+
+  return _sets.size();
+}
+
+void display_sets ( vector<Card*>cards )
+{
+  vector<Set*>_sets = find_sets( cards );
+  
+  if ( _sets.size() == 0 )
+    {
+      cout << "No valid sets in cards" << endl;
+      return;
+    }
+
+  cout << _sets.size() << " possible sets" << endl;
+  for ( unsigned int i=0; i<_sets.size(); i++ )
+    {
+      cout << "Deck[" << _sets[i]->x << "] Deck[" << _sets[i]->y << "] Deck[" << _sets[i]->z << "]" << endl;
+    }
+}
+
+
+int map_card ( char key )
+{
+  switch ( key )
+    {
+    case '1':
+      return 0;
+    case '2':
+      return 1;
+    case '3':
+      return 2;
+    case '4':
+      return 3;
+    case 'Q':
+      return 4;
+    case 'W':
+      return 5;
+    case 'E':
+      return 6;
+    case 'R':
+      return 7;
+    case 'A':
+      return 8;
+    case 'S':
+      return 9;
+    case 'D':
+      return 10;
+    case 'F':
+      return 11;
+/*Required if client list is extended to 16
+    case 'Z':
+      return 12;
+    case 'X':  
+      return 13;
+    case 'C':
+      return 14;
+    case 'V':
+      return 15;
+*/
+    default:
+      return 0;
+    }
 }
