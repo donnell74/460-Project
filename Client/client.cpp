@@ -3,8 +3,11 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <curses.h>
+#include <cstdlib>
+#include <unistd.h>
 #include <string.h>
-
+#include <stdio.h>
 /* local includes */
 #include "networking.h"
 #include "cardlib.h"
@@ -16,7 +19,6 @@ const char MESSAGE = 'm';
 const char CARDS = 'c';
 
 // last line of ACCEPTED_CHARS is for command chars
-//Rev. 'O' and 'N' used for 'nos' command in a no set valid 
 //response
 vector<char> ACCEPTED_CHARS = {'1', '2', '3', '4', 
                                'Q', 'W', 'E', 'R',
@@ -34,43 +36,56 @@ void sig_wrap_cleanup( int sig )
 }
 
 
+//|<handle_input>
 void handle_input()
 {
-  string inp = "";
-  cin >> inp;
-  cin.get(); // remove newline
-
-  if ( inp.size() < (size_t) 3 )
-  {
-    cout << "Not using all three inputs will never be a set." << endl;
-    return;
-  }
-
-  for ( auto it = inp.begin(); it != inp.end(); ++it )
-  {
-    *it = toupper(*it);
-    if ( find(ACCEPTED_CHARS.begin(), ACCEPTED_CHARS.end(), *it) == 
-         ACCEPTED_CHARS.end() )
-    {
-      cout << "Key " << *it << " is not allowed." << endl;
-      return;
-    }
-  } 
-
-  // substr will only get first 3, stop long string entries
-
-  // check if any repeats
-  if ( inp[0] == inp[1] ||
-       inp[1] == inp[2] ||
-       inp[0] == inp[2] )
-  {
-    cout << "Repeats are not allowed." << endl;
-  }
+  cbreak();
+  noecho();
+   
+  vector<char> select = {};
   
-  else
+  for ( int i = 0; ; ++i )
+  { 
+
+    int c = getch();
+
+    if ( c == ERR || ( c == ' ' && select.size() == 3 ) ) 
     {
-      my_client->send_message( inp.substr(0,3) );
+      break;
     }
+    
+    c = toupper( c );
+
+    //If already selected, deselect it and go to top.
+    if ( find( select.begin(), select.end(), c ) != select.end() )
+    {
+       //add code to deselect the card here
+       select.erase( remove( select.begin(), select.end(), c ), select.end() );
+       refresh();
+       continue;
+    }
+
+    //If acceptable char and not a selected card, select it.
+    if ( find(ACCEPTED_CHARS.begin(), ACCEPTED_CHARS.end(), c ) != 
+         ACCEPTED_CHARS.end() && 
+         find (select.begin(), select.end(), c ) == select.end() )  
+    {
+      //add code to select card here
+      select.push_back( c );
+      refresh();
+    }
+  }
+
+  string inp( select.begin(), select.end() );
+  printw( "%s", inp.data() );
+  printw( "%s", "\n" );
+  echo();
+  refresh();
+
+ 
+  //Send substing in case of left overs.
+  //my_client->send_message( inp.substr( 0,3 ) );
+  my_client->send_message( inp );
 }
 
 
@@ -81,13 +96,17 @@ void handle_server_msg()
   switch( msg.front() )
   {
     case EXIT:
-      cout << msg.substr( 1 ) << endl;
+      printw( "%s", msg.substr( 1 ).data() );
+      printw( "%s", "\n" );
+      refresh();
       my_client->cleanup();
       break;
 
     case MESSAGE:
-      cout << "Message Recieved: " << endl;
-      cout << msg.substr( 1 ) << endl; 
+      printw( "%s", "Message Received: \n" );
+      printw( "%s", msg.substr( 1 ).data() );
+      printw( "%s", "\n" );
+      refresh(); 
       break;
 
     case CARDS:
@@ -117,6 +136,8 @@ int main( int argc, char *argv[] )
 {
   char LOCALHOST[] = "127.0.0.1";
 
+  initscr();
+
   if ( argc == 1 || argc > 3 )
   {
     my_client->die("Usage: ./client <port>");
@@ -140,6 +161,9 @@ int main( int argc, char *argv[] )
 
     my_client->wait_for_input();
     my_client->cleanup();
+
+    //getch();
+    endwin();
   }
 
 }
