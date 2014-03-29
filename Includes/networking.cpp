@@ -274,17 +274,17 @@ void Client::die ( string error_msg )
 {
   // standardize error_msg so no extra new lines
   error_msg.erase( error_msg.find_last_not_of(" \n\r\t")+1 ); 
-  cerr << error_msg << endl;
+  cerr << error_msg;
 
   if ( DEBUG )
   {
-    cerr << strerror( errno ) << endl;
+    cerr << strerror( errno );
   }
   
   // close socket to server
   if ( close( client_sock_fd ) == -1 )
   {
-    cerr << strerror( errno ) << endl;
+    cerr << strerror( errno );
   }
   exit(EXIT_FAILURE);
 }
@@ -292,11 +292,8 @@ void Client::die ( string error_msg )
 
 void Client::cleanup()
 {
-  cout << "Client has closed" << endl;
-  if ( close( client_sock_fd ) < 0 )
-  {
-    die ( "Failed to close" );
-  }
+  cout << "You have been disconnected." << endl;
+  send_message( "QUI" );
   exit(EXIT_SUCCESS);
 }
 
@@ -392,12 +389,12 @@ void Client::send_message( string msg )
     die( "Unable to send message." );
   }
   if ( bytes_sent == 0 )
-  {
-    cout << "No bytes sent." << endl;
+  { 
+    //cout << "No bytes sent." << endl;
   }
   if ( bytes_sent > 0 )
-  {
-    cout << "Sent " << msg << " to server." << endl;
+  {  
+    //cout << "Sent " << msg << " to server." << endl;
   }
 }
 
