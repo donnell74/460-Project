@@ -1,0 +1,4 @@
+rm Client/client;
+rm Server/server;
+
+rm Includes/*.o;
