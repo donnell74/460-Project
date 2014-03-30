@@ -31,8 +31,11 @@ Client *my_client;
 
 void sig_wrap_cleanup( int sig )
 {
-  // wrapper for sigaction to pass int to sig which is never used
-  my_client->cleanup();
+    echo();
+    endwin();
+    cout << "nCurses has exited. " << endl;
+    // wrapper for sigaction to pass int to sig which is never used
+    my_client->cleanup();
 }
 
 
@@ -40,7 +43,6 @@ void sig_wrap_cleanup( int sig )
 void handle_input()
 {
   cbreak();
-  noecho();
    
   vector<char> select = {};
   
@@ -79,7 +81,6 @@ void handle_input()
   string inp( select.begin(), select.end() );
   printw( "%s", inp.data() );
   printw( "%s", "\n" );
-  echo();
   refresh();
 
  
@@ -159,9 +160,10 @@ int main( int argc, char *argv[] )
     action.sa_handler = sig_wrap_cleanup;
     sigaction( SIGINT, &action, nullptr );
 
-    endwin();    
-
+    noecho();
     my_client->wait_for_input();
+
+    //cout << "nCurses has exited. " << endl;
     my_client->cleanup();
 
   }
