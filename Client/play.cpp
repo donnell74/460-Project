@@ -159,11 +159,11 @@ int main( int argc, char *argv[] )
     action.sa_handler = sig_wrap_cleanup;
     sigaction( SIGINT, &action, nullptr );
 
+    endwin();    
+
     my_client->wait_for_input();
     my_client->cleanup();
 
-    //getch();
-    endwin();
   }
 
 }
