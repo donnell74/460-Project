@@ -140,7 +140,8 @@ int main( int argc, char *argv[] )
 
   if ( argc == 1 || argc > 3 )
   {
-    my_client->die("Usage: ./client <port>");
+    cerr << "Usage: ./client <port>" << endl;
+    exit(EXIT_SUCCESS);
   }
   else
   {
