@@ -2,8 +2,8 @@ CC = g++
 CFLAGS = --std=c++0x -Wall -I$(INC) 
 INC = ../Includes
 
-build: server.cpp $(INC)/cardlib.o $(INC)/networking.o 
-	$(CC) $(CFLAGS) -pthread $(INC)/networking.o $(INC)/cardlib.o -o server server.cpp 
+build: game.cpp $(INC)/cardlib.o $(INC)/server.o 
+	$(CC) $(CFLAGS) -pthread $(INC)/server.o $(INC)/cardlib.o -o game game.cpp 
 
 
 %.o: %.cpp

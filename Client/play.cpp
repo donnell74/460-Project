@@ -9,7 +9,7 @@
 #include <string.h>
 #include <stdio.h>
 /* local includes */
-#include "networking.h"
+#include "client.h"
 #include "cardlib.h"
 using namespace std;
 

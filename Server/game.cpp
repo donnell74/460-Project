@@ -9,7 +9,7 @@
 #include <poll.h>
 #include <pthread.h>
 /* Dependencies */
-#include "networking.h"
+#include "server.h"
 #include "cardlib.h"
 using namespace std;
 
