@@ -59,6 +59,7 @@ Client::Client( int port, char *addr )
     die("Cannot connect to server.");
   }
 
+  send_message( "Greg" );
 }
 
 

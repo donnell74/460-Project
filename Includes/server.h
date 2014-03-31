@@ -14,6 +14,7 @@ class Server
     vector<pollfd> poll_fds;
 
     int server_sock_fd;
+    vector<string> usernames;
 
   public:
     Deck* deck;
@@ -31,6 +32,7 @@ class Server
     void receive_input( int );
     void respond_to_client( int, char* );
     void wait_for_input ();
+    string check_name ( string );
 };
       
 #endif /* SERVER_H */

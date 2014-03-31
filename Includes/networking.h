@@ -26,6 +26,7 @@ struct Client_t
 {
   int sock_fd;  
   sockaddr_in addr;
+  string name;
 };
 
 #endif /* NETWORKING_H */

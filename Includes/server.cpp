@@ -194,13 +194,30 @@ void Server::cleanup ()
 }
 
 
+string Server::check_name ( string buffer )
+{
+    int count = 0;
+    string mybuffer = buffer;
+    for ( auto it : usernames )
+    { 
+	if ( it == mybuffer )
+	{
+	    mybuffer = buffer + to_string(count);
+	    ++count;
+	    it = usernames.front();
+	}
+    }
+
+    return buffer;
+}
+
 
 void Server::wait_for_client ( )
 {
+  char buffer[4] = {0}; // used for client name
+
   for (;;)
   {
-    // will need to be edited for mulithreading
-    // currently just connects one client
     // auto client_it = client_list.push_back( client_list.begin(), Client{});
     // emplace might be replacing, check when implementing multiple client
     Client_t this_client = {};
@@ -223,9 +240,12 @@ void Server::wait_for_client ( )
       // CRITICAL SECTION
       pthread_mutex_lock(&mutex);
       poll_fds.push_back(client_sock_fd);
+
+      read( this_client.sock_fd, &buffer, 14);
+      this_client.name = check_name( buffer );
       client_list.push_back( this_client );
       pthread_mutex_unlock(&mutex);
-      sendMessage( this_client.sock_fd, 'm', "You have been connected.");
+      sendMessage( this_client.sock_fd, 'm', "You have been connected with username " + this_client.name + ".");
       //send_playing_cards( std_indexes );
       //display_sets ( playing_deck->get_cards() );
     }
@@ -266,6 +286,7 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
 
   sendMessage( client_sock_fd, 'm', "Checking guess.." ); 
   vector<int>indexes = check_guess( guess, deck, playing_deck );
+  cout << "done checking" << endl;
 
   switch( indexes.size() )
     {
@@ -326,7 +347,7 @@ void Server::receive_input( int client_sock_fd )
       cout << "Guess from " << client_sock_fd << " of "
            << buffer << endl;
       //Respond to client's guess
-      respond_to_client( client_sock_fd, buffer );
+      //respond_to_client( client_sock_fd, buffer );
     }
   }
   else
