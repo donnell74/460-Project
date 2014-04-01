@@ -29,7 +29,7 @@ void Client::cleanup()
 }
 
 
-Client::Client( int port, char *addr )
+Client::Client( int port, char *addr, char * user )
 {
   struct sockaddr_in server_addr = {};
   struct hostent *server;
@@ -59,7 +59,7 @@ Client::Client( int port, char *addr )
     die("Cannot connect to server.");
   }
 
-  send_message( "Greg" );
+  send_message( user );
 }
 
 

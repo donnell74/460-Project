@@ -1,4 +1,4 @@
-rm Client/client;
-rm Server/server;
+rm Client/play;
+rm Server/game;
 
 rm Includes/*.o;

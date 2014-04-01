@@ -168,7 +168,7 @@ int rand()
 
 
 //Splash Screen
-void splash_screen()
+void splash_screen( char * name)
 {
   clear();
   box(stdscr, '|', '-');				
@@ -195,9 +195,10 @@ void splash_screen()
 
   touchwin(subwindow);
   wrefresh(subwindow);
+  mvwprintw(stdscr, ORIGIN_Y+20, ORIGIN_X+20, "Please Enter a Username: ");
   refresh();
+  getnstr(name, sizeof 14);
   noecho();
-
 }
 
 //Draws card on screen at desired position
@@ -926,13 +927,20 @@ int main( int argc, char *argv[] )
   }
   else
   {
+    //Initialize ncurses
+    int row, column;
+    initscr();
+    curs_set(0);
+    char user[15];
+    splash_screen( user );
+
     if ( argc == 2 )
     {
-      my_client = new Client( atoi( argv[1] ), LOCALHOST );
+      my_client = new Client( atoi( argv[1] ), LOCALHOST, user );
     }
     else
     {
-      my_client = new Client( atoi( argv[1] ), argv[2] );
+      my_client = new Client( atoi( argv[1] ), argv[2], user );
     }  
     
     // bind TERM to cleanup
@@ -941,11 +949,6 @@ int main( int argc, char *argv[] )
     action.sa_handler = sig_wrap_cleanup;
     sigaction( SIGINT, &action, nullptr );
     
-    //Initialize ncurses
-    int row, column;
-    initscr();
-    curs_set(0);
-    splash_screen();
     /*start_color();
 
     init_pair(1, COLOR_RED, COLOR_BLACK);
