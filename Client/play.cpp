@@ -103,7 +103,7 @@ void splash_screen( char * name )
   wrefresh(subwindow);
   mvwprintw(stdscr, ORIGIN_Y+20, ORIGIN_X+20, "Please Enter a Username: ");
   refresh();
-  getnstr(name, sizeof 14);
+  getnstr(name, 14);
   noecho();
 }
 
