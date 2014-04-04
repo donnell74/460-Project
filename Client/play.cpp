@@ -19,7 +19,7 @@
 #define ORIGIN_X 1
 #define ORIGIN_Y 1
 //Card background character
-#define CARD_CHAR 219
+#define CARD_CHAR 178
 //Card width and length
 #define CARD_WIDTH 16
 #define CARD_HEIGHT 5
@@ -43,15 +43,16 @@ vector<char> ACCEPTED_CHARS = {'1', '2', '3', '4',
                                'O', 'N', 'U', 'I',
 			       'T'}; 
 Client *my_client;
+WINDOW *popup_win;
 string choice_string = "";
 bool animate = false;
 int cur_x1 = 0;
 int cur_y1 = 0;
 int cur_x2 = 0;
 int cur_y2 = 0;
+bool game_started = false;
 random_device rd;
 default_random_engine e1(rd());
-
 
 void sig_wrap_cleanup( int sig )
 {
@@ -60,101 +61,6 @@ void sig_wrap_cleanup( int sig )
     cout << "nCurses has exited. " << endl;
     // wrapper for sigaction to pass int to sig which is never used
     my_client->cleanup();
-}
-
-
-//|<handle_input>
-void handle_input()
-{
-  /*
-  cbreak();
-   
-  vector<char> select = {};
-  
-  for ( int i = 0; ; ++i )
-  { 
-
-    int c = getch();
-
-    if ( c == ERR || ( c == ' ' && select.size() == 3 ) ) 
-    {
-      break;
-    }
-    
-    c = toupper( c );
-
-    //If already selected, deselect it and go to top.
-    if ( find( select.begin(), select.end(), c ) != select.end() )
-    {
-       //add code to deselect the card here
-       select.erase( remove( select.begin(), select.end(), c ), select.end() );
-       refresh();
-       continue;
-    }
-
-    //If acceptable char and not a selected card, select it.
-    if ( find(ACCEPTED_CHARS.begin(), ACCEPTED_CHARS.end(), c ) != 
-         ACCEPTED_CHARS.end() && 
-         find (select.begin(), select.end(), c ) == select.end() )  
-    {
-      //add code to select card here
-      select.push_back( c );
-      refresh();
-    }
-  }
-
-  string inp( select.begin(), select.end() );
-  printw( "%s", inp.data() );
-  printw( "%s", "\n" );
-  refresh();
-
-  */
-  //Send substing in case of left overs.
-  //my_client->send_message( inp.substr( 0,3 ) );
-  //my_client->send_message( inp );
-}
-
-
-void handle_server_msg()
-{
-  string msg = my_client->get_next_msg();
-
-  switch( msg.front() )
-  {
-    case EXIT:
-      printw( "%s", msg.substr( 1 ).data() );
-      printw( "%s", "\n" );
-      refresh();
-      my_client->cleanup();
-      break;
-
-    case MESSAGE:
-      mvprintw( 22, 2, "%s", "Message Received: \n" );
-      mvprintw( 23, 2, "%s", msg.substr( 1 ).data() );
-      refresh(); 
-      break;
-
-    case CARDS:
-      if ( DEBUG )
-      {
-	printw("CARDS NOM NOM NOM");
-	printw("Size: %d",msg.size());
-	
-	for ( int i = 1; i < (int) msg.size(); ++i )
-	{
-          printw("Received card with bitcode: %d", int( msg[i] ) );
-	}
-      }
-      break;
-
-    default:
-      break;
-  }
-
-  if ( ! my_client->get_past_data_read().empty() )
-  {
-    handle_server_msg();
-  }
 }
 
 //Random number generator wrapper
@@ -168,7 +74,7 @@ int rand()
 
 
 //Splash Screen
-void splash_screen( char * name)
+void splash_screen( char * name )
 {
   clear();
   box(stdscr, '|', '-');				
@@ -200,6 +106,7 @@ void splash_screen( char * name)
   getnstr(name, sizeof 14);
   noecho();
 }
+
 
 //Draws card on screen at desired position
 void draw_card(int card, int number, int symbol, int shape, int color)
@@ -479,16 +386,16 @@ void draw_card(int card, int number, int symbol, int shape, int color)
 
 void draw_card_IDs()
 {
-  int letter = 97;
-  
+ 
+  int ID[16] = {49,50,51,52,81,87,69,82,65,83,68,70,90,88,67,86};
+
   for(int i=0; i<3; i++)
     {
       for(int j=0; j<4; j++)
 	{
 	  move(ORIGIN_Y + ((i)*(CARD_HEIGHT+ROW_OFFSET)),
 	       ORIGIN_X + ((j)*(CARD_WIDTH+COL_OFFSET)));
-	  addch(letter);
-	  letter+=1;
+	  addch(ID[i*4+j]);
 	  
 	}
     }
@@ -544,11 +451,49 @@ void submenu_actions(WINDOW* win)
   }
 }
 
+bool in_accepted_chars(int ch)
+{
+  return ch == 49 || ch == 50 || ch == 51 || ch == 52 ||
+    ch == 113 || ch == 119 || ch == 101 || ch == 114 ||
+    ch == 97 || ch == 115 || ch == 100 || ch == 102;
+}
+
 //int get_card(int row, int column)
-int get_card(int card)
+int get_card(int ch)
 {
   //Retrieve card by row and column
-  //return row + (3 * (row-1) + (column-1));
+  //return row + (3 * (row-1) + (column-1)
+  //int ID[16] = {49,50,51,52,81,87,69,82,65,83,68,70,90,88,67,86};
+
+   switch(ch)
+     {
+     case 49:
+       return 1;
+     case 50:
+       return 2;
+     case 51:
+       return 3;
+     case 52:
+       return 4;
+     case 113:
+       return 5;
+     case 119:
+       return 6;
+     case 101:
+       return 7;
+     case 114:
+       return 8;
+     case 97:
+       return 9;
+     case 115:
+       return 10;
+     case 100:
+       return 11;
+     case 102:
+       return 12;
+     default:
+       return -1;
+     }
 }
 
 void print_card_stats(int card)
@@ -916,6 +861,226 @@ void highlight_card(int card)
   attroff(COLOR_PAIR(1));
 }
 
+void show_game_screen()
+{
+  clear();
+  int row, column;
+  start_color();
+
+    init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_RED, COLOR_WHITE);
+    init_pair(3, COLOR_MAGENTA, COLOR_WHITE);
+    init_pair(4, COLOR_BLUE, COLOR_WHITE);
+    init_pair(5, COLOR_RED, COLOR_RED);
+    init_pair(6, COLOR_MAGENTA, COLOR_MAGENTA);
+    init_pair(7, COLOR_BLUE, COLOR_BLUE);
+ 
+    getmaxyx(stdscr, row, column);
+    popup_win = newwin(10, 30, row/2-5, column/2-15);
+    keypad(popup_win, TRUE);
+    box(popup_win, 0, 0);
+  
+    keypad(stdscr, TRUE);
+    noecho();
+    cbreak();
+
+    //Draw 12 cards on the screen
+    for ( int i=1; i<13; i++ )
+    {
+       draw_card(i, rand(), rand(), rand(), rand());
+    }
+
+    //Draw card IDs
+    draw_card_IDs();
+    
+  refresh();
+}
+
+
+//|<handle_input>
+void handle_input()
+{
+  /*
+  cbreak();
+   
+  vector<char> select = {};
+  
+  for ( int i = 0; ; ++i )
+  { 
+
+    int c = getch();
+
+    if ( c == ERR || ( c == ' ' && select.size() == 3 ) ) 
+    {
+      break;
+    }
+    
+    c = toupper( c );
+
+    //If already selected, deselect it and go to top.
+    if ( find( select.begin(), select.end(), c ) != select.end() )
+    {
+       //add code to deselect the card here
+       select.erase( remove( select.begin(), select.end(), c ), select.end() );
+       refresh();
+       continue;
+    }
+
+    //If acceptable char and not a selected card, select it.
+    if ( find(ACCEPTED_CHARS.begin(), ACCEPTED_CHARS.end(), c ) != 
+         ACCEPTED_CHARS.end() && 
+         find (select.begin(), select.end(), c ) == select.end() )  
+    {
+      //add code to select card here
+      select.push_back( c );
+      refresh();
+    }
+  }
+
+  string inp( select.begin(), select.end() );
+  printw( "%s", inp.data() );
+  printw( "%s", "\n" );
+  refresh();
+
+  */
+  //Send substring in case of left overs.
+  //my_client->send_message( inp.substr( 0,3 ) );
+  //my_client->send_message( inp );
+  int lx, ly, card, ch;
+      move(30,10);
+      ch = getch();
+
+      switch(ch)
+	{
+	case 54:
+	  endwin();
+	  my_client->cleanup();
+	  break;
+	case 109:
+	  {
+	  touchwin(popup_win);
+	  submenu_actions(popup_win);
+	  break;
+	  }
+	
+	case KEY_SPACE:
+	  {
+	  getyx(stdscr,ly,lx);
+	  vector<int>cards;
+
+	  if(choice_string.size()>0)
+	    {
+	      for(int d=0; d<choice_string.size(); d++)
+		{
+		  cards.push_back(get_card((int)(choice_string[d])));
+		} 
+	    }
+	  
+	  else
+	    {
+	      for(int t=0; t<12; t++)
+		{
+		  cards.push_back(t+1);
+		}
+	    }
+	  
+	  animate_cards(cards, 20000);
+	  
+	  //Redraw cards
+	  for(int s=0; s<cards.size(); s++)
+	    {
+	      draw_card(cards[s], rand(), rand(), rand(), rand());
+	      draw_card_IDs();
+	    }
+
+	  move(ly,lx);
+	  break;
+	  }
+
+	default:
+	  mvprintw(33,10,"Key Pressed:%c", ch);
+	  break;
+	}
+      
+
+      if(choice_string.find((char)ch)==-1 && choice_string.size()==3)
+	{
+	  //Empty choice string
+	  choice_string = "";
+	  //Delete all card highlights
+	  for(int i=1; i<13; i++)
+	    {
+	      dehighlight_card(i);
+	    }
+	 
+	}
+
+      if(choice_string.find((char)ch)==-1 && in_accepted_chars(ch))
+	{
+	  choice_string+= ((char)ch);
+	  highlight_card(get_card(ch));
+	  goto resume;
+	 
+	}
+      
+      if(choice_string.find((char)ch)!=-1 && in_accepted_chars(ch))
+	{
+	  choice_string.erase(choice_string.find((char)ch),1);
+	  dehighlight_card(get_card(ch));
+	  goto resume;
+	 
+	}
+      
+ resume:
+      move(32,18);
+      clrtoeol();
+      print_card_stats(ch);
+      clrtoeol();
+      refresh();
+}
+
+
+void handle_server_msg()
+{
+  string msg = my_client->get_next_msg();
+  switch( msg.front() )
+  {
+    case EXIT:
+      printw( "%s", msg.substr( 1 ).data() );
+      printw( "%s", "\n" );
+      refresh();
+      my_client->cleanup();
+      break;
+
+    case MESSAGE:
+      mvprintw( 22, 2, "%s", "Message Received: \n" );
+      mvprintw( 23, 2, "%s", msg.substr( 1 ).data() ); 
+      break;
+
+    case CARDS:
+      if( game_started == false )
+	{
+	  show_game_screen();
+	  game_started = true;
+	}
+
+        mvprintw(24,2,"%s","CARDS NOM NOM NOM");
+	for ( int i = 1; i < (int) msg.size(); ++i )
+	{
+          mvprintw((25+i),2,"Received card with bitcode: %d", int( msg[i] ) );
+	}
+      break;
+
+          default:
+      break;
+  }
+  refresh();
+  if ( ! my_client->get_past_data_read().empty() )
+  {
+    handle_server_msg();
+  }
+}
+
 int main( int argc, char *argv[] )
 {
   char LOCALHOST[] = "127.0.0.1";
@@ -949,120 +1114,6 @@ int main( int argc, char *argv[] )
     action.sa_handler = sig_wrap_cleanup;
     sigaction( SIGINT, &action, nullptr );
     
-    /*start_color();
-
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-    init_pair(2, COLOR_RED, COLOR_WHITE);
-    init_pair(3, COLOR_YELLOW, COLOR_WHITE);
-    init_pair(4, COLOR_BLUE, COLOR_WHITE);
-    init_pair(5, COLOR_RED, COLOR_RED);
-    init_pair(6, COLOR_YELLOW, COLOR_YELLOW);
-    init_pair(7, COLOR_BLUE, COLOR_BLUE);
-
-    WINDOW *popup_win;
- 
-    getmaxyx(stdscr, row, column);
-    popup_win = newwin(10, 30, row/2-5, column/2-15);
-    keypad(popup_win, TRUE);
-    box(popup_win, 0, 0);
-  
-    keypad(stdscr, TRUE);
-    noecho();
-    cbreak();
-    
-  
-    //Draw 12 cards on the screen
-    for ( int i=1; i<13; i++ )
-    {
-       draw_card(i, rand(), rand(), rand(), rand());
-    }
-
-    //Draw card IDs
-    draw_card_IDs();
-    refresh();
-
-    int ch, lx, ly, card; 
-  
-    //Wait for user input
-    /*
-    for(;;)
-    {
-      move(30,10);
-      ch = getch();
-      card = ch - 96;
-
-      switch(ch)
-	{
-	case 109:
-	  {
-	  touchwin(popup_win);
-	  submenu_actions(popup_win);
-	  break;
-	  }
-	
-	case KEY_SPACE:
-	  {
-	  printw("WHOOSH!");
-	  getyx(stdscr,ly,lx);
-	  vector<int>cards;
-
-	  if(choice_string.size()>0)
-	    {
-	      for(int d=0; d<choice_string.size(); d++)
-		{
-		  cards.push_back((int)choice_string[d] - 96);
-		} 
-	    }
-	  
-	  else
-	    {
-	      for(int t=0; t<12; t++)
-		{
-		  cards.push_back(t+1);
-		}
-	    }
-	  
-	  animate_cards(cards, 20000);
-	  
-	  //Redraw cards
-	  for(int s=0; s<cards.size(); s++)
-	    {
-	      draw_card(s, rand(), rand(), rand(), rand());
-	    }
-
-	  move(ly,lx);
-	  break;
-	  }
-
-	default:
-	  mvprintw(33,10,"Key Pressed:%c", ch);
-	  break;
-	}
-
-      if(choice_string.size()==3)
-	{
-	  //Empty choice string
-	  choice_string = "";
-	  //Delete all card highlights
-	  for(int i=1; i<13; i++)
-	    {
-	      dehighlight_card(i);
-	    }
-	}
-
-      if(choice_string.find((char)ch)==-1 && (ch>95 && ch<109))
-	{
-	  choice_string+= ((char)ch);
-	  highlight_card(card);
-	}
-
-      move(32,18);
-      clrtoeol();
-      print_card_stats(ch);
-      clrtoeol();
-      refresh();
-    }
-    */  
     my_client->wait_for_input();
     cout << "nCurses has exited. " << endl;
     endwin();

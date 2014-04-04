@@ -214,10 +214,10 @@ string Server::check_name ( string buffer )
 
 void Server::wait_for_client ( )
 {
-  char buffer[4] = {0}; // used for client name
 
   for (;;)
   {
+    char buffer[14] = {0}; // used for client name
     // auto client_it = client_list.push_back( client_list.begin(), Client{});
     // emplace might be replacing, check when implementing multiple client
     Client_t this_client = {};

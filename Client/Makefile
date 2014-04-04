@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = --std=c++0x -Wall -I $(INC)
+CFLAGS = --std=c++0x -I $(INC)
 INC = ../Includes
 LDLIBS = -lcurses
 
