@@ -1,5 +1,9 @@
 #include "server.h"
 
+int FIB [ 15 ] =
+    { 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597 };
+
+
 void Server::die ( string error_msg )
 {
   // standardize error_msg so no extra new lines
@@ -23,9 +27,13 @@ void Server::die ( string error_msg )
 }
 
 
-Server::Server ( int port, char *addr )
+Server::Server ( int port, char *addr, int delay_time )
 {
   poll_fds = {{STDIN_FILENO, POLLIN, 0}};
+  delay = delay_time;
+  time(&start);
+  last_correct = -1;
+  streak = 0;
 
   // create socket for server
   server_sock_fd = socket( AF_INET, SOCK_STREAM, 0 );
@@ -49,7 +57,7 @@ Server::Server ( int port, char *addr )
     die("Error converting addr during server initialization. ");
   }  
 
-  int yes=1;
+  int yes = 1;
   
   // lose the pesky "Address already in use" error message
   if (setsockopt(server_sock_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
@@ -116,23 +124,24 @@ void Server::send_playing_cards ( vector<int>indexes )
 //Checks client guess
 vector<int> Server::check_guess ( char* guess, Deck* deck, Deck* playing_deck )
 {
-  vector<int> indexes;
+    vector<int> indexes;
   
-  //Client guesses 'NOS' -- no valid sets on board
-  if ( strcmp( guess, "NOS" ) == 0 && playing_deck->count( 1 ) == 12 )
+    //Client guesses 'NOS' -- no valid sets on board
+    if ( strcmp( guess, "NOS" ) == 0 && playing_deck->count( 1 ) == 12 )
     {
-      if ( num_sets( playing_deck->get_cards() ) == 0)
+        if ( num_sets( playing_deck->get_cards() ) == 0)
 	{
-	  //Clear playing deck, reset virtual top of deck, reshuffle, and reinsert cards
-	  playing_deck->clear_cards();
-	  deck->reset_top();
-	  deck->shuffle();
-	  return std_indexes;
+	    //Clear playing deck, reset virtual top of deck, 
+            //reshuffle, and reinsert cards
+	    playing_deck->clear_cards();
+	    deck->reset_top();
+	    deck->shuffle();
+	    return std_indexes;
 	}
 
-      else 
+        else 
 	{
-	  return indexes;
+	    return indexes;
 	}
     }
  
@@ -157,6 +166,7 @@ vector<int> Server::check_guess ( char* guess, Deck* deck, Deck* playing_deck )
 
   if ( check_set ( cset ) )
     {
+      //insert call to function that will update score
       playing_deck->remove_card( idx_1 );
       playing_deck->remove_card( idx_2 );
       playing_deck->remove_card( idx_3 );
@@ -194,6 +204,55 @@ void Server::cleanup ()
 }
 
 
+void Server::update_score( int client_sock_fd, int guess_type, char* guess )
+{
+    // Use fd offset instead of searching
+    Client_t this_client = client_list[ client_sock_fd - 4 ];
+
+    switch ( guess_type )
+    {
+        case 0:
+            if ( strcmp( guess, "NOS" ) == 0 )
+            {
+                this_client.score += -5;
+            }
+            else
+            {
+                this_client.score += -3;
+            }
+            break;
+
+        case 3:
+            this_client.score += 5;
+            if ( client_sock_fd == last_correct ) 
+            {
+                this_client.score += FIB[ streak ];
+                streak += 1;
+            }
+            else
+            {
+                streak = 0;
+                last_correct = client_sock_fd;
+            }
+            break;
+
+        case 12:
+            this_client.score += 10;
+            if ( client_sock_fd == last_correct )
+            {
+                this_client.score += FIB[ streak ];
+                streak += 1;
+            }
+            else
+            {
+                last_correct = client_sock_fd;
+                streak = 0;
+            }
+        default: break;
+    }
+}
+
+
 string Server::check_name ( string buffer )
 {
     int count = 0;
@@ -215,7 +274,7 @@ string Server::check_name ( string buffer )
 void Server::wait_for_client ( )
 {
   char buffer[4] = {0}; // used for client name
-
+  
   for (;;)
   {
     // auto client_it = client_list.push_back( client_list.begin(), Client{});
@@ -231,31 +290,46 @@ void Server::wait_for_client ( )
       die("Error on accept. ");
     }
     else
-    {
-      cout << "Connected new client." << endl;
+    {   
+        time( &end );
+	if ( difftime( end, start ) < delay &&  client_list.size() <= 12)
+	{
+	      cout << "Connected new client." << endl;
 
-      // add poll fd and send message
-      struct pollfd client_sock_fd = {this_client.sock_fd, POLLIN, 0};
+	      // add poll fd and send message
+	      struct pollfd client_sock_fd = {this_client.sock_fd, POLLIN, 0};
 
-      // CRITICAL SECTION
-      pthread_mutex_lock(&mutex);
-      poll_fds.push_back(client_sock_fd);
-
-      read( this_client.sock_fd, &buffer, 14);
-      this_client.name = check_name( buffer );
-      client_list.push_back( this_client );
-      pthread_mutex_unlock(&mutex);
-      sendMessage( this_client.sock_fd, 'm', "You have been connected with username " + this_client.name + ".");
-      //send_playing_cards( std_indexes );
-      //display_sets ( playing_deck->get_cards() );
+	      // CRITICAL SECTION
+	      pthread_mutex_lock(&mutex);
+	      poll_fds.push_back(client_sock_fd);
+              this_client.score = 0;
+	      read( this_client.sock_fd, &buffer, 14);
+	      this_client.name = check_name( buffer );
+	      client_list.push_back( this_client );
+	      pthread_mutex_unlock(&mutex);
+	      sendMessage( this_client.sock_fd, 'm', 
+              "You have been connected with username " + this_client.name + ".");
+	      //send_playing_cards( std_indexes );
+	      //display_sets ( playing_deck->get_cards() );	
+	}
+         else
+	{    
+              sendMessage( this_client.sock_fd, 'm', "The server is closed." ); 
+              disconnect_client( this_client.sock_fd ); 
+	}
     }
   }
-
 }
 
 
 void Server::disconnect_client( int client_sock_fd )
 {
+
+  // Could we just use fd offset of -4 instead of seraching?
+  // like this....
+  // client_list.erase( client_sock_fd - 4 );
+  // and...
+  // poll_fds.erase( client_sock_fd - 4 );
   for ( auto client_it = client_list.begin(); client_it != client_list.end(); ++client_it )
   {
     if ( client_it->sock_fd == client_sock_fd )
@@ -288,14 +362,27 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
   vector<int>indexes = check_guess( guess, deck, playing_deck );
   cout << "done checking" << endl;
 
+  // This doesn't handle incorrect No Set guesses
   switch( indexes.size() )
     {
     case 0:
-      sendMessage( client_sock_fd, 'm', "Naw client, thats not a set" );
+
+      update_score( client_sock_fd, 0, guess );
+      if ( strcmp( guess, "NOS" ) == 0 ) 
+      {
+          sendMessage( client_sock_fd, 'm', "Naw client, there's a set" );
+      }
+      else
+      {
+          sendMessage( client_sock_fd, 'm', "Naw client, that's not a set" );
+      }
+      //cout << client_list[ client_sock_fd - 4 ].name << endl;
       break;
 
     case 3:
       //1.)Send correct message to client
+      last_correct = client_sock_fd;
+      update_score( client_sock_fd, 3, guess );
       sendMessage( client_sock_fd, 'm',  "Correct!" );
 
       if ( !deck->empty( 0 ) )
@@ -309,6 +396,8 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
       break;
 				     
     case 12:
+      last_correct = client_sock_fd;
+      update_score( client_sock_fd, 12, guess );
       sendMessage( client_sock_fd, 'm',  "Correct!" );
       send_playing_cards( indexes );
       //Displays current sets in playing deck -- Testing purposes only

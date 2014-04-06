@@ -34,6 +34,7 @@ Client::Client( int port, char *addr, char * user )
   struct sockaddr_in server_addr = {};
   struct hostent *server;
 
+
   client_sock_fd = socket( AF_INET, SOCK_STREAM, 0 );
   if ( client_sock_fd < 0 )
   {

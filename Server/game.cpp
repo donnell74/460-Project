@@ -17,7 +17,6 @@ using namespace std;
 Server *my_server;
 pthread_mutex_t mutex;
 
-
 /* Never used, here because of other bad code */
 void handle_server_msg ()
 {
@@ -125,7 +124,7 @@ void sig_wrap_cleanup ( int sig )
 int main(int argc, char* argv[])
 {
   char LOCALHOST[] = "127.0.0.1";
-  
+  int DELAY = 15;
 
   if ( argc == 1 || argc > 3 )
   {
@@ -135,14 +134,19 @@ int main(int argc, char* argv[])
 
   else
   {
-    if ( argc == 2) // No port number given
+    if ( argc == 2 ) // No Addr or Dealy given
     {
-      my_server = new Server( atoi( argv[1] ), LOCALHOST );
+      my_server = new Server( atoi( argv[1] ), LOCALHOST, DELAY );
     }
 
-    if ( argc == 3) // Addr and Port Given
+    if ( argc == 3 ) // Addr and Port Given, but no Dealy
     {
-      my_server = new Server( atoi( argv[1] ), argv[2] );
+      my_server = new Server( atoi( argv[1] ), argv[2], DELAY );
+    }
+    
+    if ( argc == 4 )
+    {
+      my_server = new Server( atoi( argv[1] ), argv[2], atoi( argv[3] ) );
     }
   }
 

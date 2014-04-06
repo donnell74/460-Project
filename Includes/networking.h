@@ -27,6 +27,7 @@ struct Client_t
   int sock_fd;  
   sockaddr_in addr;
   string name;
+  int score;
 };
 
 #endif /* NETWORKING_H */
