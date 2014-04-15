@@ -141,13 +141,9 @@ int main(int argc, char* argv[])
 
     if ( argc == 3 ) // Addr and Port Given, but no Dealy
     {
-      my_server = new Server( atoi( argv[1] ), argv[2], DELAY );
+      my_server = new Server( atoi( argv[1] ), LOCALHOST, atoi(argv[2]) );
     }
     
-    if ( argc == 4 )
-    {
-      my_server = new Server( atoi( argv[1] ), argv[2], atoi( argv[3] ) );
-    }
   }
 
   //Initialize deck and playing deck

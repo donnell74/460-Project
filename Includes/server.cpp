@@ -265,8 +265,10 @@ string Server::check_name ( string buffer )
 {
     int count = 0;
     string mybuffer = buffer;
+    cout << "I got money" << endl;
     for ( auto it : usernames )
     { 
+	cout << it << endl;
 	if ( it == mybuffer )
 	{
 	    mybuffer = buffer + to_string(count);
@@ -275,7 +277,8 @@ string Server::check_name ( string buffer )
 	}
     }
 
-    return buffer;
+    usernames.push_back(mybuffer);
+    return mybuffer;
 }
 
 

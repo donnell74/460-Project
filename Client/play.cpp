@@ -1049,6 +1049,8 @@ void handle_server_msg()
       printw( "%s", msg.substr( 1 ).data() );
       printw( "%s", "\n" );
       refresh();
+      echo();
+      endwin();
       my_client->cleanup();
       break;
 
