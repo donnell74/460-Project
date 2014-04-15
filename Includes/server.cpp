@@ -160,9 +160,7 @@ vector<int> Server::check_guess ( char* guess, Deck* deck, Deck* playing_deck )
   //Display set info -- Testing purposes
   display_card( cset[0] );
   display_card( cset[1] );
-  display_card( cset[2] );
-       
-
+  display_card( cset[2] );       
 
   if ( check_set ( cset ) )
     {
@@ -171,8 +169,7 @@ vector<int> Server::check_guess ( char* guess, Deck* deck, Deck* playing_deck )
       playing_deck->remove_card( idx_2 );
       playing_deck->remove_card( idx_3 );
       indexes = { idx_1, idx_2, idx_3 };
-    }
-    
+    }    
   return indexes;
   
 }
@@ -206,8 +203,19 @@ void Server::cleanup ()
 
 void Server::update_score( int client_sock_fd, int guess_type, char* guess )
 {
-    // Use fd offset instead of searching
-    Client_t this_client = client_list[ client_sock_fd - 4 ];
+    Client_t this_client = {};
+
+    //Use fd offset instead of searching
+    //Client_t this_client = client_list[ client_sock_fd - 4 ];
+
+    for ( unsigned int i = 0; i <= client_list.size(); i++ )
+    {
+        if ( client_list[ i ].sock_fd == client_sock_fd )
+        {
+            this_client = client_list[ i ];
+            break;
+        }
+    }
 
     switch ( guess_type )
     {
@@ -324,11 +332,6 @@ void Server::wait_for_client ( )
 void Server::disconnect_client( int client_sock_fd )
 {
 
-  // Could we just use fd offset of -4 instead of seraching?
-  // like this....
-  // client_list.erase( client_sock_fd - 4 );
-  // and...
-  // poll_fds.erase( client_sock_fd - 4 );
   for ( auto client_it = client_list.begin(); client_it != client_list.end(); ++client_it )
   {
     if ( client_it->sock_fd == client_sock_fd )
@@ -361,7 +364,6 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
   vector<int>indexes = check_guess( guess, deck, playing_deck );
   cout << "done checking" << endl;
 
-  // This doesn't handle incorrect No Set guesses
   switch( indexes.size() )
     {
     case 0:
@@ -375,7 +377,6 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
       {
           sendMessage( client_sock_fd, 'm', "Naw client, that's not a set" );
       }
-      //cout << client_list[ client_sock_fd - 4 ].name << endl;
       break;
 
     case 3:
@@ -390,9 +391,9 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
 	}
      
 
-      //Displays current sets in playing deck -- Testing purposes only
-      display_sets( playing_deck->get_cards() );
-      break;
+       //Displays current sets in playing deck -- Testing purposes only
+       display_sets( playing_deck->get_cards() );
+       break;
 				     
     case 12:
       last_correct = client_sock_fd;
