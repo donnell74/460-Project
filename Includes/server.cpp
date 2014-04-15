@@ -218,7 +218,9 @@ void Server::update_score( int client_sock_fd, int guess_type, char* guess )
     }
 
     switch ( guess_type )
-    {
+    {   
+
+        pthread_mutex_lock(&mutex);
         case 0:
             if ( strcmp( guess, "NOS" ) == 0 )
             {
@@ -256,7 +258,9 @@ void Server::update_score( int client_sock_fd, int guess_type, char* guess )
                 last_correct = client_sock_fd;
                 streak = 0;
             }
-        default: break;
+        default: 
+	    pthread_mutex_unlock(&mutex);
+            break;
     }
 }
 
