@@ -1114,7 +1114,7 @@ int main( int argc, char *argv[] )
     struct sigaction action = {};
 
     action.sa_handler = sig_wrap_cleanup;
-    //sigaction( SIGINT, &action, nullptr );
+    sigaction( SIGINT, &action, nullptr );
     
     my_client->wait_for_input();
     cout << "nCurses has exited. " << endl;
