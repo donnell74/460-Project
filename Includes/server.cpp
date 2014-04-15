@@ -29,7 +29,7 @@ void Server::die ( string error_msg )
 
 Server::Server ( int port, char *addr, int delay_time )
 {
-  poll_fds = {{STDIN_FILENO, POLLIN, 0}};
+  poll_fds = { {STDIN_FILENO, POLLIN, 0} };
   delay = delay_time;
   time(&start);
   last_correct = -1;
@@ -39,12 +39,12 @@ Server::Server ( int port, char *addr, int delay_time )
   server_sock_fd = socket( AF_INET, SOCK_STREAM, 0 );
   if ( server_sock_fd < 0 )
   {
-    die("Error opening socket. ");
+    die( "Error opening socket. " );
   }
 
   // add server socket to poll_fds
-  struct pollfd server_pollfd = {server_sock_fd, POLLIN, 0};
-  poll_fds.push_back(server_pollfd);
+  struct pollfd server_pollfd = { server_sock_fd, POLLIN, 0 };
+  poll_fds.push_back( server_pollfd );
 
   // create sock addr we use for the rest of program
   struct sockaddr_in server_addr = {};
@@ -54,22 +54,23 @@ Server::Server ( int port, char *addr, int delay_time )
   // convert ip text string to binary
   if ( inet_pton( AF_INET, addr, &server_addr.sin_addr ) != 1 )
   {
-    die("Error converting addr during server initialization. ");
+    die( "Error converting addr during server initialization. " );
   }  
 
   int yes = 1;
   
   // lose the pesky "Address already in use" error message
-  if (setsockopt(server_sock_fd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
-      die("setsockopt");
+  if ( setsockopt( server_sock_fd, SOL_SOCKET, SO_REUSEADDR, 
+                   &yes, sizeof( int ) ) == -1 ) {
+      die( "setsockopt" );
   } 
   
   // bind socket to the server ip
   if ( bind( server_sock_fd, 
-             (struct sockaddr *) &server_addr,
+             ( struct sockaddr *) &server_addr,
              sizeof server_addr ) < 0)
   {
-    die("Can't bind to server socket. ");
+    die( "Can't bind to server socket. " );
   }
 
   // start listening for a connection
@@ -100,9 +101,9 @@ vector<Client_t> Server::get_client_list ( )
 
 void Server::sendMessage( int sock_fd, char type, string msg )
 {
-  msg.insert(msg.begin(), type); // makes calls to sendMessage more readable
+  msg.insert( msg.begin(), type ); // makes calls to sendMessage more readable
   msg.append( TERM_STR ); 
-  int bytes_sent = write( sock_fd, msg.c_str(), msg.size()); 
+  int bytes_sent = write( sock_fd, msg.c_str(), msg.size() ); 
   if ( bytes_sent < 0 )
   {
     die( "Unable to send message." );
@@ -160,9 +161,7 @@ vector<int> Server::check_guess ( char* guess, Deck* deck, Deck* playing_deck )
   //Display set info -- Testing purposes
   display_card( cset[0] );
   display_card( cset[1] );
-  display_card( cset[2] );
-       
-
+  display_card( cset[2] );       
 
   if ( check_set ( cset ) )
     {
@@ -171,8 +170,7 @@ vector<int> Server::check_guess ( char* guess, Deck* deck, Deck* playing_deck )
       playing_deck->remove_card( idx_2 );
       playing_deck->remove_card( idx_3 );
       indexes = { idx_1, idx_2, idx_3 };
-    }
-    
+    }    
   return indexes;
   
 }
@@ -180,7 +178,7 @@ vector<int> Server::check_guess ( char* guess, Deck* deck, Deck* playing_deck )
 
 void Server::cleanup ()
 {
-  cout << "Server going down (as well as all clients)." << endl;
+  cout << "Server going down ( as well as all clients )." << endl;
   // client list is empty or we quit while creating first client connection
   if ( ! client_list.empty() && ( client_list.front().sock_fd != 0 ) )
   {
@@ -200,17 +198,30 @@ void Server::cleanup ()
   }
 
   cout << "Server should now be closed." << endl;
-  exit(EXIT_SUCCESS);
+  exit( EXIT_SUCCESS );
 }
 
 
 void Server::update_score( int client_sock_fd, int guess_type, char* guess )
 {
-    // Use fd offset instead of searching
-    Client_t this_client = client_list[ client_sock_fd - 4 ];
+    Client_t this_client = {};
+
+    //Use fd offset instead of searching
+    //Client_t this_client = client_list[ client_sock_fd - 4 ];
+
+    for ( unsigned int i = 0; i <= client_list.size(); i++ )
+    {
+        if ( client_list[ i ].sock_fd == client_sock_fd )
+        {
+            this_client = client_list[ i ];
+            break;
+        }
+    }
 
     switch ( guess_type )
-    {
+    {   
+
+        pthread_mutex_lock( &mutex );
         case 0:
             if ( strcmp( guess, "NOS" ) == 0 )
             {
@@ -248,7 +259,9 @@ void Server::update_score( int client_sock_fd, int guess_type, char* guess )
                 last_correct = client_sock_fd;
                 streak = 0;
             }
-        default: break;
+        default: 
+	    pthread_mutex_unlock( &mutex );
+            break;
     }
 }
 
@@ -269,48 +282,49 @@ string Server::check_name ( string buffer )
 	}
     }
 
-    usernames.push_back(mybuffer);
+    usernames.push_back( mybuffer );
     return mybuffer;
 }
 
 
-void Server::wait_for_client ( )
+void Server::wait_for_client ()
 {
-  for (;;)
+  for ( ;; )
   {
-    char buffer[14] = {0}; // used for client name
+    char buffer[14] = { 0 }; // used for client name
     // auto client_it = client_list.push_back( client_list.begin(), Client{});
     // emplace might be replacing, check when implementing multiple client
     Client_t this_client = {};
-    socklen_t client_len = sizeof (this_client.addr);
-    this_client.sock_fd = accept(server_sock_fd,
-                                    (struct sockaddr *) &this_client.addr,
+    socklen_t client_len = sizeof ( this_client.addr );
+    this_client.sock_fd = accept( server_sock_fd,
+                                  ( struct sockaddr * ) &this_client.addr,
                                     &client_len );
 
     if ( this_client.sock_fd < 0 )
     {
-      die("Error on accept. ");
+      die( "Error on accept. " );
     }
     else
     {   
         time( &end );
-	if ( difftime( end, start ) < delay &&  client_list.size() <= 12)
+	if ( difftime( end, start ) < delay &&  client_list.size() <= 12 )
 	{
 	      cout << "Connected new client." << endl;
 
 	      // add poll fd and send message
-	      struct pollfd client_sock_fd = {this_client.sock_fd, POLLIN, 0};
+	      struct pollfd client_sock_fd = { this_client.sock_fd, POLLIN, 0 };
 
 	      // CRITICAL SECTION
-	      pthread_mutex_lock(&mutex);
-	      poll_fds.push_back(client_sock_fd);
+	      pthread_mutex_lock( &mutex );
+	      poll_fds.push_back( client_sock_fd );
               this_client.score = 0;
-	      read( this_client.sock_fd, &buffer, 14);
+	      read( this_client.sock_fd, &buffer, 14 );
 	      this_client.name = check_name( buffer );
 	      client_list.push_back( this_client );
-	      pthread_mutex_unlock(&mutex);
+	      pthread_mutex_unlock( &mutex );
 	      sendMessage( this_client.sock_fd, 'm', 
-              "You have been connected with username " + this_client.name + ".");
+              "You have been connected with username " + 
+              this_client.name + "." );
 	      //send_playing_cards( std_indexes );
 	      //display_sets ( playing_deck->get_cards() );	
 	}
@@ -327,12 +341,8 @@ void Server::wait_for_client ( )
 void Server::disconnect_client( int client_sock_fd )
 {
 
-  // Could we just use fd offset of -4 instead of seraching?
-  // like this....
-  // client_list.erase( client_sock_fd - 4 );
-  // and...
-  // poll_fds.erase( client_sock_fd - 4 );
-  for ( auto client_it = client_list.begin(); client_it != client_list.end(); ++client_it )
+  for ( auto client_it = client_list.begin(); 
+        client_it != client_list.end(); ++client_it )
   {
     if ( client_it->sock_fd == client_sock_fd )
     {
@@ -341,7 +351,8 @@ void Server::disconnect_client( int client_sock_fd )
     }
   }
 
-  for ( auto poll_fd_it = poll_fds.begin(); poll_fd_it != poll_fds.end(); ++poll_fd_it )
+  for ( auto poll_fd_it = poll_fds.begin(); 
+        poll_fd_it != poll_fds.end(); ++poll_fd_it )
   {
     if ( poll_fd_it->fd == client_sock_fd )
     {
@@ -352,8 +363,9 @@ void Server::disconnect_client( int client_sock_fd )
 
   // even if close fails, server acts if client has died
   // as of point
-  sendMessage( client_sock_fd, 'x', "You have been disconnected"); 
-  cout << "Client with fd of " << client_sock_fd << " has disconnected." << endl;
+  sendMessage( client_sock_fd, 'x', "You have been disconnected" ); 
+  cout << "Client with fd of " << client_sock_fd 
+       << " has disconnected." << endl;
 }
 
 
@@ -364,7 +376,6 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
   vector<int>indexes = check_guess( guess, deck, playing_deck );
   cout << "done checking" << endl;
 
-  // This doesn't handle incorrect No Set guesses
   switch( indexes.size() )
     {
     case 0:
@@ -378,7 +389,6 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
       {
           sendMessage( client_sock_fd, 'm', "Naw client, that's not a set" );
       }
-      //cout << client_list[ client_sock_fd - 4 ].name << endl;
       break;
 
     case 3:
@@ -393,9 +403,9 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
 	}
      
 
-      //Displays current sets in playing deck -- Testing purposes only
-      display_sets( playing_deck->get_cards() );
-      break;
+       //Displays current sets in playing deck -- Testing purposes only
+       display_sets( playing_deck->get_cards() );
+       break;
 				     
     case 12:
       last_correct = client_sock_fd;
@@ -411,10 +421,11 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
     }
 
   //Game over
-  if ( deck->empty( 0 ) && num_sets( playing_deck->get_cards() ) == 0 && playing_deck->count( 1 ) < 13 )  
+  if ( deck->empty( 0 ) && num_sets( playing_deck->get_cards() ) == 0 && 
+       playing_deck->count( 1 ) < 13 )  
     {
-      cout<<playing_deck->count(1)<<endl;
-      sendMessage( client_sock_fd, 'm', "Game Over");
+      cout << playing_deck->count( 1 ) << endl;
+      sendMessage( client_sock_fd, 'm', "Game Over" );
       //Perform end game tasks(disconnect clients, etc.)
       cleanup();
     }
@@ -424,9 +435,9 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
 void Server::receive_input( int client_sock_fd )
 {
   int bytes_read = 0;
-  char buffer[4] = {0}; // will only care about first 3 if guess
+  char buffer[4] = { 0 }; // will only care about first 3 if guess
 
-  bytes_read = read( client_sock_fd, &buffer, 3);
+  bytes_read = read( client_sock_fd, &buffer, 3 );
   if ( bytes_read != -1 )
   {
     if ( strcmp( buffer, "QUI" ) == 0 || bytes_read == 0 )
