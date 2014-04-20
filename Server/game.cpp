@@ -101,6 +101,12 @@ void handle_input()
       my_server->playing_deck->display( 1 );
     }
     break;
+
+  case 'U':
+    {
+      my_server->update_scores();
+      cout << "Updating" << endl;
+    }
   
   default:
     break;

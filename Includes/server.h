@@ -27,19 +27,21 @@ class Server
     Deck* playing_deck;
     Server( int, char *, int );
     ~Server();
-    void die ( string );
-    vector<Client_t> get_client_list ( );
+    void die( string );
+    vector<Client_t> get_client_list();
     void sendMessage( int, char , string );
-    void send_playing_cards ( vector<int> );
-    vector<int>check_guess( char*, Deck*, Deck* );
-    void cleanup ();
-    void update_score ( int, int, char* );
-    void wait_for_client ();
+    void send_playing_cards( vector<int> );
+    void send_null_cards( vector<int> );
+    int check_guess( char*, Deck*, Deck* );
+    void cleanup();
+    void update_score( int, int );
+    void update_scores();
+    void wait_for_client();
     void disconnect_client( int );
     void receive_input( int );
     void respond_to_client( int, char* );
-    void wait_for_input ();
-    string check_name ( string );
+    void wait_for_input();
+    string check_name( string );
 };
       
 #endif /* SERVER_H */

@@ -143,6 +143,7 @@ class Deck
   int _count;
    
  public:
+  //int rand( int );
   Deck();
   Deck( int code );
   ~Deck();
@@ -165,6 +166,8 @@ class Deck
 //Creates and returns a string of bitcodes from a deck pointer
 //and adds the cards to a playing deck
 string create_playing_cards( vector<int>indexes, Deck* deck, Deck* playing_deck );
+
+int rand ( int );
 
 //Displays information about a given card
 void display_card( Card* ncard );

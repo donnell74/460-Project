@@ -7,12 +7,16 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <sys/types.h>
+#include <cerrno>
 #include <random>
 #include <string.h>
 #include <stdio.h>
+#include <pthread.h>
+#include <signal.h>
+#include <sys/time.h>
 /* local includes */
 #include "client.h"
-#include "cardlib.h"
+//#include "cardlib.h"
 /* defined ncurses macros */
 #define KEY_SPACE ' '
 //Origin of ncurses stdscr
@@ -26,6 +30,9 @@
 //Space between rows and columns
 #define ROW_OFFSET 1
 #define COL_OFFSET 1
+//Timer Window coordinates
+#define TIME_WIN_X 20
+#define TIME_WIN_Y 24
 
 using namespace std;
 
@@ -33,26 +40,80 @@ using namespace std;
 const char EXIT = 'x';
 const char MESSAGE = 'm';
 const char CARDS = 'c';
+const char UPDATE = 'u';
 
-// last line of ACCEPTED_CHARS is for command chars
-//response
-vector<char> ACCEPTED_CHARS = {'1', '2', '3', '4', 
-                               'Q', 'W', 'E', 'R',
-                               'A', 'S', 'D', 'F', 
-                               'Z', 'X', 'C', 'V',
-                               'O', 'N', 'U', 'I',
-			       'T'}; 
+
+vector<char> ACCEPTED_CHARS = { '1', '2', '3', '4', 
+                                'q', 'w', 'e', 'r',
+                                'a', 's', 'd', 'f', 
+                                'z', 'x', 'c', 'v',
+                                'O', 'N', 'U', 'I' };
+// Globals 
 Client *my_client;
-WINDOW *popup_win;
+
+WINDOW *score_win;
+WINDOW *timer_win;
+WINDOW *message_win;
+
+char* user;
+
+string uname_string = "";
 string choice_string = "";
+
 bool animate = false;
+bool name_set = false;
+bool game_started = false;
+
 int cur_x1 = 0;
 int cur_y1 = 0;
 int cur_x2 = 0;
 int cur_y2 = 0;
-bool game_started = false;
-random_device rd;
-default_random_engine e1(rd());
+
+int uname_x;
+int uname_y;
+//end Globals
+
+
+//Get name from user: allows for name editing
+void get_user_name()
+{
+    int characters = 0;
+    
+    for ( ;; )
+    {
+        int ch = getch();
+        switch( ch )
+        {
+            case KEY_BACKSPACE:
+                if ( characters > 0 )
+                {
+                    characters -= 1;
+                    getyx( stdscr, uname_y, uname_x );
+                    mvaddch( uname_y, uname_x - 1, KEY_SPACE );
+                    move( uname_y, uname_x - 1 );
+                    uname_string.erase( uname_string.size() -1, 1 );
+                }
+
+            break;
+
+            case '\n':
+                user = new char[uname_string.length() + 1];
+                strcpy( user, uname_string.c_str() );
+                return;
+
+            default:
+                if ( ch > 32 && ch < 126 && characters < 15 )
+                {
+                    addch( ch );
+                    uname_string += ( char )ch;
+                    characters += 1;
+                }
+                break;
+        }
+        refresh();
+    }
+}
+
 
 void sig_wrap_cleanup( int sig )
 {
@@ -63,32 +124,77 @@ void sig_wrap_cleanup( int sig )
     my_client->cleanup();
 }
 
-//Random number generator wrapper
-int rand()
-{
-  uniform_int_distribution<int> uniform_dist( 0, 2 );
-  int random_number = uniform_dist( e1 );
-
-  return random_number;
-}
-
 
 //Splash Screen
 void splash_screen( char * name )
 {
-  clear();
-  box(stdscr, '|', '-');				
-  mvprintw(ORIGIN_Y, ORIGIN_X,"     /\\\\\\\\\\\\\\\\\\\\\\    /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\");         
-  mvprintw(ORIGIN_Y+1, ORIGIN_X,"    /\\\\\\/////////\\\\\\ \\/\\\\\\///////////  \\///////\\\\\\/////");     
-  mvprintw(ORIGIN_Y+2, ORIGIN_X,"    \\//\\\\\\      \\///  \\/\\\\\\                   \\/\\\\\\    ");         
-  mvprintw(ORIGIN_Y+3, ORIGIN_X,"      \\////\\\\\\         \\/\\\\\\\\\\\\\\\\\\\\\\           \\/\\\\\\   ");     
-  mvprintw(ORIGIN_Y+4, ORIGIN_X,"          \\////\\\\\\      \\/\\\\\\///////            \\/\\\\\\  ");         
-  mvprintw(ORIGIN_Y+5, ORIGIN_X,"              \\////\\\\\\   \\/\\\\\\\                   \\/\\\\\\ ");         
-  mvprintw(ORIGIN_Y+6, ORIGIN_X,"        /\\\\\\      \\//\\\\\\  \\/\\\\\\                   \\/\\\\\\");       
-  mvprintw(ORIGIN_Y+7, ORIGIN_X,"        \\///\\\\\\\\\\\\\\\\\\\\\\/   \\/\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\       \\/\\\\\\");       
-  mvprintw(ORIGIN_Y+8, ORIGIN_X,"           \\///////////     \\///////////////        \\///");
-  refresh();
-  
+    clear();
+    start_color();
+    init_pair( 10, COLOR_BLUE, COLOR_BLACK );
+    init_pair( 11, COLOR_CYAN, COLOR_BLACK );
+    init_pair( 12, COLOR_MAGENTA, COLOR_BLACK );
+    init_pair( 13, COLOR_YELLOW, COLOR_BLACK );
+    box(stdscr, '|', '-');
+
+				
+    vector<string>S = { " /\\\\\\\\\\\\\\\\\\\\\\",   
+                        "/\\\\\\/////////\\\\\\",     
+                        "\\//\\\\\\      \\///",
+                        "  \\////\\\\\\"
+                        "     \\\\///\\\\\\",
+                        "         \\////\\\\\\",
+                        "    /\\\\\\     \\//\\\\\\",
+                        "    \\///\\\\\\\\\\\\\\\\\\\\\\/",
+                        "       \\//////////" };
+
+    vector<string>E = { "/\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
+                        "\\/\\\\\\///////////",
+                        " \\/\\\\\\",
+                        "  \\/\\\\\\\\\\\\\\\\\\\\\\",
+                        "   \\/\\\\\\///////",
+                        "    \\/\\\\\\",
+                        "     \\/\\\\\\",
+                        "      \\/\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
+                        "        \\////////////////" };
+
+    vector<string>T = { "/\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
+                        "\\///////\\\\\\/////",
+                        "       \\/\\\\\\     ",
+                        "        \\/\\\\\\    ",
+                        "         \\/\\\\\\   ",
+                        "          \\/\\\\\\  ",
+                        "           \\/\\\\\\ ",
+                        "            \\/\\\\\\",
+                        "                \\///" };
+
+    int logo_offset = 6;
+
+    //Draw the 'S'
+    attron( COLOR_PAIR( 11 ) );
+    for ( int i = 0; i < S.size(); i++ )
+    {
+        mvprintw( ORIGIN_Y + i, ORIGIN_X + logo_offset, S[i].c_str() );
+    }                  
+    attroff( COLOR_PAIR( 11 ) );
+
+    //Draw the 'E'
+    logo_offset += 20;    
+    attron( COLOR_PAIR( 13 ) );
+    for ( int j = 0; j < E.size(); j++ )
+    {
+        mvprintw( ORIGIN_Y + j, ORIGIN_X + logo_offset, S[j].c_str() );
+    }                  
+    attroff( COLOR_PAIR( 13 ) );
+
+    //Draw the 'T'
+    logo_offset += 20;    
+    attron( COLOR_PAIR( 12 ) );
+    for ( int k = 0; k < T.size(); k++ )
+    {
+        mvprintw( ORIGIN_Y + k, ORIGIN_X + logo_offset, S[k].c_str() );
+    }                  
+    attroff( COLOR_PAIR( 12 ) );
+
   //Project Details window
   WINDOW* subwindow = newwin(8,35,ORIGIN_Y+10, ORIGIN_X+16);
   box(subwindow, 0, 0);
@@ -97,21 +203,58 @@ void splash_screen( char * name )
   mvwprintw(subwindow, 3, 3, "Project Team: Greg Donnell");
   mvwprintw(subwindow, 4, 3, "\t\t Matt Duff");
   mvwprintw(subwindow, 5, 3, "\t\t Tim Williams");
-  wrefresh(subwindow);
+  //wrefresh(subwindow);
 
   touchwin(subwindow);
   wrefresh(subwindow);
   mvwprintw(stdscr, ORIGIN_Y+20, ORIGIN_X+20, "Please Enter a Username: ");
+  touchwin( stdscr );
   refresh();
-  getnstr(name, 14);
-  noecho();
+  wrefresh( subwindow );
+  //getnstr(name, 14);
+  //noecho();
+}
+
+
+void update_timer_win( string msg )
+{
+
+}
+
+
+void update_score_win( string msg )
+{
+    int row = 0;
+    int column = 0;
+    int pos = 0;
+    vector<string>clients;
+
+    while ( ( pos = msg.find( "<>" ) ) != string::npos )
+    {
+        clients.push_back( msg.substr( 0, pos ) );
+        msg.erase( 0, pos + 2 );
+    }
+
+    for ( unsigned int i = 0; i < clients.size(); i++ )
+    {
+        column = i;
+        if ( i % 4 == 0 )
+        {
+            row += 1;
+            column = 0;
+        }
+        mvwprintw( score_win, row, column * 17, "%d.%s", i + 1, 
+                  clients[i].c_str() );
+    }
+    wrefresh( score_win );
+
 }
 
 
 //Draws card on screen at desired position
-void draw_card(int card, int number, int symbol, int shape, int color)
+void draw_card(int card, int number, int symbol, int shade, int color)
 {
-  int x, y, sym_ch, card_color;
+  int x, y, shade_ch, card_color;
   int columns[4] = {ORIGIN_X, (ORIGIN_X+CARD_WIDTH+COL_OFFSET), 
 		    (ORIGIN_X+2*(CARD_WIDTH+COL_OFFSET)), 
 		    (ORIGIN_X+3*(CARD_WIDTH+COL_OFFSET))};
@@ -174,25 +317,37 @@ void draw_card(int card, int number, int symbol, int shape, int color)
   
   move(y,x);
   
-  for(int j=1; j<CARD_HEIGHT+1; j++)
+    for( int j = 1; j < CARD_HEIGHT + 1; j++ )
     {
-      for(int k=0; k<CARD_WIDTH; k++)
+        for( int k = 0; k < CARD_WIDTH; k++ )
 	{
-	  addch(CARD_CHAR);
+            if ( number == 9 )
+            {
+                addch( KEY_SPACE );
+            }
+	    else
+            {
+                addch( CARD_CHAR );
+            }
 	}
-      move(y+j, x);
+        move( y + j, x );
     }
-  
-  switch(symbol)
+    
+    if ( number == 9 )
+    {
+        return;
+    }
+
+    switch(shade)
     {
     case 0:
-      sym_ch = 64;
+      shade_ch = 64;
       break;
     case 1 :
-      sym_ch = 111;
+      shade_ch = 111;
       break;
     case 2:
-      sym_ch = KEY_SPACE;
+      shade_ch = KEY_SPACE;
       break;
     default:
       break;
@@ -214,40 +369,40 @@ void draw_card(int card, int number, int symbol, int shape, int color)
     }
 
   //Configure card
-  if(sym_ch == KEY_SPACE)
+  if(shade_ch == KEY_SPACE)
     {
-      card_color += 4;
+      card_color += 3;
     }
 
   attron(COLOR_PAIR(card_color));
   switch(number)
     {
     case 0:
-      switch(shape)
+      switch(symbol)
 	{
 	case 0: 
-	  mvaddch(y+1, x+7, sym_ch);
-	  mvaddch(y+2, x+7, sym_ch);
-	  mvaddch(y+2, x+6, sym_ch);
-	  mvaddch(y+2, x+8, sym_ch);
-	  mvaddch(y+3, x+7, sym_ch);
+	  mvaddch(y+1, x+7, shade_ch);
+	  mvaddch(y+2, x+7, shade_ch);
+	  mvaddch(y+2, x+6, shade_ch);
+	  mvaddch(y+2, x+8, shade_ch);
+	  mvaddch(y+3, x+7, shade_ch);
 	  break;
 
 	case 1:
-	  mvaddch(y+1, x+6, sym_ch);
-	  mvaddch(y+1, x+7, sym_ch);
-	  mvaddch(y+1, x+8, sym_ch);
-	  mvaddch(y+2, x+8, sym_ch);
-	  mvaddch(y+3, x+8, sym_ch);
-	  mvaddch(y+3, x+7, sym_ch);
-	  mvaddch(y+3, x+6, sym_ch);
-	  mvaddch(y+2, x+6, sym_ch);
+	  mvaddch(y+1, x+6, shade_ch);
+	  mvaddch(y+1, x+7, shade_ch);
+	  mvaddch(y+1, x+8, shade_ch);
+	  mvaddch(y+2, x+8, shade_ch);
+	  mvaddch(y+3, x+8, shade_ch);
+	  mvaddch(y+3, x+7, shade_ch);
+	  mvaddch(y+3, x+6, shade_ch);
+	  mvaddch(y+2, x+6, shade_ch);
 	  break;
 
 	case 2:
-	  mvaddch(y+3, x+6, sym_ch);
-	  mvaddch(y+2, x+7, sym_ch);
-	  mvaddch(y+1, x+8, sym_ch);
+	  mvaddch(y+3, x+6, shade_ch);
+	  mvaddch(y+2, x+7, shade_ch);
+	  mvaddch(y+1, x+8, shade_ch);
 	  break;
 
 	default:
@@ -256,121 +411,121 @@ void draw_card(int card, int number, int symbol, int shape, int color)
       break;
       
     case 1:
-      switch(shape)
+      switch(symbol)
 	{
 	case 0:
-	  mvaddch(y+1, x+5, sym_ch);
-	  mvaddch(y+2, x+5, sym_ch);
-	  mvaddch(y+2, x+4, sym_ch);
-	  mvaddch(y+2, x+6, sym_ch);
-	  mvaddch(y+3, x+5, sym_ch);
+	  mvaddch(y+1, x+5, shade_ch);
+	  mvaddch(y+2, x+5, shade_ch);
+	  mvaddch(y+2, x+4, shade_ch);
+	  mvaddch(y+2, x+6, shade_ch);
+	  mvaddch(y+3, x+5, shade_ch);
 	  
-	  mvaddch(y+1, x+9, sym_ch);
-	  mvaddch(y+2, x+9, sym_ch);
-	  mvaddch(y+2, x+8, sym_ch);
-	  mvaddch(y+2, x+10, sym_ch);
-	  mvaddch(y+3, x+9, sym_ch);
+	  mvaddch(y+1, x+9, shade_ch);
+	  mvaddch(y+2, x+9, shade_ch);
+	  mvaddch(y+2, x+8, shade_ch);
+	  mvaddch(y+2, x+10, shade_ch);
+	  mvaddch(y+3, x+9, shade_ch);
 	  break;
 	  
 	case 1:
-	  mvaddch(y+1, x+4, sym_ch);
-	  mvaddch(y+1, x+5, sym_ch);
-	  mvaddch(y+1, x+6, sym_ch);
-	  mvaddch(y+2, x+6, sym_ch);
-	  mvaddch(y+3, x+6, sym_ch);
-	  mvaddch(y+3, x+5, sym_ch);
-	  mvaddch(y+3, x+4, sym_ch);
-	  mvaddch(y+2, x+4, sym_ch);
+	  mvaddch(y+1, x+4, shade_ch);
+	  mvaddch(y+1, x+5, shade_ch);
+	  mvaddch(y+1, x+6, shade_ch);
+	  mvaddch(y+2, x+6, shade_ch);
+	  mvaddch(y+3, x+6, shade_ch);
+	  mvaddch(y+3, x+5, shade_ch);
+	  mvaddch(y+3, x+4, shade_ch);
+	  mvaddch(y+2, x+4, shade_ch);
 
-	  mvaddch(y+1, x+8, sym_ch);
-	  mvaddch(y+1, x+9, sym_ch);
-	  mvaddch(y+1, x+10, sym_ch);
-	  mvaddch(y+2, x+10, sym_ch);
-	  mvaddch(y+3, x+10, sym_ch);
-	  mvaddch(y+3, x+9, sym_ch);
-	  mvaddch(y+3, x+8, sym_ch);
-	  mvaddch(y+2, x+8, sym_ch);
+	  mvaddch(y+1, x+8, shade_ch);
+	  mvaddch(y+1, x+9, shade_ch);
+	  mvaddch(y+1, x+10, shade_ch);
+	  mvaddch(y+2, x+10, shade_ch);
+	  mvaddch(y+3, x+10, shade_ch);
+	  mvaddch(y+3, x+9, shade_ch);
+	  mvaddch(y+3, x+8, shade_ch);
+	  mvaddch(y+2, x+8, shade_ch);
 	  break;
 
 	case 2:					
-	  mvaddch(y+3, x+4, sym_ch);
-	  mvaddch(y+2, x+5, sym_ch);
-	  mvaddch(y+1, x+6, sym_ch);
+	  mvaddch(y+3, x+4, shade_ch);
+	  mvaddch(y+2, x+5, shade_ch);
+	  mvaddch(y+1, x+6, shade_ch);
 
-	  mvaddch(y+3, x+8, sym_ch);
-	  mvaddch(y+2, x+9, sym_ch);
-	  mvaddch(y+1, x+10, sym_ch);
+	  mvaddch(y+3, x+8, shade_ch);
+	  mvaddch(y+2, x+9, shade_ch);
+	  mvaddch(y+1, x+10, shade_ch);
 	  break;
 	default:
 	  break;
 	}
       break;
     case 2:
-      switch(shape)
+      switch(symbol)
 	{
 	case 0:
-	  mvaddch(y+1, x+3, sym_ch);
-	  mvaddch(y+2, x+3, sym_ch);
-	  mvaddch(y+2, x+2, sym_ch);
-	  mvaddch(y+2, x+4, sym_ch);
-	  mvaddch(y+3, x+3, sym_ch);
+	  mvaddch(y+1, x+3, shade_ch);
+	  mvaddch(y+2, x+3, shade_ch);
+	  mvaddch(y+2, x+2, shade_ch);
+	  mvaddch(y+2, x+4, shade_ch);
+	  mvaddch(y+3, x+3, shade_ch);
 	  
-	  mvaddch(y+1, x+7, sym_ch);
-	  mvaddch(y+2, x+7, sym_ch);
-	  mvaddch(y+2, x+6, sym_ch);
-	  mvaddch(y+2, x+8, sym_ch);
-	  mvaddch(y+3, x+7, sym_ch);
+	  mvaddch(y+1, x+7, shade_ch);
+	  mvaddch(y+2, x+7, shade_ch);
+	  mvaddch(y+2, x+6, shade_ch);
+	  mvaddch(y+2, x+8, shade_ch);
+	  mvaddch(y+3, x+7, shade_ch);
 	  
-          mvaddch(y+1, x+11, sym_ch);
-	  mvaddch(y+2, x+11, sym_ch);
-	  mvaddch(y+2, x+10, sym_ch);
-	  mvaddch(y+2, x+12, sym_ch);
-	  mvaddch(y+3, x+11, sym_ch);
+          mvaddch(y+1, x+11, shade_ch);
+	  mvaddch(y+2, x+11, shade_ch);
+	  mvaddch(y+2, x+10, shade_ch);
+	  mvaddch(y+2, x+12, shade_ch);
+	  mvaddch(y+3, x+11, shade_ch);
 	  
 	  break;
 
 	case 1:
-	  mvaddch(y+1, x+2, sym_ch);
-	  mvaddch(y+1, x+3, sym_ch);
-	  mvaddch(y+1, x+4, sym_ch);
-	  mvaddch(y+2, x+4, sym_ch);
-	  mvaddch(y+3, x+4, sym_ch);
-	  mvaddch(y+3, x+3, sym_ch);
-	  mvaddch(y+3, x+2, sym_ch);
-	  mvaddch(y+2, x+2, sym_ch);
+	  mvaddch(y+1, x+2, shade_ch);
+	  mvaddch(y+1, x+3, shade_ch);
+	  mvaddch(y+1, x+4, shade_ch);
+	  mvaddch(y+2, x+4, shade_ch);
+	  mvaddch(y+3, x+4, shade_ch);
+	  mvaddch(y+3, x+3, shade_ch);
+	  mvaddch(y+3, x+2, shade_ch);
+	  mvaddch(y+2, x+2, shade_ch);
 
-	  mvaddch(y+1, x+6, sym_ch);
-	  mvaddch(y+1, x+7, sym_ch);
-	  mvaddch(y+1, x+8, sym_ch);
-	  mvaddch(y+2, x+8, sym_ch);
-	  mvaddch(y+3, x+8, sym_ch);
-	  mvaddch(y+3, x+7, sym_ch);
-	  mvaddch(y+3, x+6, sym_ch);
-	  mvaddch(y+2, x+6, sym_ch);
+	  mvaddch(y+1, x+6, shade_ch);
+	  mvaddch(y+1, x+7, shade_ch);
+	  mvaddch(y+1, x+8, shade_ch);
+	  mvaddch(y+2, x+8, shade_ch);
+	  mvaddch(y+3, x+8, shade_ch);
+	  mvaddch(y+3, x+7, shade_ch);
+	  mvaddch(y+3, x+6, shade_ch);
+	  mvaddch(y+2, x+6, shade_ch);
 
-	  mvaddch(y+1, x+10, sym_ch);
-	  mvaddch(y+1, x+11, sym_ch);
-	  mvaddch(y+1, x+12, sym_ch);
-	  mvaddch(y+2, x+12, sym_ch);
-	  mvaddch(y+3, x+12, sym_ch);
-	  mvaddch(y+3, x+11, sym_ch);
-	  mvaddch(y+3, x+10, sym_ch);
-	  mvaddch(y+2, x+10, sym_ch);
+	  mvaddch(y+1, x+10, shade_ch);
+	  mvaddch(y+1, x+11, shade_ch);
+	  mvaddch(y+1, x+12, shade_ch);
+	  mvaddch(y+2, x+12, shade_ch);
+	  mvaddch(y+3, x+12, shade_ch);
+	  mvaddch(y+3, x+11, shade_ch);
+	  mvaddch(y+3, x+10, shade_ch);
+	  mvaddch(y+2, x+10, shade_ch);
 
 	  break;
 
 	case 2:
-	  mvaddch(y+3, x+2, sym_ch);
-	  mvaddch(y+2, x+3, sym_ch);
-	  mvaddch(y+1, x+4, sym_ch);
+	  mvaddch(y+3, x+2, shade_ch);
+	  mvaddch(y+2, x+3, shade_ch);
+	  mvaddch(y+1, x+4, shade_ch);
 
-	  mvaddch(y+3, x+6, sym_ch);
-	  mvaddch(y+2, x+7, sym_ch);
-	  mvaddch(y+1, x+8, sym_ch);
+	  mvaddch(y+3, x+6, shade_ch);
+	  mvaddch(y+2, x+7, shade_ch);
+	  mvaddch(y+1, x+8, shade_ch);
 
-	  mvaddch(y+3, x+10, sym_ch);
-	  mvaddch(y+2, x+11, sym_ch);
-	  mvaddch(y+1, x+12, sym_ch);
+	  mvaddch(y+3, x+10, shade_ch);
+	  mvaddch(y+2, x+11, shade_ch);
+	  mvaddch(y+1, x+12, shade_ch);
 	  break;
 	}
       break;
@@ -384,79 +539,36 @@ void draw_card(int card, int number, int symbol, int shape, int color)
 
 }
 
+
 void draw_card_IDs()
 {
- 
-  int ID[16] = {49,50,51,52,81,87,69,82,65,83,68,70,90,88,67,86};
-
-  for(int i=0; i<3; i++)
+    for( int i = 0; i < 3; i++ )
     {
-      for(int j=0; j<4; j++)
-	{
-	  move(ORIGIN_Y + ((i)*(CARD_HEIGHT+ROW_OFFSET)),
-	       ORIGIN_X + ((j)*(CARD_WIDTH+COL_OFFSET)));
-	  addch(ID[i*4+j]);
+          for( int j = 0; j < 4; j++ )
+          {
+	      move( ORIGIN_Y + ( ( i ) * ( CARD_HEIGHT + ROW_OFFSET ) ),
+	            ORIGIN_X + ( ( j ) * ( CARD_WIDTH + COL_OFFSET ) ) );
+	      addch( ( int )ACCEPTED_CHARS[i * 4 + j] );
 	  
-	}
+	  }
     }
+    refresh();
 }
 
-void submenu_actions(WINDOW* win)
-{
-  mvwprintw(win,0,4,"Menu");
-  mvwprintw(win,2,3,"1. Option");
-  mvwprintw(win,3,3,"2. Option");
-  mvwprintw(win,4,3,"3. Close");
-  
-  for(;;)
-  {
-    int ch = wgetch(win);
-    int highlight = 1;
 
-    switch(ch)
-      {
-      case 1:
-	mvwprintw(win,5,3,"1");
-	break;
-
-      case 2:
-	mvwprintw(win,5,3,"2");
-	break;
-
-      case 3:
-	mvwprintw(win,5,3,"3");
-	break;
-	
-      case KEY_UP:
-	highlight-=1;
-	break;
-
-      case KEY_DOWN:
-	highlight+=1;
-	break;
-
-      case '\r':
-	break;
-
-      default:
-	mvwprintw(win,5,3,"%c",ch);
-	wrefresh(win);
-	usleep(200000);
-	mvwprintw(win,5,3,"    ");
-	wmove(win,5,3);
-	break;
-      }
-	
-    wrefresh(win);
-  }
-}
 
 bool in_accepted_chars(int ch)
 {
-  return ch == 49 || ch == 50 || ch == 51 || ch == 52 ||
-    ch == 113 || ch == 119 || ch == 101 || ch == 114 ||
-    ch == 97 || ch == 115 || ch == 100 || ch == 102;
+    for ( auto chars : ACCEPTED_CHARS )
+    {
+        if ( ch == ( int )chars )
+        {
+            return true;
+        }
+    }
+    return false;
 }
+
 
 //int get_card(int row, int column)
 int get_card(int ch)
@@ -496,12 +608,58 @@ int get_card(int ch)
      }
 }
 
-void print_card_stats(int card)
+
+string get_card_coords( int card )
 {
-  mvprintw(31,10,"Card:%c", card);
-  mvprintw(32,10,"Choice String:%s", choice_string.c_str());
-  mvprintw(33,10,"Random:%d", rand());
+    switch( card )
+    {
+        case 1:
+            return "11";
+
+        case 2:
+            return "12";
+
+        case 3:
+            return "13";
+
+        case 4:
+            return "14";
+    
+        case 5:
+            return "21";
+
+        case 6:
+            return "22";
+
+        case 7:
+            return "23";
+
+        case 8:
+            return "24";
+
+        case 9:
+            return "31";
+
+        case 10:
+            return "32";
+
+        case 11:
+            return "33";
+
+        case 12:
+            return "34";
+
+        default:
+            return "-1";
+    }
 }
+
+
+void print_card_stats( int card )
+{
+    mvprintw( 32, 10, "Choice String:%s", choice_string.c_str() );
+}
+
 
 void animate_cards(vector<int>cards, int rate)
 {
@@ -511,64 +669,11 @@ void animate_cards(vector<int>cards, int rate)
   vector<int>yhs;
   vector<int>mids;
 
-  int row, column, mid, x1, x2, y1, y2;
-  for(int c=0; c<cards.size(); c++)
+    int row, column, mid, x1, x2, y1, y2;
+    for( int c = 0; c < cards.size(); c++)
     {
-      switch(cards[c])
-	{
-	case 1:
-	  row = 1;
-	  column = 1;
-	  break;
-	case 2:
-	  row = 1;
-	  column = 2;
-	  break;
-	case 3:
-	  row = 1;
-	  column = 3;
-	  break;
-	case 4:
-	  row = 1;
-	  column = 4;
-	  break;
-	case 5:
-	  row = 2;
-	  column = 1;
-	  break;
-	case 6:
-	  row = 2;
-	  column = 2;
-	  break;
-	case 7:
-	  row = 2;
-	  column = 3;
-	  break;
-	case 8:
-	  row = 2;
-	  column = 4;
-	  break;
-	case 9:
-	  row = 3;
-	  column = 1;
-	  break;
-	case 10:
-	  row = 3;
-	  column = 2;
-	  break;
-	case 11:
-	  row = 3;
-	  column = 3;
-	  break;
-	case 12:
-	  row = 3;
-	  column = 4;
-	  break;
-	default:
-	  break;
-    }
-
-  
+      row = get_card_coords( cards[c] )[0] - 48;
+      column = get_card_coords( cards[c] )[1] - 48;
       x1 = ORIGIN_X + ((column - 1)*(CARD_WIDTH+COL_OFFSET));
       x2 = x1 + CARD_WIDTH-1;
       y1 = ORIGIN_Y + ((row - 1)*(CARD_HEIGHT+ROW_OFFSET));
@@ -617,68 +722,17 @@ void animate_cards(vector<int>cards, int rate)
 
 void dehighlight_card(int card)
 {
-  int x1, x2, y1, y2, column, row;
-  switch(card)
-    {
-    case 1:
-      row = 1;
-      column = 1;
-      break;
-    case 2:
-      row = 1;
-      column = 2;
-      break;
-    case 3:
-      row = 1;
-      column = 3;
-      break;
-    case 4:
-      row = 1;
-      column = 4;
-      break;
-    case 5:
-      row = 2;
-      column = 1;
-      break;
-    case 6:
-      row = 2;
-      column = 2;
-      break;
-    case 7:
-      row = 2;
-      column = 3;
-      break;
-    case 8:
-      row = 2;
-      column = 4;
-      break;
-    case 9:
-      row = 3;
-      column = 1;
-      break;
-    case 10:
-      row = 3;
-      column = 2;
-      break;
-    case 11:
-      row = 3;
-      column = 3;
-      break;
-    case 12:
-      row = 3;
-      column = 4;
-      break;
-    default:
-      break;
-    }
+    int x1, x2, y1, y2, column, row;
+    row = get_card_coords( card )[0] - 48;
+    column = get_card_coords( card )[1] - 48;
   
-  x1 = ORIGIN_X + ((column - 1)*(CARD_WIDTH+COL_OFFSET))+1;
-  x2 = x1 - 1 +CARD_WIDTH-1;
-  y1 = ORIGIN_Y + ((row - 1)*(CARD_HEIGHT+ROW_OFFSET));
-  y2 = y1+CARD_HEIGHT-1;
+    x1 = ORIGIN_X + ((column - 1)*(CARD_WIDTH+COL_OFFSET))+1;
+    x2 = x1 - 1 +CARD_WIDTH-1;
+    y1 = ORIGIN_Y + ((row - 1)*(CARD_HEIGHT+ROW_OFFSET));
+    y2 = y1+CARD_HEIGHT-1;
 
-//Clear previous highlight
-  if(x2 != 0)
+    //Clear previous highlight
+    if( x2 != 0 )
     {
       //1.Left Border
       move(y1-1, x1-2);
@@ -719,103 +773,12 @@ void dehighlight_card(int card)
     }
 }
 
+
 void highlight_card(int card)
 {
-  int column,row,x1,x2,y1,y2;
-  /*//Clear previous highlight
-  if(cur_x2 != 0)
-    {
-      //1.Left Border
-      move(cur_y1-1, cur_x1-2);
-      addch(32);
-      for(int i=0; i<CARD_HEIGHT+1; i++)
-	{
-	  move(cur_y1+i, cur_x1-2);
-	  addch(32);
-	}
-
-      //2.Top Border
-      move(cur_y1-1, cur_x1-1);
-      addch(32);
-      for(int j=0; j<CARD_WIDTH; j++)
-	{
-	  move(cur_y1-1, j+cur_x1-1+1);
-	  addch(32);
-	}
-
-      //3.Right Border
-      move(cur_y1-1, cur_x2+1);
-      addch(32);
-      for(int k=0; k<CARD_HEIGHT; k++)
-	{
-	  move(cur_y1+k, cur_x2+1);
-	  addch(32);
-	}
-
-      //4.Bottom Border
-      move(cur_y2+1, cur_x1-1);
-      addch(32);
-      for(int l=0; l<CARD_WIDTH; l++)
-	{
-	  move(cur_y2+1, l+cur_x1-1+1);
-	  addch(32);
-	}
-
-    }
-  */
-  switch(card)
-    {
-    case 1:
-      row = 1;
-      column = 1;
-      break;
-    case 2:
-      row = 1;
-      column = 2;
-      break;
-    case 3:
-      row = 1;
-      column = 3;
-      break;
-    case 4:
-      row = 1;
-      column = 4;
-      break;
-    case 5:
-      row = 2;
-      column = 1;
-      break;
-    case 6:
-      row = 2;
-      column = 2;
-      break;
-    case 7:
-      row = 2;
-      column = 3;
-      break;
-    case 8:
-      row = 2;
-      column = 4;
-      break;
-    case 9:
-      row = 3;
-      column = 1;
-      break;
-    case 10:
-      row = 3;
-      column = 2;
-      break;
-    case 11:
-      row = 3;
-      column = 3;
-      break;
-    case 12:
-      row = 3;
-      column = 4;
-      break;
-    default:
-      break;
-    }
+    int column,row,x1,x2,y1,y2;
+    row = get_card_coords( card )[0] - 48;
+    column = get_card_coords( card )[1] - 48;
   
   x1 = ORIGIN_X + ((column - 1)*(CARD_WIDTH+COL_OFFSET))+1;
   x2 = x1 - 1 +CARD_WIDTH-1;
@@ -863,180 +826,152 @@ void highlight_card(int card)
 
 void show_game_screen()
 {
-  clear();
-  int row, column;
-  start_color();
+    clear();
+    int row, column;
+    start_color();
 
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-    init_pair(2, COLOR_RED, COLOR_WHITE);
-    init_pair(3, COLOR_MAGENTA, COLOR_WHITE);
-    init_pair(4, COLOR_BLUE, COLOR_WHITE);
-    init_pair(5, COLOR_RED, COLOR_RED);
-    init_pair(6, COLOR_MAGENTA, COLOR_MAGENTA);
-    init_pair(7, COLOR_BLUE, COLOR_BLUE);
+    init_pair( 1, COLOR_RED, COLOR_BLACK );
+    init_pair( 2, COLOR_RED, COLOR_WHITE );
+    init_pair( 3, COLOR_MAGENTA, COLOR_WHITE );
+    init_pair( 4, COLOR_BLUE, COLOR_WHITE );
+    init_pair( 5, COLOR_RED, COLOR_RED );
+    init_pair( 6, COLOR_MAGENTA, COLOR_MAGENTA );
+    init_pair( 7, COLOR_BLUE, COLOR_BLUE );
  
-    getmaxyx(stdscr, row, column);
-    popup_win = newwin(10, 30, row/2-5, column/2-15);
-    keypad(popup_win, TRUE);
-    box(popup_win, 0, 0);
-  
-    keypad(stdscr, TRUE);
-    noecho();
-    cbreak();
-
-    //Draw 12 cards on the screen
-    for ( int i=1; i<13; i++ )
-    {
-       draw_card(i, rand(), rand(), rand(), rand());
-    }
-
-    //Draw card IDs
-    draw_card_IDs();
+    getmaxyx (stdscr, row, column );
+    score_win = newwin( 4, 80, 21, 0 );
+    message_win = newwin( 1, 80, 20, 0 );
     
-  refresh();
+    refresh();
 }
 
 
 //|<handle_input>
 void handle_input()
 {
-  /*
-  cbreak();
-   
-  vector<char> select = {};
-  
-  for ( int i = 0; ; ++i )
-  { 
-
-    int c = getch();
-
-    if ( c == ERR || ( c == ' ' && select.size() == 3 ) ) 
+    int card, ch;
+    if( game_started )
     {
-      break;
+        ch = getch();
+
+        switch(ch)
+	{
+	    case 54:
+	        endwin();
+	        my_client->cleanup();
+	        break;
+
+	    case 110:
+	        choice_string = "nnn";
+	        break;
+	
+	    case KEY_SPACE:
+	    {
+	        vector<int>cards;
+
+	        if ( choice_string.size() == 3 )
+	        {
+                    my_client->send_message( choice_string );
+	            for( int d = 0; d < choice_string.size(); d++ )
+		    {
+		        cards.push_back( get_card( ( int )
+                                       ( choice_string[d] ) ) );
+		    } 
+	        }
+                break;
+            }
+            default:
+                mvprintw( 33, 10, "Key Pressed:%c", ch );
+                break;
+        }
+
+
+        if ( choice_string.find( ( char )ch ) == -1 && 
+            choice_string.size() == 3 )
+	{
+	    //Empty choice string
+	    choice_string = "";
+	    //Delete all card highlights
+	    for( int i = 1; i < 13; i++ )
+	    {
+	      dehighlight_card( i );
+	    }
+	 
+	}
+
+        if ( choice_string.find( ( char )ch ) == -1 && 
+            in_accepted_chars( ch ) )
+	{
+	    choice_string += ( ( char )ch );
+	    highlight_card( get_card( ch ) );
+	    goto resume;
+	 
+	}
+      
+        if ( choice_string.find( ( char )ch ) !=-1 && 
+            in_accepted_chars( ch ) )
+	{
+	    choice_string.erase( choice_string.find( ( char )ch ), 1 );
+	    dehighlight_card( get_card ( ch ) );
+	    goto resume;
+	 
+	}
+      
+    resume:
+        move( 32,18 );
+        clrtoeol();
+        print_card_stats( ch );
+        clrtoeol();
+        refresh();
+    }
+}
+
+
+string bitcode_parser( char bitcode )
+{
+    int bit = ( int )bitcode;
+    int remainder;
+    int padding;
+    string card_string = "";
+    string result = "";
+
+    if ( bit == 255 )
+    {
+        mvprintw( 43, 0, "9999" );
+        return "9999";
+    }
+
+    if ( bit == 200 )
+    {
+        return "0000";
+    }
+
+    for ( ;; )
+    {
+        if ( bit <= 2 )
+        {
+            card_string += to_string( bit );
+            break;
+        }
+        remainder = bit % 4;
+        bit = bit >> 2;
+        card_string += to_string( remainder );
     }
     
-    c = toupper( c );
-
-    //If already selected, deselect it and go to top.
-    if ( find( select.begin(), select.end(), c ) != select.end() )
+    //Reverse string
+    for ( int j = card_string.size(); j > 0; j-- )
     {
-       //add code to deselect the card here
-       select.erase( remove( select.begin(), select.end(), c ), select.end() );
-       refresh();
-       continue;
+        result += card_string[j -1];
     }
 
-    //If acceptable char and not a selected card, select it.
-    if ( find(ACCEPTED_CHARS.begin(), ACCEPTED_CHARS.end(), c ) != 
-         ACCEPTED_CHARS.end() && 
-         find (select.begin(), select.end(), c ) == select.end() )  
+    padding = 4 - result.size();
+
+    for ( int i = 0; i < padding; i++ )
     {
-      //add code to select card here
-      select.push_back( c );
-      refresh();
+        result.insert( 0, "0" );
     }
-  }
 
-  string inp( select.begin(), select.end() );
-  printw( "%s", inp.data() );
-  printw( "%s", "\n" );
-  refresh();
-
-  */
-  //Send substring in case of left overs.
-  //my_client->send_message( inp.substr( 0,3 ) );
-  //my_client->send_message( inp );
-  int lx, ly, card, ch;
-      move(30,10);
-      ch = getch();
-
-      switch(ch)
-	{
-	case 54:
-	  endwin();
-	  my_client->cleanup();
-	  break;
-	case 109:
-	  {
-	  touchwin(popup_win);
-	  submenu_actions(popup_win);
-	  break;
-	  }
-	
-	case KEY_SPACE:
-	  {
-	  getyx(stdscr,ly,lx);
-	  vector<int>cards;
-
-	  if(choice_string.size()>0)
-	    {
-	      for(int d=0; d<choice_string.size(); d++)
-		{
-		  cards.push_back(get_card((int)(choice_string[d])));
-		} 
-	    }
-	  
-	  else
-	    {
-	      for(int t=0; t<12; t++)
-		{
-		  cards.push_back(t+1);
-		}
-	    }
-	  
-	  animate_cards(cards, 20000);
-	  
-	  //Redraw cards
-	  for(int s=0; s<cards.size(); s++)
-	    {
-	      draw_card(cards[s], rand(), rand(), rand(), rand());
-	      draw_card_IDs();
-	    }
-
-	  move(ly,lx);
-	  break;
-	  }
-
-	default:
-	  mvprintw(33,10,"Key Pressed:%c", ch);
-	  break;
-	}
-      
-
-      if(choice_string.find((char)ch)==-1 && choice_string.size()==3)
-	{
-	  //Empty choice string
-	  choice_string = "";
-	  //Delete all card highlights
-	  for(int i=1; i<13; i++)
-	    {
-	      dehighlight_card(i);
-	    }
-	 
-	}
-
-      if(choice_string.find((char)ch)==-1 && in_accepted_chars(ch))
-	{
-	  choice_string+= ((char)ch);
-	  highlight_card(get_card(ch));
-	  goto resume;
-	 
-	}
-      
-      if(choice_string.find((char)ch)!=-1 && in_accepted_chars(ch))
-	{
-	  choice_string.erase(choice_string.find((char)ch),1);
-	  dehighlight_card(get_card(ch));
-	  goto resume;
-	 
-	}
-      
- resume:
-      move(32,18);
-      clrtoeol();
-      print_card_stats(ch);
-      clrtoeol();
-      refresh();
+    return result;
 }
 
 
@@ -1049,39 +984,72 @@ void handle_server_msg()
       printw( "%s", msg.substr( 1 ).data() );
       printw( "%s", "\n" );
       refresh();
-      echo();
       endwin();
       my_client->cleanup();
       break;
 
     case MESSAGE:
-      mvprintw( 22, 2, "%s", "Message Received: \n" );
-      mvprintw( 23, 2, "%s", msg.substr( 1 ).data() ); 
+      wmove( message_win, 0, 0 );
+      wclrtoeol( message_win );
+      mvwprintw( message_win, 0, 0, "Server Msg:%s", msg.substr( 1 ).data() );
+      wrefresh( message_win );
       break;
 
     case CARDS:
-      if( game_started == false )
+        {
+        if( game_started == false )
 	{
 	  show_game_screen();
 	  game_started = true;
 	}
+      
+        vector<string>cards;
+        vector<int>idxs;
+        msg = msg.substr( 1 );
+        int pos;
 
-        mvprintw(24,2,"%s","CARDS NOM NOM NOM");
-	for ( int i = 1; i < (int) msg.size(); ++i )
-	{
-          mvprintw((25+i),2,"Received card with bitcode: %d", int( msg[i] ) );
-	}
-      break;
+        while ( ( pos = msg.find( ";" ) ) != string::npos )
+        {
+            cards.push_back( msg.substr( 0, pos ) );
+            msg.erase( 0, pos + 1 );
+        }
+        
+        for ( int j = 0; j < cards.size(); j++ )
+        {
+            idxs.push_back( stoi( cards[j].substr( 2 ).data() ) + 1 );
+        }
 
-          default:
-      break;
-  }
-  refresh();
-  if ( ! my_client->get_past_data_read().empty() )
-  {
-    handle_server_msg();
-  }
+        //Animate cards
+        animate_cards( idxs, 20000 );
+
+        //Draw
+        for ( int i = 0; i < cards.size(); ++i )
+        {
+            string c_string = bitcode_parser( cards[i][0] );
+            draw_card( idxs[i], c_string[0] - 48, c_string[1] - 48,
+                       c_string[2] - 48, c_string[3] - 48 ); 
+        }
+
+        draw_card_IDs();
+        }
+        break;
+
+    case UPDATE:
+        update_score_win( msg.substr( 1, msg.size() - 1 ) );
+        break;
+
+    default:
+        break;
+    }
+
+    refresh();
+
+    if ( ! my_client->get_past_data_read().empty() )
+    {
+        handle_server_msg();
+    }   
 }
+
 
 int main( int argc, char *argv[] )
 {
@@ -1097,9 +1065,13 @@ int main( int argc, char *argv[] )
     //Initialize ncurses
     int row, column;
     initscr();
+    keypad( stdscr, TRUE );
     curs_set(0);
-    char user[15];
+    noecho();
+
     splash_screen( user );
+    timer_win = newwin( 1, 17, TIME_WIN_Y, TIME_WIN_X );
+    get_user_name();
 
     if ( argc == 2 )
     {
@@ -1114,7 +1086,7 @@ int main( int argc, char *argv[] )
     struct sigaction action = {};
 
     action.sa_handler = sig_wrap_cleanup;
-    //sigaction( SIGINT, &action, nullptr );
+    sigaction( SIGINT, &action, nullptr );
     
     my_client->wait_for_input();
     cout << "nCurses has exited. " << endl;
