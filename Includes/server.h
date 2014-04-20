@@ -21,6 +21,8 @@ class Server
     time_t end;
     int last_correct;
     int streak;
+    const int FIB [ 15 ] =
+    { 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597 };
 
   public:
     Deck* deck;

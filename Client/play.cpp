@@ -134,38 +134,38 @@ void splash_screen( char * name )
     init_pair( 11, COLOR_CYAN, COLOR_BLACK );
     init_pair( 12, COLOR_MAGENTA, COLOR_BLACK );
     init_pair( 13, COLOR_YELLOW, COLOR_BLACK );
-    box(stdscr, '|', '-');
+    wborder( stdscr, '|', '|', '-', '-', '+', '+', '+', '+' );
 
-				
-    vector<string>S = { " /\\\\\\\\\\\\\\\\\\\\\\",   
-                        "/\\\\\\/////////\\\\\\",     
-                        "\\//\\\\\\      \\///",
-                        "  \\////\\\\\\"
-                        "     \\\\///\\\\\\",
-                        "         \\////\\\\\\",
-                        "    /\\\\\\     \\//\\\\\\",
-                        "    \\///\\\\\\\\\\\\\\\\\\\\\\/",
-                        "       \\//////////" };
+    vector<string>S = { R"(  /\\\\\\\\\\\      )",
+                        R"(/\\\/////////\\\    )",
+                        R"(\//\\\      \///    )",
+                        R"(  \////\\           )",
+                        R"(      \////\\\      )",
+                        R"(          \////\\\  )",
+                        R"(    /\\\      \//\\\)",
+                        R"(    \///\\\\\\\\\\\/)",
+                        R"(       \/////////// )" };
+		
+    vector<string>E = { R"(/\\\\\\\\\\\\\\     )",
+                        R"(\/\\///////////     )",
+                        R"( \/\\\              )",
+                        R"(  \/\\\\\\\\\       )",
+                        R"(   \/\\\/////       )",
+                        R"(    \/\\\           )",
+                        R"(     \/\\\          )",
+                        R"(      \/\\\\\\\\\\\\)",
+                        R"(       \////////////)" };
 
-    vector<string>E = { "/\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
-                        "\\/\\\\\\///////////",
-                        " \\/\\\\\\",
-                        "  \\/\\\\\\\\\\\\\\\\\\\\\\",
-                        "   \\/\\\\\\///////",
-                        "    \\/\\\\\\",
-                        "     \\/\\\\\\",
-                        "      \\/\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
-                        "        \\////////////////" };
+    vector<string>T = { R"(/\\\\\\\\\\\\\\\ )",
+                        R"(\///////\\\///// )",
+                        R"(       \/\\\     )",
+                        R"(        \/\\\    )",
+                        R"(         \/\\\   )",
+                        R"(          \/\\\  )",
+                        R"(           \/\\\ )",
+                        R"(            \/\\\)",
+                        R"(             \///)" };
 
-    vector<string>T = { "/\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
-                        "\\///////\\\\\\/////",
-                        "       \\/\\\\\\     ",
-                        "        \\/\\\\\\    ",
-                        "         \\/\\\\\\   ",
-                        "          \\/\\\\\\  ",
-                        "           \\/\\\\\\ ",
-                        "            \\/\\\\\\",
-                        "                \\///" };
 
     int logo_offset = 6;
 
@@ -182,7 +182,7 @@ void splash_screen( char * name )
     attron( COLOR_PAIR( 13 ) );
     for ( int j = 0; j < E.size(); j++ )
     {
-        mvprintw( ORIGIN_Y + j, ORIGIN_X + logo_offset, S[j].c_str() );
+        mvprintw( ORIGIN_Y + j, ORIGIN_X + logo_offset, E[j].c_str() );
     }                  
     attroff( COLOR_PAIR( 13 ) );
 
@@ -191,28 +191,26 @@ void splash_screen( char * name )
     attron( COLOR_PAIR( 12 ) );
     for ( int k = 0; k < T.size(); k++ )
     {
-        mvprintw( ORIGIN_Y + k, ORIGIN_X + logo_offset, S[k].c_str() );
+        mvprintw( ORIGIN_Y + k, ORIGIN_X + logo_offset, T[k].c_str() );
     }                  
     attroff( COLOR_PAIR( 12 ) );
 
-  //Project Details window
-  WINDOW* subwindow = newwin(8,35,ORIGIN_Y+10, ORIGIN_X+16);
-  box(subwindow, 0, 0);
-  mvwprintw(subwindow, 1, 3, "CSC 460");
-  mvwprintw(subwindow, 2, 3, "Spring 2014");
-  mvwprintw(subwindow, 3, 3, "Project Team: Greg Donnell");
-  mvwprintw(subwindow, 4, 3, "\t\t Matt Duff");
-  mvwprintw(subwindow, 5, 3, "\t\t Tim Williams");
-  //wrefresh(subwindow);
-
-  touchwin(subwindow);
-  wrefresh(subwindow);
-  mvwprintw(stdscr, ORIGIN_Y+20, ORIGIN_X+20, "Please Enter a Username: ");
-  touchwin( stdscr );
-  refresh();
-  wrefresh( subwindow );
-  //getnstr(name, 14);
-  //noecho();
+    //Project Details window
+    //WINDOW* subwindow = newwin( 8, 35, ORIGIN_Y + 10, ORIGIN_X + 16 );
+    WINDOW* subwindow = newwin( 8, 35, ORIGIN_Y + 10, ORIGIN_X + 20 );
+    wborder( subwindow, '|', '|', '-', '-', '+', '+', '+', '+' );
+    mvwprintw( subwindow, 1, 3, "CSC 460" );
+    mvwprintw( subwindow, 2, 3, "Spring 2014" );
+    mvwprintw( subwindow, 3, 3, "Project Team: Greg Donnell" );
+    mvwprintw( subwindow, 4, 3, "\t\t Matt Duff" );
+    mvwprintw( subwindow, 5, 3, "\t\t Tim Williams" );
+    touchwin( subwindow );
+    mvwprintw( stdscr, ORIGIN_Y + 20, ORIGIN_X + 20, 
+               "Please Enter a Username: " );
+    touchwin( stdscr );
+    refresh();
+    wrefresh( subwindow );
+  
 }
 
 
