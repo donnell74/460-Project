@@ -177,10 +177,10 @@ int Server::check_guess( char* guess, Deck* deck, Deck* playing_deck )
             //Set to check
             vector<Card*>cset;
   
-            int idx_1 = map_card( guess[0] );
-            int idx_2 = map_card( guess[1] );
-            int idx_3 = map_card( guess[2] );
-
+            int idx_1 = map_card( toupper( guess[0] ) );
+            int idx_2 = map_card( toupper( guess[1] ) );
+            int idx_3 = map_card( toupper( guess[2] ) );
+	    cout<<idx_1<<idx_2<<idx_3<<endl;
             cset.push_back( playing_deck->get_card( idx_1 ) );
             cset.push_back( playing_deck->get_card( idx_2 ) );
             cset.push_back( playing_deck->get_card( idx_3 ) );
