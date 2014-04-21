@@ -45,8 +45,18 @@ Deck::Deck()
                     ncard->symbol = static_cast<Symbol>( j );
                     ncard->shade = static_cast<Shade>( k );
                     ncard->color = static_cast<Color>( l );
-                    ncard->bitcode = ( i << 6 ) | ( j << 4 ) | 
+		    
+		    //Fixes issue with null char as bitcode
+		    if ( i == 0 && j == 0 && k == 0 && l == 0 )
+		      {
+			ncard->bitcode = (char)200;
+		      }
+ 
+		    else
+		      {
+			ncard->bitcode = ( i << 6 ) | ( j << 4 ) | 
                                      ( k << 2 ) | l;
+		      }
                     cards.push_back( ncard );
                 }
             }  
@@ -177,15 +187,11 @@ void Deck::shuffle()
 {
     if( !empty( 0 ) )
     {
-        random_device rd;
-        default_random_engine e1( rd() );
-  
         //Pointer to Card struct for temporary storage
         Card* temp;
         for ( int i = _count - 1; i > top; i-- )
 	{
-	    uniform_int_distribution<int> uniform_dist( 0, i );
-	    int random_number = uniform_dist( e1 );
+	    int random_number = rand(i);
 
 	    temp = cards[i];
 	    cards[i] = cards[random_number];
@@ -436,6 +442,7 @@ string create_playing_cards( vector<int>indexes,
     {
         Card* ncard = deck->draw();
         card_array += ncard->bitcode;
+	card_array += ":" + to_string(indexes[i]) + ";";
         cout << ncard->bitcode + 31 << endl;
         //Add card to playing deck
         playing_deck->replace_card( indexes[i], ncard );

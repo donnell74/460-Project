@@ -1,0 +1,9 @@
+for each_dir in Server Client; do \
+	make -C  $each_dir build; \
+	done
+make[1]: Entering directory `/home/tw/460-Project/Server'
+g++ --std=c++0x -Wall -I../Includes  -c -o ../Includes/server.o ../Includes/server.cpp
+make[1]: Leaving directory `/home/tw/460-Project/Server'
+make[1]: Entering directory `/home/tw/460-Project/Client'
+g++ --std=c++0x -I ../Includes ../Includes/cardlib.o ../Includes/client.o -o play play.cpp -lcurses -pthread
+make[1]: Leaving directory `/home/tw/460-Project/Client'

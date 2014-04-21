@@ -222,6 +222,8 @@ void update_timer_win( string msg )
 
 void update_score_win( string msg )
 {
+  touchwin( score_win );
+    wclear( score_win );
     int row = 0;
     int column = 0;
     int pos = 0;
@@ -933,6 +935,11 @@ string bitcode_parser( char bitcode )
     string card_string = "";
     string result = "";
 
+    if ( bit < 0 )
+      {
+	bit = 128 - (-1)*bit + 128;
+      }
+    
     if ( bit == 255 )
     {
         mvprintw( 43, 0, "9999" );
@@ -1019,7 +1026,7 @@ void handle_server_msg()
 
         //Animate cards
         animate_cards( idxs, 20000 );
-
+	
         //Draw
         for ( int i = 0; i < cards.size(); ++i )
         {
