@@ -139,7 +139,7 @@ void splash_screen( char * name )
     vector<string>S = { R"(  /\\\\\\\\\\\      )",
                         R"(/\\\/////////\\\    )",
                         R"(\//\\\      \///    )",
-                        R"(  \////\\           )",
+                        R"(  \////\\\          )",
                         R"(      \////\\\      )",
                         R"(          \////\\\  )",
                         R"(    /\\\      \//\\\)",
@@ -196,14 +196,13 @@ void splash_screen( char * name )
     attroff( COLOR_PAIR( 12 ) );
 
     //Project Details window
-    //WINDOW* subwindow = newwin( 8, 35, ORIGIN_Y + 10, ORIGIN_X + 16 );
     WINDOW* subwindow = newwin( 8, 35, ORIGIN_Y + 10, ORIGIN_X + 20 );
     wborder( subwindow, '|', '|', '-', '-', '+', '+', '+', '+' );
     mvwprintw( subwindow, 1, 3, "CSC 460" );
     mvwprintw( subwindow, 2, 3, "Spring 2014" );
-    mvwprintw( subwindow, 3, 3, "Project Team: Greg Donnell" );
-    mvwprintw( subwindow, 4, 3, "\t\t Matt Duff" );
-    mvwprintw( subwindow, 5, 3, "\t\t Tim Williams" );
+    mvwprintw( subwindow, 3, 3, "Project Team: Tim Williams" );
+    mvwprintw( subwindow, 4, 3, "\t\t Greg Donnell" );
+    mvwprintw( subwindow, 5, 3, "\t\t Matthew Duff" );
     touchwin( subwindow );
     mvwprintw( stdscr, ORIGIN_Y + 20, ORIGIN_X + 20, 
                "Please Enter a Username: " );
@@ -222,11 +221,13 @@ void update_timer_win( string msg )
 
 void update_score_win( string msg )
 {
-  touchwin( score_win );
+    touchwin( score_win );
     wclear( score_win );
-    int row = 0;
+
+    int row = 1;
     int column = 0;
     int pos = 0;
+
     vector<string>clients;
 
     while ( ( pos = msg.find( "<>" ) ) != string::npos )
@@ -237,14 +238,15 @@ void update_score_win( string msg )
 
     for ( unsigned int i = 0; i < clients.size(); i++ )
     {
-        column = i;
         if ( i % 4 == 0 )
         {
-            row += 1;
-            column = 0;
+           row += 1;
+           column = 0;
         }
-        mvwprintw( score_win, row, column * 17, "%d.%s", i + 1, 
-                  clients[i].c_str() );
+        column = ( i % 4 ) * 15;
+
+        mvwprintw( score_win, row - 1, column, "%d.%s ", i + 1,
+                   clients[i].c_str() );
     }
     wrefresh( score_win );
 
@@ -557,7 +559,7 @@ void draw_card_IDs()
 
 
 
-bool in_accepted_chars(int ch)
+bool in_accepted_chars( int ch )
 {
     for ( auto chars : ACCEPTED_CHARS )
     {
@@ -657,9 +659,12 @@ string get_card_coords( int card )
 
 void print_card_stats( int card )
 {
-    mvprintw( 32, 10, "Choice String:%s", choice_string.c_str() );
+    //mvprintw( 32, 10, "Choice String:%s", choice_string.c_str() );
+    wclear( message_win );
+    mvwprintw( message_win, 0, 0, "SERVER MESSAGE: You've selected %s", 
+               choice_string.c_str() );
+    wrefresh( message_win );
 }
-
 
 void animate_cards(vector<int>cards, int rate)
 {
@@ -719,6 +724,7 @@ void animate_cards(vector<int>cards, int rate)
 
   draw_card_IDs();
 }
+
 
 void dehighlight_card(int card)
 {
@@ -824,6 +830,7 @@ void highlight_card(int card)
   attroff(COLOR_PAIR(1));
 }
 
+
 void show_game_screen()
 {
     clear();
@@ -841,12 +848,15 @@ void show_game_screen()
     getmaxyx (stdscr, row, column );
     score_win = newwin( 4, 80, 21, 0 );
     message_win = newwin( 1, 80, 20, 0 );
-    
+    mvwprintw( message_win, 0, 0, "SERVER MESSAGE: Make a guess %s!", 
+               uname_string.c_str() );
     refresh();
+    wrefresh( message_win );
+
 }
 
 
-//|<handle_input>
+//|handle_input
 void handle_input()
 {
     int card, ch;
@@ -881,7 +891,10 @@ void handle_input()
                 break;
             }
             default:
-                mvprintw( 33, 10, "Key Pressed:%c", ch );
+                //mvprintw( 33, 10, "Key Pressed:%c", ch );
+                mvwprintw( message_win, 0, 0, 
+                           "SERVER MESSAGE: you've pressed %c", ch );
+                wrefresh( message_win );
                 break;
         }
 
@@ -996,7 +1009,8 @@ void handle_server_msg()
     case MESSAGE:
       wmove( message_win, 0, 0 );
       wclrtoeol( message_win );
-      mvwprintw( message_win, 0, 0, "Server Msg:%s", msg.substr( 1 ).data() );
+      mvwprintw( message_win, 0, 0, "SERVER MESSAGE: %s", 
+                 msg.substr( 1 ).data() );
       wrefresh( message_win );
       break;
 

@@ -1,8 +1,5 @@
 #include "server.h"
 
-//static int FIB [ 15 ] =
-//    { 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597 };
-
 
 void Server::die ( string error_msg )
 {
@@ -137,6 +134,23 @@ void Server::send_null_cards( vector<int>indexes )
     for ( auto client_it : get_client_list() )
     {
         sendMessage( client_it.sock_fd, 'c', cards_to_send );
+    }
+}
+
+
+void Server::insertion_sort()
+{
+    for ( unsigned int j = 1; j < ( unsigned int )client_list.size(); j++ )
+    {
+        int key = client_list[j].score;
+        int i = j - 1;
+
+        while ( i >= 0 && key < client_list[i].score )
+        {
+            client_list[i + 1] = client_list[i];
+            i--;
+        }
+        client_list[i + 1].score = key;
     }
 }
 

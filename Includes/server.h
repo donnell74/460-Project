@@ -37,6 +37,7 @@ class Server
     int check_guess( char*, Deck*, Deck* );
     void cleanup();
     void update_score( int, int );
+    void insertion_sort();
     void update_scores();
     void wait_for_client();
     void disconnect_client( int );

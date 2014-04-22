@@ -18,13 +18,13 @@ Server *my_server;
 pthread_mutex_t mutex;
 
 /* Never used, here because of other bad code */
-void handle_server_msg ()
+void handle_server_msg()
 {
-  return;
+    return;
 }
 
 
-void display_options ( )
+void display_options( )
 {
   cout << "Menu" << endl;
   cout << "B. Start Game" << endl;
@@ -58,6 +58,7 @@ void handle_input()
   
     case 'B':
       my_server->send_playing_cards( std_indexes );
+      my_server->update_scores();
       display_sets( my_server->playing_deck->get_cards() );
       break;
 
