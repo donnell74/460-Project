@@ -46,7 +46,6 @@ const char UPDATE = 'u';
 vector<char> ACCEPTED_CHARS = { '1', '2', '3', '4', 
                                 'q', 'w', 'e', 'r',
                                 'a', 's', 'd', 'f', 
-                                'z', 'x', 'c', 'v',
                                 'O', 'N', 'U', 'I' };
 // Globals 
 Client *my_client;
@@ -75,6 +74,7 @@ int uname_y;
 
 
 //Get name from user: allows for name editing
+//|get_user_name
 void get_user_name()
 {
     int characters = 0;
@@ -114,7 +114,7 @@ void get_user_name()
     }
 }
 
-
+//|sig_wrap_cleanup
 void sig_wrap_cleanup( int sig )
 {
     echo();
@@ -126,6 +126,7 @@ void sig_wrap_cleanup( int sig )
 
 
 //Splash Screen
+//|splassh_screen
 void splash_screen( char * name )
 {
     clear();
@@ -212,13 +213,14 @@ void splash_screen( char * name )
   
 }
 
-
+//|update_timer_win
 void update_timer_win( string msg )
 {
 
 }
 
 
+//|update_score_win
 void update_score_win( string msg )
 {
     touchwin( score_win );
@@ -243,7 +245,7 @@ void update_score_win( string msg )
            row += 1;
            column = 0;
         }
-        column = ( i % 4 ) * 15;
+        column = ( i % 4 ) * 17;
 
         mvwprintw( score_win, row - 1, column, "%d.%s ", i + 1,
                    clients[i].c_str() );
@@ -254,70 +256,83 @@ void update_score_win( string msg )
 
 
 //Draws card on screen at desired position
-void draw_card(int card, int number, int symbol, int shade, int color)
+//|draw_card
+void draw_card( int card, int number, int symbol, int shade, int color )
 {
-  int x, y, shade_ch, card_color;
-  int columns[4] = {ORIGIN_X, (ORIGIN_X+CARD_WIDTH+COL_OFFSET), 
-		    (ORIGIN_X+2*(CARD_WIDTH+COL_OFFSET)), 
-		    (ORIGIN_X+3*(CARD_WIDTH+COL_OFFSET))};
+    int x, y, shade_ch, card_color;
+    int columns[4] = { ORIGIN_X, ( ORIGIN_X + CARD_WIDTH + COL_OFFSET ), 
+		     ( ORIGIN_X + 2 * ( CARD_WIDTH + COL_OFFSET ) ), 
+		     ( ORIGIN_X + 3 * ( CARD_WIDTH + COL_OFFSET ) ) };
 
-  int rows[3] = {ORIGIN_Y, (ORIGIN_Y+CARD_HEIGHT+ROW_OFFSET), 
-		 (ORIGIN_Y+2*(CARD_HEIGHT+ROW_OFFSET))};
-  switch(card)
-	{
-	case 1:
-	  y = rows[0];
-	  x = columns[0];
-	  break;
-	case 2:
-	  y = rows[0];
-	  x = columns[1];
-	  break;
-	case 3:
-	  y = rows[0];
-	  x = columns[2];
-	  break;
-	case 4:
-	  y = rows[0];
-	  x = columns[3];
-	  break;
+    int rows[3] = { ORIGIN_Y, ( ORIGIN_Y + CARD_HEIGHT + ROW_OFFSET ), 
+		  ( ORIGIN_Y + 2 * ( CARD_HEIGHT + ROW_OFFSET ) ) };
+    switch( card )
+    {
+        case 1:
+	    y = rows[0];
+	    x = columns[0];
+	    break;
+
+        case 2:
+	    y = rows[0];
+	    x = columns[1];
+	    break;
+
+        case 3:
+	    y = rows[0];
+	    x = columns[2];
+	    break;
+
+        case 4:
+	    y = rows[0];
+	    x = columns[3];
+	    break;
+
 	case 5:
-	  y = rows[1];
-	  x = columns[0];
-	  break;
+	    y = rows[1];
+	    x = columns[0];
+	    break;
+
 	case 6:
-	  y = rows[1];
-	  x = columns[1];
-	  break;
+	    y = rows[1];
+	    x = columns[1];
+	    break;
+
 	case 7:
-	  y = rows[1];
-	  x = columns[2];
-	  break;
+	    y = rows[1];
+	    x = columns[2];
+	    break;
+
 	case 8:
-	  y = rows[1];
-	  x = columns[3];
-	  break;
+	    y = rows[1];
+	    x = columns[3];
+	    break;
+
 	case 9:
-	  y = rows[2];
-	  x = columns[0];
-	  break;
+	    y = rows[2];
+	    x = columns[0];
+	    break;
+
 	case 10:
-	  y = rows[2];
-	  x = columns[1];
-	  break;
+	    y = rows[2];
+	    x = columns[1];
+	    break;
+
 	case 11:
-	  y = rows[2];
-	  x = columns[2];
-	  break;
+	    y = rows[2];
+	    x = columns[2];
+	    break;
+
 	case 12:
-	  y = rows[2];
-	  x = columns[3];
-	  break;
+	    y = rows[2];
+	    x = columns[3];
+	    break;
+
 	default:
 	  break;
     }
   
-  move(y,x);
+    move( y,x );
   
     for( int j = 1; j < CARD_HEIGHT + 1; j++ )
     {
@@ -340,204 +355,211 @@ void draw_card(int card, int number, int symbol, int shade, int color)
         return;
     }
 
-    switch(shade)
+    switch( shade )
     {
-    case 0:
-      shade_ch = 64;
-      break;
-    case 1 :
-      shade_ch = 111;
-      break;
-    case 2:
-      shade_ch = KEY_SPACE;
-      break;
-    default:
-      break;
+        case 0:
+            shade_ch = 64;
+            break;
+
+        case 1 :
+            shade_ch = 111;
+            break;
+
+        case 2:
+            shade_ch = KEY_SPACE;
+            break;
+
+        default:
+            break;
     }
 
-  switch(color)
+    switch( color )
     {
-    case 0:
-      card_color = 2;
-      break;
-    case 1:
-      card_color = 3;
-      break;
-    case 2:
-      card_color = 4;
-      break;
-    default:
-      break;
+        case 0:
+            card_color = 2;
+            break;
+
+        case 1:
+            card_color = 3;
+            break;
+
+        case 2:
+           card_color = 4;
+           break;
+
+        default:
+           break;
     }
 
-  //Configure card
-  if(shade_ch == KEY_SPACE)
+    //Configure card
+    if( shade_ch == KEY_SPACE )
     {
-      card_color += 3;
+        card_color += 3;
     }
 
-  attron(COLOR_PAIR(card_color));
-  switch(number)
+    attron( COLOR_PAIR( card_color ) );
+
+    switch( number )
     {
-    case 0:
-      switch(symbol)
-	{
-	case 0: 
-	  mvaddch(y+1, x+7, shade_ch);
-	  mvaddch(y+2, x+7, shade_ch);
-	  mvaddch(y+2, x+6, shade_ch);
-	  mvaddch(y+2, x+8, shade_ch);
-	  mvaddch(y+3, x+7, shade_ch);
-	  break;
+        case 0:
+            switch( symbol )
+	    {
+	        case 0: 
+	            mvaddch( y + 1, x + 7, shade_ch );
+	            mvaddch( y + 2, x + 7, shade_ch );
+	            mvaddch( y + 2, x + 6, shade_ch );
+	            mvaddch( y + 2, x + 8, shade_ch );
+	            mvaddch( y + 3, x + 7, shade_ch );
+	            break;
 
-	case 1:
-	  mvaddch(y+1, x+6, shade_ch);
-	  mvaddch(y+1, x+7, shade_ch);
-	  mvaddch(y+1, x+8, shade_ch);
-	  mvaddch(y+2, x+8, shade_ch);
-	  mvaddch(y+3, x+8, shade_ch);
-	  mvaddch(y+3, x+7, shade_ch);
-	  mvaddch(y+3, x+6, shade_ch);
-	  mvaddch(y+2, x+6, shade_ch);
-	  break;
+	        case 1:
+	            mvaddch( y + 1, x + 6, shade_ch );
+	            mvaddch( y + 1, x + 7, shade_ch );
+	            mvaddch( y + 1, x + 8, shade_ch ) ;
+	            mvaddch( y + 2, x + 8, shade_ch );
+	            mvaddch( y + 3, x + 8, shade_ch );
+	            mvaddch( y + 3, x + 7, shade_ch );
+	            mvaddch( y + 3, x + 6, shade_ch );
+	            mvaddch( y + 2, x + 6, shade_ch );
+	            break;
 
-	case 2:
-	  mvaddch(y+3, x+6, shade_ch);
-	  mvaddch(y+2, x+7, shade_ch);
-	  mvaddch(y+1, x+8, shade_ch);
-	  break;
+	        case 2:
+	            mvaddch( y + 3, x + 6, shade_ch );
+	            mvaddch( y + 2, x + 7, shade_ch );
+	            mvaddch( y + 1, x + 8, shade_ch );
+	            break;
 
-	default:
-	  break;
-	}
-      break;
+	        default:
+	           break;
+	    }
+            break;
       
-    case 1:
-      switch(symbol)
-	{
-	case 0:
-	  mvaddch(y+1, x+5, shade_ch);
-	  mvaddch(y+2, x+5, shade_ch);
-	  mvaddch(y+2, x+4, shade_ch);
-	  mvaddch(y+2, x+6, shade_ch);
-	  mvaddch(y+3, x+5, shade_ch);
+        case 1:
+            switch( symbol )
+	    {
+	        case 0:
+	            mvaddch( y + 1, x + 5, shade_ch );
+	            mvaddch( y + 2, x + 5, shade_ch );
+	            mvaddch( y + 2, x + 4, shade_ch );
+	            mvaddch( y + 2, x + 6, shade_ch );
+	            mvaddch( y + 3, x + 5, shade_ch );
 	  
-	  mvaddch(y+1, x+9, shade_ch);
-	  mvaddch(y+2, x+9, shade_ch);
-	  mvaddch(y+2, x+8, shade_ch);
-	  mvaddch(y+2, x+10, shade_ch);
-	  mvaddch(y+3, x+9, shade_ch);
-	  break;
+	            mvaddch( y + 1, x + 9, shade_ch );
+	            mvaddch( y + 2, x + 9, shade_ch );
+	            mvaddch( y + 2, x + 8, shade_ch );
+	            mvaddch( y + 2, x + 10, shade_ch );
+	            mvaddch( y + 3, x + 9, shade_ch );
+	            break;
 	  
-	case 1:
-	  mvaddch(y+1, x+4, shade_ch);
-	  mvaddch(y+1, x+5, shade_ch);
-	  mvaddch(y+1, x+6, shade_ch);
-	  mvaddch(y+2, x+6, shade_ch);
-	  mvaddch(y+3, x+6, shade_ch);
-	  mvaddch(y+3, x+5, shade_ch);
-	  mvaddch(y+3, x+4, shade_ch);
-	  mvaddch(y+2, x+4, shade_ch);
+	        case 1:
+	            mvaddch( y + 1, x + 4, shade_ch );
+	            mvaddch( y + 1, x + 5, shade_ch );
+	            mvaddch( y + 1, x + 6, shade_ch );
+	            mvaddch( y + 2, x + 6, shade_ch );
+	            mvaddch( y + 3, x + 6, shade_ch );
+	            mvaddch( y + 3, x + 5, shade_ch );
+	            mvaddch( y + 3, x + 4, shade_ch );
+	            mvaddch( y + 2, x + 4, shade_ch );
 
-	  mvaddch(y+1, x+8, shade_ch);
-	  mvaddch(y+1, x+9, shade_ch);
-	  mvaddch(y+1, x+10, shade_ch);
-	  mvaddch(y+2, x+10, shade_ch);
-	  mvaddch(y+3, x+10, shade_ch);
-	  mvaddch(y+3, x+9, shade_ch);
-	  mvaddch(y+3, x+8, shade_ch);
-	  mvaddch(y+2, x+8, shade_ch);
-	  break;
+	            mvaddch( y + 1, x + 8, shade_ch );
+	            mvaddch( y + 1, x + 9, shade_ch );
+	            mvaddch( y + 1, x + 10, shade_ch );
+	            mvaddch( y + 2, x + 10, shade_ch );
+	            mvaddch( y + 3, x + 10, shade_ch );
+	            mvaddch( y + 3, x + 9, shade_ch );
+	            mvaddch( y + 3, x + 8, shade_ch );
+	            mvaddch( y + 2, x + 8, shade_ch );
+	            break;
 
-	case 2:					
-	  mvaddch(y+3, x+4, shade_ch);
-	  mvaddch(y+2, x+5, shade_ch);
-	  mvaddch(y+1, x+6, shade_ch);
+	        case 2:					
+	            mvaddch( y + 3, x + 4, shade_ch );
+	            mvaddch( y + 2, x + 5, shade_ch );
+	            mvaddch( y + 1, x + 6, shade_ch );
 
-	  mvaddch(y+3, x+8, shade_ch);
-	  mvaddch(y+2, x+9, shade_ch);
-	  mvaddch(y+1, x+10, shade_ch);
-	  break;
-	default:
-	  break;
+	            mvaddch( y + 3, x + 8, shade_ch );
+	            mvaddch( y + 2, x + 9, shade_ch );
+	            mvaddch( y + 1, x + 10, shade_ch );
+	            break;
+
+	        default:
+	            break;
 	}
-      break;
-    case 2:
-      switch(symbol)
-	{
-	case 0:
-	  mvaddch(y+1, x+3, shade_ch);
-	  mvaddch(y+2, x+3, shade_ch);
-	  mvaddch(y+2, x+2, shade_ch);
-	  mvaddch(y+2, x+4, shade_ch);
-	  mvaddch(y+3, x+3, shade_ch);
+        break;
+
+        case 2:
+            switch( symbol )
+	    {
+	        case 0:
+	            mvaddch( y + 1, x + 3, shade_ch );
+	            mvaddch( y + 2, x + 3, shade_ch );
+	            mvaddch( y + 2, x + 2, shade_ch );
+	            mvaddch( y + 2, x + 4, shade_ch );
+	            mvaddch( y + 3, x + 3, shade_ch );
 	  
-	  mvaddch(y+1, x+7, shade_ch);
-	  mvaddch(y+2, x+7, shade_ch);
-	  mvaddch(y+2, x+6, shade_ch);
-	  mvaddch(y+2, x+8, shade_ch);
-	  mvaddch(y+3, x+7, shade_ch);
+	            mvaddch( y + 1, x + 7, shade_ch );
+	            mvaddch( y + 2, x + 7, shade_ch );
+	            mvaddch( y + 2, x + 6, shade_ch );
+	            mvaddch( y + 2, x + 8, shade_ch );
+	            mvaddch( y + 3, x + 7, shade_ch );
 	  
-          mvaddch(y+1, x+11, shade_ch);
-	  mvaddch(y+2, x+11, shade_ch);
-	  mvaddch(y+2, x+10, shade_ch);
-	  mvaddch(y+2, x+12, shade_ch);
-	  mvaddch(y+3, x+11, shade_ch);
-	  
-	  break;
+                    mvaddch( y + 1, x + 11, shade_ch );
+	            mvaddch( y + 2, x + 11, shade_ch );
+	            mvaddch( y + 2, x + 10, shade_ch );
+	            mvaddch( y + 2, x + 12, shade_ch );
+	            mvaddch( y + 3, x + 11, shade_ch );
+	            break;
 
-	case 1:
-	  mvaddch(y+1, x+2, shade_ch);
-	  mvaddch(y+1, x+3, shade_ch);
-	  mvaddch(y+1, x+4, shade_ch);
-	  mvaddch(y+2, x+4, shade_ch);
-	  mvaddch(y+3, x+4, shade_ch);
-	  mvaddch(y+3, x+3, shade_ch);
-	  mvaddch(y+3, x+2, shade_ch);
-	  mvaddch(y+2, x+2, shade_ch);
+	        case 1:
+	            mvaddch( y + 1, x + 2, shade_ch );
+	            mvaddch( y + 1, x + 3, shade_ch );
+	            mvaddch( y + 1, x + 4, shade_ch );
+	            mvaddch( y + 2, x + 4, shade_ch );
+	            mvaddch( y + 3, x + 4, shade_ch );
+	            mvaddch( y + 3, x + 3, shade_ch );
+	            mvaddch( y + 3, x + 2, shade_ch );
+	            mvaddch( y + 2, x + 2, shade_ch );
 
-	  mvaddch(y+1, x+6, shade_ch);
-	  mvaddch(y+1, x+7, shade_ch);
-	  mvaddch(y+1, x+8, shade_ch);
-	  mvaddch(y+2, x+8, shade_ch);
-	  mvaddch(y+3, x+8, shade_ch);
-	  mvaddch(y+3, x+7, shade_ch);
-	  mvaddch(y+3, x+6, shade_ch);
-	  mvaddch(y+2, x+6, shade_ch);
+	            mvaddch( y + 1, x + 6, shade_ch );
+	            mvaddch( y + 1, x + 7, shade_ch );
+	            mvaddch( y + 1, x + 8, shade_ch );
+	            mvaddch( y + 2, x + 8, shade_ch );
+	            mvaddch( y + 3, x + 8, shade_ch );
+	            mvaddch( y + 3, x + 7, shade_ch );
+	            mvaddch( y + 3, x + 6, shade_ch );
+	            mvaddch( y + 2, x + 6, shade_ch );
 
-	  mvaddch(y+1, x+10, shade_ch);
-	  mvaddch(y+1, x+11, shade_ch);
-	  mvaddch(y+1, x+12, shade_ch);
-	  mvaddch(y+2, x+12, shade_ch);
-	  mvaddch(y+3, x+12, shade_ch);
-	  mvaddch(y+3, x+11, shade_ch);
-	  mvaddch(y+3, x+10, shade_ch);
-	  mvaddch(y+2, x+10, shade_ch);
+	            mvaddch( y + 1, x + 10, shade_ch );
+	            mvaddch( y + 1, x + 11, shade_ch );
+	            mvaddch( y + 1, x + 12, shade_ch );
+	            mvaddch( y + 2, x + 12, shade_ch );
+	            mvaddch( y + 3, x + 12, shade_ch );
+	            mvaddch( y + 3, x + 11, shade_ch );
+	            mvaddch( y + 3, x + 10, shade_ch );
+	            mvaddch( y + 2, x + 10, shade_ch );
+	            break;
 
-	  break;
+	        case 2:
+	            mvaddch( y + 3, x + 2, shade_ch );
+	            mvaddch( y + 2, x + 3, shade_ch );
+	            mvaddch( y + 1, x + 4, shade_ch );
 
-	case 2:
-	  mvaddch(y+3, x+2, shade_ch);
-	  mvaddch(y+2, x+3, shade_ch);
-	  mvaddch(y+1, x+4, shade_ch);
+	            mvaddch( y + 3, x + 6, shade_ch );
+	            mvaddch( y + 2, x + 7, shade_ch );
+	            mvaddch( y + 1, x + 8, shade_ch );
 
-	  mvaddch(y+3, x+6, shade_ch);
-	  mvaddch(y+2, x+7, shade_ch);
-	  mvaddch(y+1, x+8, shade_ch);
-
-	  mvaddch(y+3, x+10, shade_ch);
-	  mvaddch(y+2, x+11, shade_ch);
-	  mvaddch(y+1, x+12, shade_ch);
-	  break;
-	}
-      break;
+	            mvaddch( y + 3, x + 10, shade_ch );
+	            mvaddch( y + 2, x + 11, shade_ch );
+	            mvaddch( y + 1, x + 12, shade_ch );
+	            break;
+	    }
+            break;
 
     default:
-      break;
+        break;
     }
   
-  attroff(COLOR_PAIR(card_color));
-  refresh();
+    attroff( COLOR_PAIR( card_color ) );
+    refresh();
 
 }
 
@@ -558,7 +580,7 @@ void draw_card_IDs()
 }
 
 
-
+//|in_accepted_chars
 bool in_accepted_chars( int ch )
 {
     for ( auto chars : ACCEPTED_CHARS )
@@ -572,45 +594,58 @@ bool in_accepted_chars( int ch )
 }
 
 
-//int get_card(int row, int column)
-int get_card(int ch)
+//|get_card
+int get_card( int ch )
 {
-  //Retrieve card by row and column
-  //return row + (3 * (row-1) + (column-1)
-  //int ID[16] = {49,50,51,52,81,87,69,82,65,83,68,70,90,88,67,86};
+    //Retrieve card by row and column
+    //return row + (3 * (row-1) + (column-1)
+    //int ID[16] = {49,50,51,52,81,87,69,82,65,83,68,70,90,88,67,86};
 
-   switch(ch)
-     {
-     case 49:
-       return 1;
-     case 50:
-       return 2;
-     case 51:
-       return 3;
-     case 52:
-       return 4;
-     case 113:
-       return 5;
-     case 119:
-       return 6;
-     case 101:
-       return 7;
-     case 114:
-       return 8;
-     case 97:
-       return 9;
-     case 115:
-       return 10;
-     case 100:
-       return 11;
-     case 102:
-       return 12;
-     default:
-       return -1;
+    switch( ch )
+    {
+        case 49:
+            return 1;
+
+        case 50:
+            return 2;
+
+        case 51:
+            return 3;
+
+        case 52:
+            return 4;
+
+        case 113:
+            return 5;
+
+        case 119:
+            return 6;
+
+        case 101:
+            return 7;
+
+        case 114:
+            return 8;
+
+        case 97:
+            return 9;
+
+        case 115:
+            return 10;
+
+        case 100:
+            return 11;
+
+        case 102:
+            return 12;
+
+        default:
+            return -1;
      }
 }
 
 
+//|get_card_coords
 string get_card_coords( int card )
 {
     switch( card )
@@ -657,72 +692,98 @@ string get_card_coords( int card )
 }
 
 
+//|print_card_stats
 void print_card_stats( int card )
 {
-    //mvprintw( 32, 10, "Choice String:%s", choice_string.c_str() );
     wclear( message_win );
-    mvwprintw( message_win, 0, 0, "SERVER MESSAGE: You've selected %s", 
-               choice_string.c_str() );
+    
+    if ( choice_string == "nnn" )
+    {
+    
+        mvwprintw( message_win, 0, 0, 
+                   "CLIENT MESSAGE: You've selected NO SET." );
+    }
+    else if ( choice_string.size() == 0 )
+    {
+        
+        mvwprintw( message_win, 0, 0, 
+                   "CLIENT MESSAGE: You've selected nothing." );
+    }
+    else
+    {
+        mvwprintw( message_win, 0, 0, 
+                   "CLIENT MESSAGE: You've selected %s", 
+                   choice_string.c_str() );
+    }
     wrefresh( message_win );
 }
 
-void animate_cards(vector<int>cards, int rate)
+
+//|animate_cards
+void animate_cards( vector<int>cards, int rate )
 {
-  vector<int>xls;
-  vector<int>xhs;
-  vector<int>yls;
-  vector<int>yhs;
-  vector<int>mids;
+    vector<int>xls;
+    vector<int>xhs;
+    vector<int>yls;
+    vector<int>yhs;
+    vector<int>mids;
 
-    int row, column, mid, x1, x2, y1, y2;
-    for( int c = 0; c < cards.size(); c++)
+    int row;
+    int column;
+    int mid;
+    int x1;
+    int x2;
+    int y1; 
+    int y2;
+
+    for ( int c = 0; c < cards.size(); c++ )
     {
-      row = get_card_coords( cards[c] )[0] - 48;
-      column = get_card_coords( cards[c] )[1] - 48;
-      x1 = ORIGIN_X + ((column - 1)*(CARD_WIDTH+COL_OFFSET));
-      x2 = x1 + CARD_WIDTH-1;
-      y1 = ORIGIN_Y + ((row - 1)*(CARD_HEIGHT+ROW_OFFSET));
-      y2 = y1+CARD_HEIGHT-1;
-      mid = (x1+x2)/2;
+        row = get_card_coords( cards[c] )[0] - 48;
+        column = get_card_coords( cards[c] )[1] - 48;
+        x1 = ORIGIN_X + ( (column - 1 ) * ( CARD_WIDTH + COL_OFFSET ) );
+        x2 = x1 + CARD_WIDTH - 1;
+        y1 = ORIGIN_Y + ( ( row - 1 ) * ( CARD_HEIGHT+ROW_OFFSET ) );
+        y2 = y1 + CARD_HEIGHT - 1;
+        mid = ( x1 + x2 ) / 2;
       
-      xls.push_back(x1);
-      xhs.push_back(x2);
-      yls.push_back(y1);
-      yhs.push_back(y2);
-      mids.push_back(mid);
+        xls.push_back( x1 );
+        xhs.push_back( x2 );
+        yls.push_back( y1 );
+        yhs.push_back( y2 );
+        mids.push_back( mid );
     }
   
-  //Vanish animation
-  for(int i=0; i<CARD_WIDTH/2; i++)
+    //Vanish animation
+    for ( int i = 0; i < CARD_WIDTH / 2; i++ )
     {
-      for(int j=0; j<CARD_HEIGHT; j++)
+        for ( int j = 0; j < CARD_HEIGHT; j++ )
 	{
-	  for(int w=0; w<cards.size(); w++)
+	    for ( int w = 0; w < cards.size(); w++ )
 	    {
-	      mvaddch(yls[w]+j, xls[w]+i, KEY_SPACE);
-	      mvaddch(yls[w]+j, xhs[w]-i, KEY_SPACE);
+	        mvaddch( yls[w] + j, xls[w] + i, KEY_SPACE );
+	        mvaddch( yls[w] + j, xhs[w] - i, KEY_SPACE );
 	    }
 	}
-      usleep(rate);
-      refresh();
+        usleep( rate );
+        refresh();
     }
   
-  //Reappear animation
-  for(int k=0; k<CARD_WIDTH/2; k++)
+    //Reappear animation
+    for ( int k = 0; k < CARD_WIDTH / 2; k++ )
     {
-      for(int l=0; l<CARD_HEIGHT; l++)
+        for ( int l = 0; l < CARD_HEIGHT; l++ )
 	{
-	  for(int z=0; z<cards.size(); z++)
+	    for ( int z = 0; z < cards.size(); z++ )
 	    {
-	      mvaddch(yls[z]+l, mids[z]+1+k, CARD_CHAR);
-	      mvaddch(yls[z]+l, mids[z]-k, CARD_CHAR);
+	        mvaddch( yls[z] + l, mids[z] + 1 + k, CARD_CHAR );
+	        mvaddch( yls[z] + l, mids[z] - k, CARD_CHAR );
 	    }
 	}
-      usleep(rate);
-      refresh();
+        usleep( rate );
+        refresh();
     }
 
-  draw_card_IDs();
+    draw_card_IDs();
 }
 
 
@@ -831,6 +892,7 @@ void highlight_card(int card)
 }
 
 
+//|show_game_screen
 void show_game_screen()
 {
     clear();
@@ -848,7 +910,7 @@ void show_game_screen()
     getmaxyx (stdscr, row, column );
     score_win = newwin( 4, 80, 21, 0 );
     message_win = newwin( 1, 80, 20, 0 );
-    mvwprintw( message_win, 0, 0, "SERVER MESSAGE: Make a guess %s!", 
+    mvwprintw( message_win, 0, 0, "CLIENT MESSAGE: Make a guess %s!", 
                uname_string.c_str() );
     refresh();
     wrefresh( message_win );
@@ -864,7 +926,7 @@ void handle_input()
     {
         ch = getch();
 
-        switch(ch)
+        switch( ch )
 	{
 	    case 54:
 	        endwin();
@@ -892,28 +954,31 @@ void handle_input()
             }
             default:
                 //mvprintw( 33, 10, "Key Pressed:%c", ch );
-                mvwprintw( message_win, 0, 0, 
-                           "SERVER MESSAGE: you've pressed %c", ch );
-                wrefresh( message_win );
+                //if ( in_accepted_chars( ch ) )
+                //{
+                //    mvwprintw( message_win, 0, 0, 
+                //               "SERVER MESSAGE: you've pressed %c", ch );
+                //    wrefresh( message_win );
+                //}
                 break;
         }
 
 
         if ( choice_string.find( ( char )ch ) == -1 && 
-            choice_string.size() == 3 )
+             choice_string.size() == 3 )
 	{
 	    //Empty choice string
 	    choice_string = "";
 	    //Delete all card highlights
 	    for( int i = 1; i < 13; i++ )
 	    {
-	      dehighlight_card( i );
+	        dehighlight_card( i );
 	    }
 	 
 	}
 
         if ( choice_string.find( ( char )ch ) == -1 && 
-            in_accepted_chars( ch ) )
+             in_accepted_chars( ch ) )
 	{
 	    choice_string += ( ( char )ch );
 	    highlight_card( get_card( ch ) );
@@ -921,8 +986,8 @@ void handle_input()
 	 
 	}
       
-        if ( choice_string.find( ( char )ch ) !=-1 && 
-            in_accepted_chars( ch ) )
+        if ( choice_string.find( ( char )ch ) != -1 && 
+             in_accepted_chars( ch ) )
 	{
 	    choice_string.erase( choice_string.find( ( char )ch ), 1 );
 	    dehighlight_card( get_card ( ch ) );
@@ -933,7 +998,10 @@ void handle_input()
     resume:
         move( 32,18 );
         clrtoeol();
-        print_card_stats( ch );
+        if ( in_accepted_chars( ch ) || choice_string == "nnn" )
+        {
+            print_card_stats( ch );
+        }
         clrtoeol();
         refresh();
     }
