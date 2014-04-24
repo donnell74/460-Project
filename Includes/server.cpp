@@ -439,6 +439,7 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
 
             if ( !deck->empty( 0 ) )
             {
+	      
                 int limit = 11;
                 vector<int>indxs = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
               
@@ -452,8 +453,11 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
                 {
                     deck->add_card( playing_deck->get_card( indxs[j] ) );
                 }
+
+	
                 deck->shuffle();
                 send_playing_cards( indxs );
+	
             }
             display_sets( playing_deck->get_cards() );
             break;

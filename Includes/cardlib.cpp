@@ -116,8 +116,8 @@ int Deck::count( int code )
 
 void Deck::reset_top()
 {
-    top -= 12;
-    _count += 12;
+    top += 6;
+    _count -= 6;
 }
 
 
@@ -189,13 +189,12 @@ void Deck::shuffle()
     {
         //Pointer to Card struct for temporary storage
         Card* temp;
-        for ( int i = _count - 1; i > top; i-- )
+        for ( int i = 0; i < _count; i++ )
 	{
-	    int random_number = rand(i);
-
-	    temp = cards[i];
-	    cards[i] = cards[random_number];
-	    cards[random_number] = temp;
+	    int random_number = rand( _count - i );
+	    temp = cards[i+top];
+	    cards[i+top] = cards[random_number+top];
+	    cards[random_number+top] = temp;
 	}
     }
 
@@ -206,6 +205,35 @@ void Deck::shuffle()
 
 }
 
+
+void Deck::sort_cards()
+{
+  //Sort cards using Insertion Sort algorithm
+  int i, j, key, key2;
+  Card* ncard;
+  
+  for( j = top+1; j < 81; j++ )
+    {
+      key = stoi(to_string(cards[ j ]->number) + 
+		 to_string(cards[ j ]->symbol) + 
+		 to_string(cards[ j ]->shade) + 
+		 to_string(cards[ j ]->color));
+      
+     
+      ncard = cards[ j ];
+
+      for( i = j - 1; (i >= top) && 
+	     ( stoi(to_string(cards[ i ]->number) + 
+		  to_string(cards[ i ]->symbol) +
+		  to_string(cards[ i ]->shade) + 
+		    to_string(cards[ i ]->color)) < key); i-- )
+	{
+	  cards[ i + 1 ] = cards[ i ];
+	}
+      
+      cards[ i + 1 ] = ncard;
+    }
+}
 
 void Deck::mem_display()
 {
@@ -252,6 +280,7 @@ void Deck::clear_cards()
 void Deck::add_card( Card* ncard )
 {
     cards.push_back( ncard );
+    _count+=1;
 }
 
 

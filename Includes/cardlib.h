@@ -143,17 +143,18 @@ class Deck
   int _count;
    
  public:
-  //int rand( int );
   Deck();
   Deck( int code );
   ~Deck();
   bool empty( int code );
   vector <Card*>get_cards();
   int count( int code );
+  int get_top(){return top;}
   void reset_top();
   void mem_display();
   void display( int code );
   void shuffle();
+  void sort_cards();
   Card* draw();
   Card* get_card( int index );
   void remove_card( int index );

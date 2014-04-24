@@ -23,7 +23,6 @@ void handle_server_msg()
     return;
 }
 
-
 void display_options( )
 {
   cout << "Menu" << endl;
@@ -96,7 +95,8 @@ void handle_input()
         case 'U':
            my_server->update_scores();
            cout << "Updating..." << endl;
-  
+	   break;
+       
         default:
           break;
     }

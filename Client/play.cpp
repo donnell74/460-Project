@@ -80,7 +80,7 @@ void get_user_name( char* user_name )
   int characters = 0;
   char* temp;
 
-  if ( strlen ( user_name ) > 0 ) 
+  if ( user_name[0] != '\0' ) 
     {
       int limit;
       //Trim user name to 14
@@ -1169,7 +1169,7 @@ int main( int argc, char *argv[] )
   char LOCALHOST[] = "127.0.0.1";
   //Initialize ncurses
   int row, column;
-  char* user_name = "";
+  char* user_name;
   initscr();
   keypad( stdscr, TRUE );
   curs_set(0);
@@ -1181,7 +1181,7 @@ int main( int argc, char *argv[] )
       {
        case 2:
 	{
-	  get_user_name("");
+	  get_user_name( user_name );
 	  my_client = new Client( atoi( argv[1] ), LOCALHOST, user );
 	}
 	break;
