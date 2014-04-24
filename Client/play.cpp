@@ -75,9 +75,30 @@ int uname_y;
 
 //Get name from user: allows for name editing
 //|get_user_name
-void get_user_name()
+void get_user_name( char* user_name )
 {
-    int characters = 0;
+  int characters = 0;
+  char* temp;
+
+  if ( strlen ( user_name ) > 0 ) 
+    {
+      int limit;
+      //Trim user name to 14
+      if ( strlen ( user_name ) > 14 )
+	{
+	  limit = 14;
+	}
+
+      else
+	{
+	  limit = strlen ( user_name );
+	}
+      
+      strncpy( temp, user_name, limit );
+      characters = strlen( temp );
+      uname_string = string( temp, characters );
+      mvprintw( 21, 45, "%s", uname_string.c_str() );
+    }
     
     for ( ;; )
     {
@@ -101,8 +122,13 @@ void get_user_name()
                 strcpy( user, uname_string.c_str() );
                 return;
 
+	    case 54:
+	        endwin();
+		exit(EXIT_SUCCESS);
+	        break;
+ 
             default:
-                if ( ch > 32 && ch < 126 && characters < 15 )
+                if ( ch > 32 && ch < 126 && characters < 14 )
                 {
                     addch( ch );
                     uname_string += ( char )ch;
@@ -127,8 +153,8 @@ void sig_wrap_cleanup( int sig )
 
 
 //Splash Screen
-//|splassh_screen
-void splash_screen( char *name )
+//|splash_screen
+void splash_screen( )
 {
     clear();
     start_color();
@@ -226,7 +252,7 @@ void update_timer_win( string msg )
 void update_score_win( string msg )
 {
     touchwin( score_win );
-    wclear( score_win );
+    werase( score_win );
 
     int row = 1;
     int column = 0;
@@ -697,7 +723,7 @@ string get_card_coords( int card )
 //|print_card_stats
 void print_card_stats( int card )
 {
-    wclear( message_win );
+    werase( message_win );
     
     if ( choice_string == "nnn" )
     {
@@ -1204,6 +1230,7 @@ void handle_server_msg()
 //|main
 int main( int argc, char *argv[] )
 {
+<<<<<<< HEAD
     char LOCALHOST[] = "127.0.0.1";
 
     if ( argc == 1 || argc > 3 )
@@ -1244,7 +1271,54 @@ int main( int argc, char *argv[] )
         cout << "nCurses has exited. " << endl;
         endwin();
         my_client->cleanup();
+=======
+  char LOCALHOST[] = "127.0.0.1";
+  //Initialize ncurses
+  int row, column;
+  char* user_name = "";
+  initscr();
+  keypad( stdscr, TRUE );
+  curs_set(0);
+  noecho();
+  splash_screen();
+  timer_win = newwin( 1, 17, TIME_WIN_Y, TIME_WIN_X );
+  
+  switch( argc )
+      {
+       case 2:
+	{
+	  get_user_name("");
+	  my_client = new Client( atoi( argv[1] ), LOCALHOST, user );
+	}
+	break;
+
+      case 3:
+	{
+	  get_user_name(argv[2]);
+	  my_client = new Client( atoi( argv[1] ), LOCALHOST, user );
+	}
+
+	break;
+
+      default:
+	{
+	  cerr << "Usage: ./client <port>" << endl;
+	  exit(EXIT_SUCCESS);
+	}
+	break;
+      }
+
+    // bind TERM to cleanup
+    struct sigaction action = {};
+
+    action.sa_handler = sig_wrap_cleanup;
+    sigaction( SIGINT, &action, nullptr );
+    sigaction( SIGWINCH, &action, nullptr );
+    my_client->wait_for_input();
+    cout << "nCurses has exited. " << endl;
+    endwin();
+    my_client->cleanup();
+>>>>>>> fd394a2437d0aea637f9724f0208d227305e56c6
 
     }  
 
-}
