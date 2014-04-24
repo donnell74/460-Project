@@ -140,6 +140,7 @@ void get_user_name( char* user_name )
     }
 }
 
+
 //|sig_wrap_cleanup
 void sig_wrap_cleanup( int sig )
 {
@@ -152,7 +153,7 @@ void sig_wrap_cleanup( int sig )
 
 
 //Splash Screen
-//|splassh_screen
+//|splash_screen
 void splash_screen( )
 {
     clear();
@@ -238,6 +239,7 @@ void splash_screen( )
     wrefresh( subwindow );
   
 }
+
 
 //|update_timer_win
 void update_timer_win( string msg )
@@ -589,7 +591,7 @@ void draw_card( int card, int number, int symbol, int shade, int color )
 
 }
 
-
+//|draw_card_IDs
 void draw_card_IDs()
 {
     for( int i = 0; i < 3; i++ )
@@ -813,108 +815,122 @@ void animate_cards( vector<int>cards, int rate )
 }
 
 
-void dehighlight_card(int card)
+//|dehighlight_card
+void dehighlight_card( int card )
 {
-    int x1, x2, y1, y2, column, row;
+    int x1;
+    int x2;
+    int y1;
+    int y2;
+    int column;
+    int row;
+
     row = get_card_coords( card )[0] - 48;
     column = get_card_coords( card )[1] - 48;
   
-    x1 = ORIGIN_X + ((column - 1)*(CARD_WIDTH+COL_OFFSET))+1;
-    x2 = x1 - 1 +CARD_WIDTH-1;
-    y1 = ORIGIN_Y + ((row - 1)*(CARD_HEIGHT+ROW_OFFSET));
-    y2 = y1+CARD_HEIGHT-1;
+    x1 = ORIGIN_X + ( ( column - 1 ) * ( CARD_WIDTH + COL_OFFSET ) ) + 1;
+    x2 = x1 - 1 + CARD_WIDTH - 1;
+    y1 = ORIGIN_Y + ( ( row - 1 ) * ( CARD_HEIGHT + ROW_OFFSET ) );
+    y2 = y1 + CARD_HEIGHT - 1;
 
     //Clear previous highlight
-    if( x2 != 0 )
+    if ( x2 != 0 )
     {
-      //1.Left Border
-      move(y1-1, x1-2);
-      addch(32);
-      for(int i=0; i<CARD_HEIGHT+1; i++)
+        //1.Left Border
+        move( y1 - 1, x1 - 2 );
+        addch( 32 );
+        for ( int i = 0; i < CARD_HEIGHT + 1; i++ ) 
 	{
-	  move(y1+i, x1-2);
-	  addch(32);
+	    move( y1 + i, x1 - 2 );
+	    addch( 32 );
 	}
 
-      //2.Top Border
-      move(y1-1, x1-1);
-      addch(32);
-      for(int j=0; j<CARD_WIDTH; j++)
+        //2.Top Border
+        move( y1 - 1, x1 - 1 );
+        addch( 32 );
+        for ( int j = 0; j < CARD_WIDTH; j++ )
 	{
-	  move(y1-1, j+x1-1+1);
-	  addch(32);
+	    move( y1 - 1, j + x1 );
+	    addch( 32 );
 	}
 
-      //3.Right Border
-      move(y1-1, x2+1);
-      addch(32);
-      for(int k=0; k<CARD_HEIGHT; k++)
+        //3.Right Border
+        move( y1 - 1, x2 + 1 );
+        addch( 32 );
+        for ( int k = 0; k < CARD_HEIGHT; k++ )
 	{
-	  move(y1+k, x2+1);
-	  addch(32);
+	    move( y1 + k, x2 + 1);
+	    addch( 32 );
 	}
 
-      //4.Bottom Border
-      move(y2+1, x1-1);
-      addch(32);
-      for(int l=0; l<CARD_WIDTH; l++)
+        //4.Bottom Border
+        move( y2 + 1, x1 - 1);
+        addch( 32 );
+        for ( int l = 0; l < CARD_WIDTH; l++ )
 	{
-	  move(y2+1, l+x1-1+1);
-	  addch(32);
+	    move( y2 + 1, l + x1 );
+	    addch( 32 );
 	}
 
     }
 }
 
 
-void highlight_card(int card)
+//|highligh_card
+void highlight_card( int card )
 {
-    int column,row,x1,x2,y1,y2;
+    int column;
+    int row;
+    int x1; 
+    int x2;
+    int y1;
+    int y2;
+
     row = get_card_coords( card )[0] - 48;
     column = get_card_coords( card )[1] - 48;
   
-  x1 = ORIGIN_X + ((column - 1)*(CARD_WIDTH+COL_OFFSET))+1;
-  x2 = x1 - 1 +CARD_WIDTH-1;
-  y1 = ORIGIN_Y + ((row - 1)*(CARD_HEIGHT+ROW_OFFSET));
-  y2 = y1+CARD_HEIGHT-1;
+    x1 = ORIGIN_X + ( ( column - 1 ) * ( CARD_WIDTH + COL_OFFSET ) ) + 1;
+    x2 = x1 - 1 + CARD_WIDTH - 1;
+    y1 = ORIGIN_Y + ( ( row - 1 ) * ( CARD_HEIGHT + ROW_OFFSET ) );
+    y2 = y1 + CARD_HEIGHT - 1;
   
-  //Set current highlighted x and y marks
-  cur_x1 = x1;
-  cur_x2 = x2;
-  cur_y1 = y1;
-  cur_y2 = y2;
+    //Set current highlighted x and y marks
+    cur_x1 = x1;
+    cur_x2 = x2;
+    cur_y1 = y1;
+    cur_y2 = y2;
   
-  //Draw border around selected card
-  attron(COLOR_PAIR(1));
-  //1.Left Border
-  mvaddch(y1-1, x1-2, CARD_CHAR);
-  for(int i=0; i<CARD_HEIGHT+1; i++)
+    //Draw border around selected card
+    attron( COLOR_PAIR( 1 ) );
+    //1.Left Border
+    mvaddch( y1 - 1, x1 - 2, CARD_CHAR );
+    for ( int i = 0; i < CARD_HEIGHT + 1; i++ )
     {
-      mvaddch(y1+i, x1-2, CARD_CHAR);
+        mvaddch( y1 + i, x1 - 2, CARD_CHAR );
     }
 
-  //2.Top Border
-  mvaddch(y1-1, x1-1, CARD_CHAR);
-  for(int j=0; j<CARD_WIDTH; j++)
-  {
-    mvaddch(y1-1, j+x1-1+1, CARD_CHAR);
-  }
-
-  //3.Right Border
-  mvaddch(y1-1, x2+1, CARD_CHAR);
-  for(int k=0; k<CARD_HEIGHT; k++)
+    //2.Top Border
+    mvaddch( y1 - 1, x1 - 1, CARD_CHAR );
+    for ( int j = 0; j < CARD_WIDTH; j++ )
     {
-      mvaddch(y1+k, x2+1, CARD_CHAR);
+        mvaddch( y1 - 1, j + x1, CARD_CHAR );
     }
 
-  //4.Bottom Border
-  mvaddch(y2+1, x1-1, CARD_CHAR);
-  for(int l=0; l<CARD_WIDTH; l++)
+    //3.Right Border
+    mvaddch( y1 - 1, x2 + 1, CARD_CHAR );
+    for ( int k = 0; k < CARD_HEIGHT; k++ )
     {
-      mvaddch(y2+1, l+x1-1+1, CARD_CHAR);
+        mvaddch( y1 + k, x2 + 1, CARD_CHAR );
     }
 
-  attroff(COLOR_PAIR(1));
+    //4.Bottom Border
+    mvaddch( y2 + 1, x1 - 1, CARD_CHAR );
+    for ( int l = 0; l < CARD_WIDTH; l++ )
+    {
+        mvaddch( y2 + 1, l + x1, CARD_CHAR );
+    }
+
+    attroff( COLOR_PAIR( 1 ) );
 }
 
 
@@ -944,6 +960,58 @@ void show_game_screen()
 }
 
 
+//|quit_options
+void quit_options()
+{
+    
+    WINDOW* quit_win = newwin( 8, 34, ORIGIN_Y + 10, ORIGIN_X + 20 );
+    wborder( quit_win, '|', '|', '-', '-', '+', '+', '+', '+' );
+    mvwprintw( quit_win, 1, 3, "Do you wan to quit?" );
+    mvwprintw( quit_win, 2, 3, "--press 1, 2, or 3--" );
+    mvwprintw( quit_win, 3, 3, "1. Quit" );
+    mvwprintw( quit_win, 4, 3, "2. Stay and Watch" );
+    mvwprintw( quit_win, 5, 3, "3. Keep Playing" );
+    touchwin( quit_win );
+    wrefresh( quit_win );
+
+    int ch;
+    ch = wgetch( quit_win );
+
+    switch ( ch )
+    {
+        case 49:
+            endwin();
+            my_client->cleanup();
+            break;
+
+        case 50:
+            nocbreak();
+            touchwin( stdscr );
+            mvwprintw( message_win, 0, 0, 
+                       "CLIENT MESSAGE: Press 'Ctrl' + 'c' to quit" );
+            touchwin( score_win );
+            refresh();
+            wrefresh( message_win );
+            wrefresh( score_win );
+            break;
+
+        case 51:
+            touchwin( stdscr );
+            mvwprintw( message_win, 0, 0, 
+                       "CLIENT MESSAGE: Welcome back %s!",
+                        uname_string.c_str() );
+            touchwin( score_win );
+            refresh();
+            wrefresh( message_win );
+            wrefresh( score_win );
+            break;
+        
+        default:
+            break;
+    }
+}
+
+
 //|handle_input
 void handle_input()
 {
@@ -955,8 +1023,9 @@ void handle_input()
         switch( ch )
 	{
 	    case 54:
-	        endwin();
-	        my_client->cleanup();
+	        //endwin();
+	        //my_client->cleanup();
+                quit_options();
 	        break;
 
 	    case 110:
@@ -979,13 +1048,6 @@ void handle_input()
                 break;
             }
             default:
-                //mvprintw( 33, 10, "Key Pressed:%c", ch );
-                //if ( in_accepted_chars( ch ) )
-                //{
-                //    mvwprintw( message_win, 0, 0, 
-                //               "SERVER MESSAGE: you've pressed %c", ch );
-                //    wrefresh( message_win );
-                //}
                 break;
         }
 
@@ -1034,6 +1096,7 @@ void handle_input()
 }
 
 
+//|bitcode_parser
 string bitcode_parser( char bitcode )
 {
     int bit = ( int )bitcode;
@@ -1043,9 +1106,9 @@ string bitcode_parser( char bitcode )
     string result = "";
 
     if ( bit < 0 )
-      {
-	bit = 128 - (-1)*bit + 128;
-      }
+    {
+	bit = 128 - ( -1 ) * bit + 128;
+    }
     
     if ( bit == 255 )
     {
@@ -1086,73 +1149,74 @@ string bitcode_parser( char bitcode )
     return result;
 }
 
-
+//|handle_server_msg
 void handle_server_msg()
 {
-  string msg = my_client->get_next_msg();
-  switch( msg.front() )
-  {
-    case EXIT:
-      printw( "%s", msg.substr( 1 ).data() );
-      printw( "%s", "\n" );
-      refresh();
-      endwin();
-      my_client->cleanup();
-      break;
+    string msg = my_client->get_next_msg();
 
-    case MESSAGE:
-      wmove( message_win, 0, 0 );
-      wclrtoeol( message_win );
-      mvwprintw( message_win, 0, 0, "SERVER MESSAGE: %s", 
-                 msg.substr( 1 ).data() );
-      wrefresh( message_win );
-      break;
+    switch( msg.front() )
+    {
+        case EXIT:
+            printw( "%s", msg.substr( 1 ).data() );
+            printw( "%s", "\n" );
+            refresh();
+            endwin();
+            my_client->cleanup();
+            break;
 
-    case CARDS:
+        case MESSAGE:
+            wmove( message_win, 0, 0 );
+            wclrtoeol( message_win );
+            mvwprintw( message_win, 0, 0, "SERVER MESSAGE: %s", 
+                       msg.substr( 1 ).data() );
+            wrefresh( message_win );
+            break;
+
+        case CARDS:
         {
-        if( game_started == false )
-	{
-	  show_game_screen();
-	  game_started = true;
-	}
+            if( game_started == false )
+	    {
+	        show_game_screen();
+	        game_started = true;
+	    }
       
-        vector<string>cards;
-        vector<int>idxs;
-        msg = msg.substr( 1 );
-        int pos;
+            vector<string>cards;
+            vector<int>idxs;
+            msg = msg.substr( 1 );
+            int pos;
 
-        while ( ( pos = msg.find( ";" ) ) != string::npos )
-        {
-            cards.push_back( msg.substr( 0, pos ) );
-            msg.erase( 0, pos + 1 );
-        }
+            while ( ( pos = msg.find( ";" ) ) != string::npos )
+            {
+                cards.push_back( msg.substr( 0, pos ) );
+                msg.erase( 0, pos + 1 );
+            }
         
-        for ( int j = 0; j < cards.size(); j++ )
-        {
-            idxs.push_back( stoi( cards[j].substr( 2 ).data() ) + 1 );
-        }
+            for ( int j = 0; j < cards.size(); j++ )
+            {
+                idxs.push_back( stoi( cards[j].substr( 2 ).data() ) + 1 );
+            }
 
-        //Animate cards
-        animate_cards( idxs, 20000 );
+            //Animate cards
+            animate_cards( idxs, 20000 );
 	
-        //Draw
-        for ( int i = 0; i < cards.size(); ++i )
-        {
-            string c_string = bitcode_parser( cards[i][0] );
-            draw_card( idxs[i], c_string[0] - 48, c_string[1] - 48,
-                       c_string[2] - 48, c_string[3] - 48 ); 
+            //Draw
+            for ( int i = 0; i < cards.size(); ++i )
+            {
+                string c_string = bitcode_parser( cards[i][0] );
+                draw_card( idxs[i], c_string[0] - 48, c_string[1] - 48,
+                           c_string[2] - 48, c_string[3] - 48 ); 
+            }   
+
+            draw_card_IDs();
         }
-
-        draw_card_IDs();
-        }
         break;
 
-    case UPDATE:
-        update_score_win( msg.substr( 1, msg.size() - 1 ) );
-        break;
+        case UPDATE:
+            update_score_win( msg.substr( 1, msg.size() - 1 ) );
+            break;
 
-    default:
-        break;
+        default:
+           break;
     }
 
     refresh();
@@ -1163,9 +1227,51 @@ void handle_server_msg()
     }   
 }
 
-
+//|main
 int main( int argc, char *argv[] )
 {
+<<<<<<< HEAD
+    char LOCALHOST[] = "127.0.0.1";
+
+    if ( argc == 1 || argc > 3 )
+    {
+        cerr << "Usage: ./client <port>" << endl;
+        exit( EXIT_SUCCESS );
+    }
+    else
+    {
+        //Initialize ncurses
+        int row;
+        int  column;
+        initscr();
+        keypad( stdscr, TRUE );
+        curs_set( 0 );
+        noecho();
+
+        splash_screen( user );
+        timer_win = newwin( 1, 17, TIME_WIN_Y, TIME_WIN_X );
+        get_user_name();
+
+        if ( argc == 2 )
+        {
+            my_client = new Client( atoi( argv[1] ), LOCALHOST, user );
+        }
+        else
+        {
+            my_client = new Client( atoi( argv[1] ), argv[2], user );
+        }  
+    
+        // bind TERM to cleanup
+        struct sigaction action = {};
+
+        action.sa_handler = sig_wrap_cleanup;
+        sigaction( SIGINT, &action, nullptr );
+    
+        my_client->wait_for_input();
+        cout << "nCurses has exited. " << endl;
+        endwin();
+        my_client->cleanup();
+=======
   char LOCALHOST[] = "127.0.0.1";
   //Initialize ncurses
   int row, column;
@@ -1212,6 +1318,7 @@ int main( int argc, char *argv[] )
     cout << "nCurses has exited. " << endl;
     endwin();
     my_client->cleanup();
+>>>>>>> fd394a2437d0aea637f9724f0208d227305e56c6
 
-  }
+    }  
 
