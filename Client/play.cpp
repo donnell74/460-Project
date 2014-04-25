@@ -79,7 +79,8 @@ void get_user_name( char* user_name )
 {
   int characters = 0;
   char* temp;
-
+  mvprintw( 6, 3, "%s", user_name );
+  
   if ( user_name[0] != '\0' ) 
     {
       int limit;
@@ -1196,7 +1197,7 @@ int main( int argc, char *argv[] )
 
       default:
 	{
-	  cerr << "Usage: ./client <port>" << endl;
+	  cerr << "Usage: ./client <port> username" << endl;
 	  exit(EXIT_SUCCESS);
 	}
 	break;
