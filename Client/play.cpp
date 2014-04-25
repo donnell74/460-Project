@@ -75,32 +75,23 @@ int uname_y;
 
 //Get name from user: allows for name editing
 //|get_user_name
-void get_user_name( char* user_name )
+void get_user_name( string user_name )
 {
   int characters = 0;
-  char* temp;
-  mvprintw( 6, 3, "%s", user_name );
   
-  if ( user_name[0] != '\0' ) 
+  if ( user_name != "" ) 
     {
-      int limit;
       //Trim user name to 14
-      if ( strlen ( user_name ) > 14 )
+      if ( user_name.size() > 14 )
 	{
-	  limit = 14;
-	}
-
-      else
-	{
-	  limit = strlen ( user_name );
-	}
+	  user_name.substr( 0, 13 ); 
+        }
       
-      strncpy( temp, user_name, limit );
-      characters = strlen( temp );
-      uname_string = string( temp, characters );
+      characters = user_name.size();
+      uname_string = user_name;
       mvprintw( 21, 45, "%s", uname_string.c_str() );
     }
-    
+  
     for ( ;; )
     {
         int ch = getch();
@@ -1170,7 +1161,6 @@ int main( int argc, char *argv[] )
   char LOCALHOST[] = "127.0.0.1";
   //Initialize ncurses
   int row, column;
-  char* user_name;
   initscr();
   keypad( stdscr, TRUE );
   curs_set(0);
@@ -1182,14 +1172,14 @@ int main( int argc, char *argv[] )
       {
        case 2:
 	{
-	  get_user_name( user_name );
+	  get_user_name( "" );
 	  my_client = new Client( atoi( argv[1] ), LOCALHOST, user );
 	}
 	break;
 
       case 3:
 	{
-	  get_user_name(argv[2]);
+	  get_user_name( string( argv[2], strlen( argv[2] ) ) );
 	  my_client = new Client( atoi( argv[1] ), LOCALHOST, user );
 	}
 
