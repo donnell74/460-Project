@@ -1170,7 +1170,7 @@ int main( int argc, char *argv[] )
   char LOCALHOST[] = "127.0.0.1";
   //Initialize ncurses
   int row, column;
-  char* user_name;
+  char user_name[] = "";
   initscr();
   keypad( stdscr, TRUE );
   curs_set(0);
