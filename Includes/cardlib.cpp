@@ -209,7 +209,9 @@ void Deck::shuffle()
 void Deck::sort_cards()
 {
   //Sort cards using Insertion Sort algorithm
-  int i, j, key, key2;
+  int i;
+  int j;
+  int key;
   Card* ncard;
   
   for( j = top+1; j < 81; j++ )

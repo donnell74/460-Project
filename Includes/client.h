@@ -5,7 +5,8 @@
 
 /* Function required by user to implement  */
 void handle_server_msg ();
-void handle_input ();
+void handle_input();
+void quit_options( bool );
 
 class Client
 {
@@ -17,14 +18,14 @@ class Client
   public:
     Client( int, char *, char * );
     ~Client();
-    void die ( string );
+    void die( string );
     void cleanup();
     void read_server_msg();
-    void wait_for_input ();
+    void wait_for_input();
     void send_message( string );
     string get_past_data_read();
     void set_past_data_read( string );
-    string get_next_msg ();
+    string get_next_msg();
 };
 
 #endif

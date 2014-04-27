@@ -53,6 +53,7 @@ Client *my_client;
 WINDOW *score_win;
 WINDOW *timer_win;
 WINDOW *message_win;
+WINDOW *legend_win;
 
 char* user;
 
@@ -115,8 +116,7 @@ void get_user_name( string user_name )
                 return;
 
 	    case 54:
-	        endwin();
-		exit( EXIT_SUCCESS );
+                quit_options( game_started );
 	        break;
  
             default:
@@ -144,8 +144,8 @@ void sig_wrap_cleanup( int sig )
 }
 
 
-//|splassh_screen
-void splash_screen( )
+//|splash_screen
+void splash_screen()
 {
     clear();
     start_color();
@@ -433,7 +433,7 @@ void draw_card( int card, int number, int symbol, int shade, int color )
 	        case 1:
 	            mvaddch( y + 1, x + 6, shade_ch );
 	            mvaddch( y + 1, x + 7, shade_ch );
-	            mvaddch( y + 1, x + 8, shade_ch ) ;
+	            mvaddch( y + 1, x + 8, shade_ch );
 	            mvaddch( y + 2, x + 8, shade_ch );
 	            mvaddch( y + 3, x + 8, shade_ch );
 	            mvaddch( y + 3, x + 7, shade_ch );
@@ -462,11 +462,11 @@ void draw_card( int card, int number, int symbol, int shade, int color )
 	            mvaddch( y + 2, x + 6, shade_ch );
 	            mvaddch( y + 3, x + 5, shade_ch );
 	  
-	            mvaddch( y + 1, x + 9, shade_ch );
-	            mvaddch( y + 2, x + 9, shade_ch );
-	            mvaddch( y + 2, x + 8, shade_ch );
+	            mvaddch( y + 1, x + 9,  shade_ch );
+	            mvaddch( y + 2, x + 9,  shade_ch );
+	            mvaddch( y + 2, x + 8,  shade_ch );
 	            mvaddch( y + 2, x + 10, shade_ch );
-	            mvaddch( y + 3, x + 9, shade_ch );
+	            mvaddch( y + 3, x + 9,  shade_ch );
 	            break;
 	  
 	        case 1:
@@ -479,23 +479,23 @@ void draw_card( int card, int number, int symbol, int shade, int color )
 	            mvaddch( y + 3, x + 4, shade_ch );
 	            mvaddch( y + 2, x + 4, shade_ch );
 
-	            mvaddch( y + 1, x + 8, shade_ch );
-	            mvaddch( y + 1, x + 9, shade_ch );
+	            mvaddch( y + 1, x + 8,  shade_ch );
+	            mvaddch( y + 1, x + 9,  shade_ch );
 	            mvaddch( y + 1, x + 10, shade_ch );
 	            mvaddch( y + 2, x + 10, shade_ch );
 	            mvaddch( y + 3, x + 10, shade_ch );
-	            mvaddch( y + 3, x + 9, shade_ch );
-	            mvaddch( y + 3, x + 8, shade_ch );
-	            mvaddch( y + 2, x + 8, shade_ch );
+	            mvaddch( y + 3, x + 9,  shade_ch );
+	            mvaddch( y + 3, x + 8,  shade_ch );
+	            mvaddch( y + 2, x + 8,  shade_ch );
 	            break;
 
 	        case 2:					
-	            mvaddch( y + 3, x + 4, shade_ch );
-	            mvaddch( y + 2, x + 5, shade_ch );
-	            mvaddch( y + 1, x + 6, shade_ch );
+	            mvaddch( y + 3, x + 4,  shade_ch );
+	            mvaddch( y + 2, x + 5,  shade_ch );
+	            mvaddch( y + 1, x + 6,  shade_ch );
 
-	            mvaddch( y + 3, x + 8, shade_ch );
-	            mvaddch( y + 2, x + 9, shade_ch );
+	            mvaddch( y + 3, x + 8,  shade_ch );
+	            mvaddch( y + 2, x + 9,  shade_ch );
 	            mvaddch( y + 1, x + 10, shade_ch );
 	            break;
 
@@ -937,62 +937,103 @@ void show_game_screen()
     getmaxyx (stdscr, row, column );
     score_win = newwin( 4, 80, 21, 0 );
     message_win = newwin( 1, 80, 20, 0 );
+    legend_win = newwin( 10, 10, 1, 70 ); 
     mvwprintw( message_win, 0, 0, "CLIENT MESSAGE: Make a guess %s!", 
                uname_string.c_str() );
+    mvwprintw( legend_win, 0, 0, "=LEGEND=" );
+    mvwprintw( legend_win, 1, 0, "========" );
+    mvwprintw( legend_win, 2, 0, "'6'" );
+    mvwprintw( legend_win, 3, 0, "--Quit" );
+    mvwprintw( legend_win, 4, 0, "'n'" );
+    mvwprintw( legend_win, 5, 0, "--No Set" );
+    mvwprintw( legend_win, 6, 0, "Space Bar" );
+    mvwprintw( legend_win, 7, 0, "--Guess" );
+    mvwprintw( legend_win, 8, 0, "========" );
     refresh();
+    wrefresh( legend_win );
     wrefresh( message_win );
 
 }
 
 
 //|quit_options
-void quit_options()
+void quit_options( bool game_started )
 {
     
-    WINDOW* quit_win = newwin( 8, 34, ORIGIN_Y + 10, ORIGIN_X + 20 );
+    WINDOW* quit_win = newwin( 8, 35, ORIGIN_Y + 10, ORIGIN_X + 20 );
     wborder( quit_win, '|', '|', '-', '-', '+', '+', '+', '+' );
     mvwprintw( quit_win, 1, 3, "Do you wan to quit?" );
-    mvwprintw( quit_win, 2, 3, "--press 1, 2, or 3--" );
-    mvwprintw( quit_win, 3, 3, "1. Quit" );
-    mvwprintw( quit_win, 4, 3, "2. Stay and Watch" );
-    mvwprintw( quit_win, 5, 3, "3. Keep Playing" );
-    touchwin( quit_win );
-    wrefresh( quit_win );
 
-    int ch;
-    ch = wgetch( quit_win );
-
-    switch ( ch )
+    if ( game_started )
     {
-        case 49:
-            endwin();
-            my_client->cleanup();
-            break;
+        mvwprintw( quit_win, 2, 3, "--press 1, 2, or 3--" );
+        mvwprintw( quit_win, 3, 3, "1. Quit" );
+        mvwprintw( quit_win, 4, 3, "2. Stay and Watch" );
+        mvwprintw( quit_win, 5, 3, "3. Keep Playing" );
+        touchwin( quit_win );
+        wrefresh( quit_win );
 
-        case 50:
-            nocbreak();
-            touchwin( stdscr );
-            mvwprintw( message_win, 0, 0, 
-                       "CLIENT MESSAGE: Press 'Ctrl' + 'c' to quit" );
-            touchwin( score_win );
-            refresh();
-            wrefresh( message_win );
-            wrefresh( score_win );
-            break;
+        int ch;
+        ch = wgetch( quit_win );
 
-        case 51:
-            touchwin( stdscr );
-            mvwprintw( message_win, 0, 0, 
-                       "CLIENT MESSAGE: Welcome back %s!",
-                        uname_string.c_str() );
-            touchwin( score_win );
-            refresh();
-            wrefresh( message_win );
-            wrefresh( score_win );
-            break;
+        switch ( ch )
+        {
+            case 49:
+                endwin();
+                my_client->cleanup();
+                break;
+
+            case 50:
+                nocbreak();
+                touchwin( stdscr );
+                mvwprintw( message_win, 0, 0, 
+                           "CLIENT MESSAGE: Press 'Ctrl' + 'c' to quit" );
+                touchwin( score_win );
+                refresh();
+                wrefresh( message_win );
+                wrefresh( score_win );
+                break;
+
+            case 51:
+                touchwin( stdscr );
+                mvwprintw( message_win, 0, 0, 
+                           "CLIENT MESSAGE: Welcome back %s!",
+                            uname_string.c_str() );
+                touchwin( score_win );
+                refresh();
+                wrefresh( message_win );
+                wrefresh( score_win );
+                break;
         
-        default:
-            break;
+                default:
+                    break;
+        }
+    }
+    else
+    {   
+        mvwprintw( quit_win, 2, 3, "--press 1 or 2--" );
+        mvwprintw( quit_win, 3, 3, "1. Quit" );
+        mvwprintw( quit_win, 4, 3, "2. Stay and Log in" );
+        touchwin( quit_win );
+        wrefresh( quit_win );
+
+        int ch;
+        ch = wgetch( quit_win );
+
+        switch ( ch )
+        {
+            case 49:
+                endwin();
+                exit( EXIT_SUCCESS );
+                break;
+
+            case 50:
+                splash_screen();
+                break;
+
+            default:
+                break;
+        }
     }
 }
 
@@ -1008,7 +1049,7 @@ void handle_input()
         switch( ch )
 	{
 	    case 54:
-	        quit_options();
+	        quit_options( game_started );
 	        break;
 
 	    case 110:
