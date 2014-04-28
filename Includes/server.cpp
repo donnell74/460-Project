@@ -1,10 +1,11 @@
 #include "server.h"
 
 
-void Server::die ( string error_msg )
+//|die
+void Server::die( string error_msg )
 {
     // standardize error_msg so no extra new lines
-    error_msg.erase(error_msg.find_last_not_of( " \n\r\t" ) + 1 ); 
+    error_msg.erase( error_msg.find_last_not_of( " \n\r\t" ) + 1 ); 
     cerr << error_msg << endl;
 
     if ( DEBUG )
@@ -20,11 +21,12 @@ void Server::die ( string error_msg )
             cerr << strerror( errno ) << endl;
         }
     }
-    exit(EXIT_FAILURE);
+    exit( EXIT_FAILURE );
 }
 
 
-Server::Server ( int port, char *addr, int delay_time )
+//|Server
+Server::Server( int port, char *addr, int delay_time )
 {
     poll_fds = { { STDIN_FILENO, POLLIN, 0 } };
     delay = delay_time;
@@ -84,22 +86,24 @@ Server::Server ( int port, char *addr, int delay_time )
 
 }
 
-
+//|~Server
 Server::~Server()
 {
     cleanup();
 }
 
 
+//|get_client_list
 vector<Client_t> Server::get_client_list()
 {
     return client_list;
 }
 
 
+//|sendMessage
 void Server::sendMessage( int sock_fd, char type, string msg )
 {
-    msg.insert( msg.begin(), type ); // makes calls to sendMessage more readable
+    msg.insert( msg.begin(), type ); //makes calls to sendMessage more readable
     msg.append( TERM_STR ); 
     int bytes_sent = write( sock_fd, msg.c_str(), msg.size() ); 
     if ( bytes_sent < 0 )
@@ -110,18 +114,22 @@ void Server::sendMessage( int sock_fd, char type, string msg )
 
 
 // Sends desired amount of cards to all clients.
+//|send_playing_cards
 void Server::send_playing_cards( vector<int>indexes )
 {
   
     string cards_to_send = create_playing_cards( indexes, deck, playing_deck );
     for ( auto client_it : get_client_list() )
     {
-        sendMessage( client_it.sock_fd, 'c', cards_to_send ); 
+        sendMessage( client_it.sock_fd, 'c', cards_to_send );
+        sendMessage( client_it.sock_fd, 'm', "Make a guess " + 
+                     client_it.name ); 
     }
 
 }
 
 
+//|send_null_cards
 void Server::send_null_cards( vector<int>indexes )
 {
     string cards_to_send = "";
@@ -138,6 +146,7 @@ void Server::send_null_cards( vector<int>indexes )
 }
 
 
+//insertion_sort
 void Server::insertion_sort()
 {
     for ( unsigned int j = 1; j < ( unsigned int )client_list.size(); j++ )
@@ -155,6 +164,7 @@ void Server::insertion_sort()
 }
 
 
+//|update_scores
 void Server::update_scores()
 {
     string unames_string = "";
@@ -175,6 +185,7 @@ void Server::update_scores()
 
 
 //Checks client guess
+//|check_guess
 int Server::check_guess( char* guess, Deck* deck, Deck* playing_deck )
 {
     switch( guess[0] )
@@ -215,16 +226,18 @@ int Server::check_guess( char* guess, Deck* deck, Deck* playing_deck )
 }
 
 
+//|cleanup
 void Server::cleanup ()
 {
-    cout << "Server going down ( as well as all clients )." << endl;
+    cout << "\nServer going down ( as well as all clients )." << endl;
     // client list is empty or we quit while creating first client connection
     if ( ! client_list.empty() && ( client_list.front().sock_fd != 0 ) )
     {
         for ( auto client_it : client_list )
         {
             cout << "Closing client " << client_it.sock_fd << endl;
-            sendMessage( client_it.sock_fd, 'x', "You have been disconnected"); 
+            sendMessage( client_it.sock_fd, 
+                         'x', "You have been disconnected" ); 
         }
     }
   
@@ -241,6 +254,7 @@ void Server::cleanup ()
 }
 
 
+//|update_score
 void Server::update_score( int client_sock_fd, int guess_type )
 {
     int index = 0;
@@ -317,6 +331,7 @@ void Server::update_score( int client_sock_fd, int guess_type )
 }
 
 
+//|check_name
 string Server::check_name( string buffer )
 {
     int count = 0;
@@ -338,6 +353,7 @@ string Server::check_name( string buffer )
 }
 
 
+//|wait_for_cleanup
 void Server::wait_for_client()
 {
     for ( ;; )
@@ -380,7 +396,7 @@ void Server::wait_for_client()
                              this_client.name + "." );
 	         //send_playing_cards( std_indexes );
 	         //display_sets ( playing_deck->get_cards() );	
-	     }
+	    }
             else
 	    {    
                 sendMessage( this_client.sock_fd, 'm', 
@@ -392,6 +408,7 @@ void Server::wait_for_client()
 }
 
 
+//|disconnect_client
 void Server::disconnect_client( int client_sock_fd )
 {
 
@@ -422,7 +439,7 @@ void Server::disconnect_client( int client_sock_fd )
          << " has disconnected." << endl;
 }
 
-
+//|respond_to_client
 void Server::respond_to_client ( int client_sock_fd, char* guess )
 {
 
@@ -506,7 +523,8 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
         default:
             break;
     }
-    
+    //When deck is empty, this blocks messages (from above switch) to client
+    //We might need to get rid of this message.
     if ( deck->empty( 0 ) )
     {
         for ( unsigned int i = 0; i < client_list.size(); i++ )
@@ -528,6 +546,7 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
 }
 
 
+//|receive_input
 void Server::receive_input( int client_sock_fd )
 {
     int bytes_read = 0;
@@ -558,6 +577,7 @@ void Server::receive_input( int client_sock_fd )
 }
 
 
+//|wait_for_input
 void Server::wait_for_input()
 {
     for ( ;; )

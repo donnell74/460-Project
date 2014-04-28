@@ -938,8 +938,9 @@ void show_game_screen()
     score_win = newwin( 4, 80, 21, 0 );
     message_win = newwin( 1, 80, 20, 0 );
     legend_win = newwin( 10, 10, 1, 70 ); 
-    mvwprintw( message_win, 0, 0, "CLIENT MESSAGE: Make a guess %s!", 
-               uname_string.c_str() );
+    //mvwprintw( message_win, 0, 0, "SERVER MESSAGE: %s", 
+    //                   msg.substr( 1 ).data() );
+    //mvwprintw( message_win, 0, 0, "CLIENT MESSAGE: Make a guess" );
     mvwprintw( legend_win, 0, 0, "=LEGEND=" );
     mvwprintw( legend_win, 1, 0, "========" );
     mvwprintw( legend_win, 2, 0, "'6'" );
@@ -952,7 +953,6 @@ void show_game_screen()
     refresh();
     wrefresh( legend_win );
     wrefresh( message_win );
-
 }
 
 
@@ -1302,4 +1302,5 @@ int main( int argc, char *argv[] )
       my_client->cleanup();
 
 }
+
 
