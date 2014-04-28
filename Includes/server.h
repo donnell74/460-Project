@@ -3,6 +3,7 @@
 #include "networking.h"
 #include "cardlib.h"
 #include <time.h>
+#include <algorithm>
 
 /* Function required by user to implement  */
 void handle_input();
@@ -43,7 +44,9 @@ class Server
     void disconnect_client( int );
     void receive_input( int );
     void respond_to_client( int, char* );
+    void score_sort();
     void wait_for_input();
+    void force_game_over();
     string check_name( string );
 };
       

@@ -161,6 +161,7 @@ class Deck
   void replace_card( int index, Card* ncard );
   void clear_cards();
   void add_card( Card* ncard );
+  void remove_all_cards();
 };
 
 

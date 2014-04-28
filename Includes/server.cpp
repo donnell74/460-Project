@@ -97,6 +97,14 @@ vector<Client_t> Server::get_client_list()
 }
 
 
+//|force_game_over
+void Server::force_game_over()
+{
+  cout << "Attempting a forced game over" << endl;
+  deck->remove_all_cards();
+}
+
+
 void Server::sendMessage( int sock_fd, char type, string msg )
 {
     msg.insert( msg.begin(), type ); // makes calls to sendMessage more readable
@@ -134,23 +142,6 @@ void Server::send_null_cards( vector<int>indexes )
     for ( auto client_it : get_client_list() )
     {
         sendMessage( client_it.sock_fd, 'c', cards_to_send );
-    }
-}
-
-
-void Server::insertion_sort()
-{
-    for ( unsigned int j = 1; j < ( unsigned int )client_list.size(); j++ )
-    {
-        int key = client_list[j].score;
-        int i = j - 1;
-
-        while ( i >= 0 && key < client_list[i].score )
-        {
-            client_list[i + 1] = client_list[i];
-            i--;
-        }
-        client_list[i + 1].score = key;
     }
 }
 
@@ -375,9 +366,8 @@ void Server::wait_for_client()
 	        this_client.name = check_name( buffer );
 	        client_list.push_back( this_client );
 	        pthread_mutex_unlock( &mutex );
-	        sendMessage( this_client.sock_fd, 'm', 
-                             "You have been connected with username " + 
-                             this_client.name + "." );
+	        sendMessage( this_client.sock_fd, 'n', 
+                       this_client.name );
 	         //send_playing_cards( std_indexes );
 	         //display_sets ( playing_deck->get_cards() );	
 	     }
@@ -423,6 +413,24 @@ void Server::disconnect_client( int client_sock_fd )
 }
 
 
+//|compareByScore
+bool compareByScore(const Client_t &a, const Client_t &b)
+{
+      return a.score > b.score;
+}
+
+
+//|score_sort
+void Server::score_sort()
+{
+
+  pthread_mutex_lock( &mutex );
+  sort(client_list.begin(), client_list.end(), compareByScore);
+  pthread_mutex_unlock( &mutex );
+}
+
+
+//|respond_to_client
 void Server::respond_to_client ( int client_sock_fd, char* guess )
 {
 
@@ -516,18 +524,37 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
         }
     }
 
-    //Game over
+    //|Game over
     if ( deck->empty( 0 ) && num_sets( playing_deck->get_cards() ) == 0 )
          // && playing_deck->count( 1 ) < 13 )  
     {
-        cout << playing_deck->count( 1 ) << endl;
-        sendMessage( client_sock_fd, 'm', "Game Over" );
+        cout << "Sending game over to all clients" << endl;
+
+        score_sort();
+        string unames_string = "";
+
+        for ( unsigned int i = 0; i < client_list.size(); i++ )
+        {
+            unames_string += client_list[i].name;
+            unames_string += " ";
+            unames_string += to_string( client_list[i].score );
+            unames_string += "<>";
+        }
+
+        for ( auto client_it = client_list.begin(); 
+              client_it != client_list.end(); ++client_it )
+        {
+          sendMessage( client_it->sock_fd, 'o', unames_string );
+        }
+
+        sleep(15);
         //Perform end game tasks(disconnect clients, etc.)
         cleanup();
     }
 }
 
 
+//|receive_input
 void Server::receive_input( int client_sock_fd )
 {
     int bytes_read = 0;
@@ -558,6 +585,7 @@ void Server::receive_input( int client_sock_fd )
 }
 
 
+//|wait_for_input
 void Server::wait_for_input()
 {
     for ( ;; )

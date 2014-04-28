@@ -41,7 +41,8 @@ const char EXIT = 'x';
 const char MESSAGE = 'm';
 const char CARDS = 'c';
 const char UPDATE = 'u';
-
+const char GAMEOVER = 'o';
+const char USERNAME = 'n';
 
 vector<char> ACCEPTED_CHARS = { '1', '2', '3', '4', 
                                 'q', 'w', 'e', 'r',
@@ -287,7 +288,7 @@ void draw_card( int card, int number, int symbol, int shade, int color )
     switch( card )
     {
         case 1:
-	    y = rows[0];
+	    y = rows[1];
 	    x = columns[0];
 	    break;
 
@@ -1133,6 +1134,42 @@ string bitcode_parser( char bitcode )
 }
 
 
+
+//|display_game_over
+void display_game_over( string msg )
+{
+  clear();
+
+  wborder( stdscr, '|', '|', '-', '-', '+', '+', '+', '+' );
+  int pos = 0;
+  int row = 5;
+
+  vector<string>clients;
+
+  mvprintw( 0, 30, "Scoreboard");
+
+  while ( ( pos = msg.find( "<>" ) ) != string::npos )
+  {
+      clients.push_back( msg.substr( 0, pos ) );
+      msg.erase( 0, pos + 2 );
+  }
+
+  for ( unsigned int i = 0; i < clients.size(); i++ )
+  {
+      row += 1;
+      size_t found = clients[i].find(user);
+      if (found!=string::npos && clients[i][found+strlen(user)] == ' ')
+        attron( COLOR_PAIR( 11 ) );
+
+      mvprintw( row - 1, 30, "%d.%s ", i + 1,
+                 clients[i].c_str() );
+
+      attroff( COLOR_PAIR( 11 ) );
+  }
+  refresh();
+}
+
+
 //|handle_server_msg
 void handle_server_msg()
 {
@@ -1146,6 +1183,10 @@ void handle_server_msg()
             endwin();
             my_client->cleanup();
             break;
+        
+        case GAMEOVER:
+            display_game_over( msg.substr( 1 ) );
+            break;
 
         case MESSAGE:
             wmove( message_win, 0, 0 );
@@ -1153,6 +1194,15 @@ void handle_server_msg()
             mvwprintw( message_win, 0, 0, "SERVER MESSAGE: %s", 
                        msg.substr( 1 ).data() );
             wrefresh( message_win );
+            break;
+
+        case USERNAME:
+            wmove( stdscr, 0, 0 );
+            wclrtoeol( stdscr );
+            mvwprintw( stdscr, 22, 21, "You have been connected with username: %s", 
+                       msg.substr( 1 ).data() );
+            strcpy(user, msg.substr( 1 ).c_str());
+            wrefresh( stdscr );
             break;
 
         case CARDS:

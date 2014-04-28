@@ -27,6 +27,7 @@ void display_options( )
 {
   cout << "Menu" << endl;
   cout << "B. Start Game" << endl;
+  cout << "O. End Game" << endl;
   cout << "Q. Quit" << endl;
   cout << "D. Display deck" << endl;
   cout << "S. Shuffle deck" << endl;
@@ -61,6 +62,10 @@ void handle_input()
             my_server->send_playing_cards( std_indexes );
             my_server->update_scores();
             display_sets( my_server->playing_deck->get_cards() );
+            break;
+
+        case 'O':
+            my_server->force_game_over();
             break;
 
         case 'M':
