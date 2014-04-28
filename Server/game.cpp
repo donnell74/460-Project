@@ -17,13 +17,17 @@ using namespace std;
 Server *my_server;
 pthread_mutex_t mutex;
 
+ 
 /* Never used, here because of other bad code */
+//|handle_server_msg
 void handle_server_msg()
 {
     return;
 }
 
-void display_options( )
+
+//|display_options
+void display_options()
 {
   cout << "Menu" << endl;
   cout << "B. Start Game" << endl;
@@ -36,6 +40,7 @@ void display_options( )
   cout << "P. Display Playing Deck" << endl;
   //cout << "K. Set Options" << endl;
  }
+
 
 /*void set_options ( )
 {
@@ -98,12 +103,12 @@ void handle_input()
             break;
 
         case 'U':
-           my_server->update_scores();
-           cout << "Updating..." << endl;
-	   break;
+            my_server->update_scores();
+            cout << "Updating..." << endl;
+	    break;
        
         default:
-          break;
+            break;
     }
 }
 
