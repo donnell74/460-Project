@@ -431,7 +431,7 @@ void Server::disconnect_client( int client_sock_fd )
 
 
 //|compareByScore
-bool compareByScore(const Client_t &a, const Client_t &b)
+bool compareByScore( const Client_t &a, const Client_t &b )
 {
       return a.score > b.score;
 }
@@ -441,9 +441,9 @@ bool compareByScore(const Client_t &a, const Client_t &b)
 void Server::score_sort()
 {
 
-  pthread_mutex_lock( &mutex );
-  sort(client_list.begin(), client_list.end(), compareByScore);
-  pthread_mutex_unlock( &mutex );
+    pthread_mutex_lock( &mutex );
+    sort( client_list.begin(), client_list.end(), compareByScore );
+    pthread_mutex_unlock( &mutex );
 }
 
 
@@ -531,16 +531,6 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
         default:
             break;
     }
-    //When deck is empty, this blocks messages (from above switch) to client
-    //We might need to get rid of this message.
-    if ( deck->empty( 0 ) )
-    {
-        for ( unsigned int i = 0; i < client_list.size(); i++ )
-        {
-            sendMessage( client_list[i].sock_fd, 'm',
-                         "No more cards in the deck" );
-        }
-    }
 
     //|Game over
     if ( deck->empty( 0 ) && num_sets( playing_deck->get_cards() ) == 0 )
@@ -565,7 +555,7 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
           sendMessage( client_it->sock_fd, 'o', unames_string );
         }
 
-        sleep(15);
+        sleep( 15 );
         //Perform end game tasks(disconnect clients, etc.)
         cleanup();
     }
