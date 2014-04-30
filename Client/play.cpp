@@ -43,11 +43,8 @@ const char CARDS = 'c';
 const char UPDATE = 'u';
 const char GAMEOVER = 'o';
 const char USERNAME = 'n';
+const char KEYBOARD_LAYOUT = 'k';
 
-vector<char> ACCEPTED_CHARS = { '1', '2', '3', '4', 
-                                'q', 'w', 'e', 'r',
-                                'a', 's', 'd', 'f', 
-                                'O', 'N', 'U', 'I' };
 // Globals 
 Client *my_client;
 
@@ -72,6 +69,13 @@ int cur_y2 = 0;
 
 int uname_x;
 int uname_y;
+
+char* keyboard;
+
+string ukeyboard_string = "";
+int ukeyboard_x;
+int ukeyboard_y;
+int keyboard_as_int = 0;
 //end Globals
 
 
@@ -231,6 +235,117 @@ void splash_screen()
     wrefresh( subwindow );
   
 }
+
+
+//|show_keyboard_layout
+void show_keyboard_layout ( )
+{
+    // Alpha
+    WINDOW* alpha = newwin( 9, 13, ORIGIN_Y + 10, ORIGIN_X + 9 );
+    wborder( alpha, '|', '|', '-', '-', '+', '+', '+', '+' );
+    mvwprintw( alpha, 1, 1, "Keyboard  1" );
+    mvwprintw( alpha, 2, 1, "-----------" );
+    mvwprintw( alpha, 3, 3, "A B C D" );
+    mvwprintw( alpha, 4, 3, "E F G H" );
+    mvwprintw( alpha, 5, 3, "I J K L" );
+    mvwprintw( alpha, 6, 3, "M N O P" );
+    mvwprintw( alpha, 7, 3, "   X   " );
+    mvwprintw( stdscr, ORIGIN_Y + 22, ORIGIN_X + 20, 
+               "Please Choose Your Keyboard Layout: " );
+    
+    // left QWERTY
+    WINDOW* lqwerty = newwin( 9, 13, ORIGIN_Y + 10, ORIGIN_X + 22 );
+    wborder( lqwerty, '|', '|', '-', '-', '+', '+', '+', '+' );
+    mvwprintw( lqwerty, 1, 1, "Keyboard  2" );
+    mvwprintw( lqwerty, 2, 1, "-----------" );
+    mvwprintw( lqwerty, 3, 3, "1 2 3 4" );
+    mvwprintw( lqwerty, 4, 3, "Q W E R" );
+    mvwprintw( lqwerty, 5, 3, "A S D F" );
+    mvwprintw( lqwerty, 6, 3, "Z X C V" );
+
+    // left QWERTY
+    WINDOW* rqwerty = newwin( 9, 13, ORIGIN_Y + 10, ORIGIN_X + 35 );
+    wborder( rqwerty, '|', '|', '-', '-', '+', '+', '+', '+' );
+    mvwprintw( rqwerty, 1, 1, "Keyboard  3" );
+    mvwprintw( rqwerty, 2, 1, "-----------" );
+    mvwprintw( rqwerty, 3, 3, "7 8 9 0" );
+    mvwprintw( rqwerty, 4, 3, "U I O P" );
+    mvwprintw( rqwerty, 5, 3, "J K L ;" );
+    mvwprintw( rqwerty, 6, 3, "M , . /" );
+    mvwprintw( rqwerty, 7, 3, "   N   " );
+
+    // left QWERTY
+    WINDOW* colemak = newwin( 9, 13, ORIGIN_Y + 10, ORIGIN_X + 48 );
+    wborder( colemak, '|', '|', '-', '-', '+', '+', '+', '+' );
+    mvwprintw( colemak, 1, 1, "Keyboard  4" );
+    mvwprintw( colemak, 2, 1, "-----------" );
+    mvwprintw( colemak, 3, 3, "1 2 3 4" );
+    mvwprintw( colemak, 4, 3, "Q W F P" );
+    mvwprintw( colemak, 5, 3, "A R S T" );
+    mvwprintw( colemak, 6, 3, "Z X C V" );
+    mvwprintw( colemak, 7, 3, "   N   " );
+
+
+    touchwin( stdscr );
+    refresh();
+    wrefresh( alpha );
+    wrefresh( lqwerty );
+    wrefresh( rqwerty );
+    wrefresh( colemak );
+}
+
+
+//|get_keyboard_layout
+void get_keyboard_layout ( )
+{
+  show_keyboard_layout();
+  int characters = 0;
+  
+  for ( ;; )
+  {
+    int ch = getch();
+    switch( ch )
+    {
+      case KEY_BACKSPACE:
+        if ( characters > 0 )
+        {
+          characters -= 1;
+          getyx( stdscr, ukeyboard_y, ukeyboard_x );
+          mvaddch( ukeyboard_y, ukeyboard_x - 1, KEY_SPACE );
+          move( ukeyboard_y, ukeyboard_x - 1 );
+          ukeyboard_string.erase( ukeyboard_string.size() -1, 1 );
+        }
+
+        break;
+
+      case '\n':
+        keyboard = new char[ukeyboard_string.length() + 1];
+        strcpy( keyboard, ukeyboard_string.c_str() );
+        return;
+
+      case 54:
+        quit_options( game_started );
+        break;
+
+      default:
+        if ( characters == 1 )
+        {
+          break;
+        }
+
+        if ( ch > 32 && ch < 126 && characters < 14 )
+        {
+          addch( ch );
+          ukeyboard_string += ( char )ch;
+          characters += 1;
+        }
+        break;
+    }
+    refresh();
+  }
+}
+
+
 
 //|update_timer_win
 void update_timer_win( string msg )
@@ -591,7 +706,7 @@ void draw_card_IDs()
           {
 	      move( ORIGIN_Y + ( ( i ) * ( CARD_HEIGHT + ROW_OFFSET ) ),
 	            ORIGIN_X + ( ( j ) * ( CARD_WIDTH + COL_OFFSET ) ) );
-	      addch( ( int )ACCEPTED_CHARS[i * 4 + j] );
+	      addch( ( int )ACCEPTED_CHARS[keyboard_as_int][i * 4 + j] );
 	  
 	  }
     }
@@ -602,7 +717,7 @@ void draw_card_IDs()
 //|in_accepted_chars
 bool in_accepted_chars( int ch )
 {
-    for ( auto chars : ACCEPTED_CHARS )
+    for ( auto chars : ACCEPTED_CHARS[keyboard_as_int] )
     {
         if ( ch == ( int )chars )
         {
@@ -616,48 +731,61 @@ bool in_accepted_chars( int ch )
 //|get_card
 int get_card( int ch )
 {
-
-    switch( ch )
+    // before you replace this with a switch statement
+    // switch statement does not let none constant values
+    // for cases
+    if ( ch == ACCEPTED_CHARS[keyboard_as_int][0] )
     {
-        case 49:
-            return 1;
-
-        case 50:
-            return 2;
-
-        case 51:
-            return 3;
-
-        case 52:
-            return 4;
-
-        case 113:
-            return 5;
-
-        case 119:
-            return 6;
-
-        case 101:
-            return 7;
-
-        case 114:
-            return 8;
-
-        case 97:
-            return 9;
-
-        case 115:
-            return 10;
-
-        case 100:
-            return 11;
-
-        case 102:
-            return 12;
-
-        default:
-            return -1;
-     }
+      return 1;
+    }
+    else if ( ch == ACCEPTED_CHARS[keyboard_as_int][1] )
+    {
+      return 2;
+    }
+    else if ( ch == ACCEPTED_CHARS[keyboard_as_int][2] )
+    {
+      return 3;
+    }
+    else if ( ch == ACCEPTED_CHARS[keyboard_as_int][3] )
+    {
+      return 4;
+    }
+    else if ( ch == ACCEPTED_CHARS[keyboard_as_int][4] )
+    {
+      return 5;
+    }
+    else if ( ch == ACCEPTED_CHARS[keyboard_as_int][5] )
+    {
+      return 6;
+    }
+    else if ( ch == ACCEPTED_CHARS[keyboard_as_int][6] )
+    {
+      return 7;
+    }
+    else if ( ch == ACCEPTED_CHARS[keyboard_as_int][7] )
+    {
+      return 8;
+    }
+    else if ( ch == ACCEPTED_CHARS[keyboard_as_int][8] )
+    {
+      return 9;
+    }
+    else if ( ch == ACCEPTED_CHARS[keyboard_as_int][9] )
+    {
+      return 10;
+    }
+    else if ( ch == ACCEPTED_CHARS[keyboard_as_int][10] )
+    {
+      return 11;
+    }
+    else if ( ch == ACCEPTED_CHARS[keyboard_as_int][11] )
+    {
+      return 12;
+    }
+    else
+    {
+        return -1;
+    }
 }
 
 
@@ -1062,8 +1190,8 @@ void handle_input()
                     my_client->send_message( choice_string );
 	            for( int d = 0; d < choice_string.size(); d++ )
 		    {
-		        cards.push_back( get_card( ( int )
-                                       ( choice_string[d] ) ) );
+		        cards.push_back( get_card( 
+                                       choice_string[d] ) );
 		    } 
 	        }
                 break;
@@ -1087,10 +1215,10 @@ void handle_input()
 	}
 
         if ( choice_string.find( ( char )ch ) == -1 && 
-             in_accepted_chars( ch ) )
+             in_accepted_chars( toupper(ch) ) )
 	{
 	    choice_string += ( ( char )ch );
-	    highlight_card( get_card( ch ) );
+	    highlight_card( get_card( toupper(ch) ) );
 	    goto resume;
 	 
 	}
@@ -1239,8 +1367,12 @@ void handle_server_msg()
             mvwprintw( stdscr, 22, 21, 
                        "You have been connected with username: %s", 
                        msg.substr( 1 ).data() );
-            strcpy(user, msg.substr( 1 ).c_str());
+            strncpy( user, msg.substr( 1 ).c_str(), msg.substr( 1 ).size() );
             wrefresh( stdscr );
+            break;
+
+        case KEYBOARD_LAYOUT:
+            keyboard_as_int = msg.at(1) - '1'; //convert to int minus 1 
             break;
 
         case CARDS:
@@ -1317,14 +1449,16 @@ int main( int argc, char *argv[] )
         case 2:
 	{
 	    get_user_name( "" );
-	    my_client = new Client( atoi( argv[1] ), LOCALHOST, user );
+      get_keyboard_layout( );
+	    my_client = new Client( atoi( argv[1] ), LOCALHOST, user, ukeyboard_string );
 	}
 	break;
 
         case 3:
 	{
 	    get_user_name( string( argv[2], strlen( argv[2] ) ) );
-	    my_client = new Client( atoi( argv[1] ), LOCALHOST, user );
+      get_keyboard_layout( );
+	    my_client = new Client( atoi( argv[1] ), LOCALHOST, user, keyboard );
 	}
 
 	break;

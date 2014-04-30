@@ -9,6 +9,28 @@
 using namespace std;
 
 static vector<int>std_indexes = {0,1,2,3,4,5,6,7,8,9,10,11};
+static vector<vector<char>> ACCEPTED_CHARS = {
+  { 'A', 'B', 'C', 'D', 
+    'E', 'F', 'G', 'H',
+    'I', 'J', 'K', 'L', 
+    'M', 'N', 'O', 'P',
+    'O', 'X', 'U', 'I' },
+  { '1', '2', '3', '4', 
+    'Q', 'W', 'E', 'R',
+    'A', 'S', 'D', 'F', 
+    'O', 'N', 'U', 'I' },
+  { '7', '8', '9', '0', 
+    'U', 'I', 'O', 'P',
+    'J', 'K', 'L', ';', 
+    'M', ',', '.', '/',
+    'O', 'N', 'U', 'I' },
+  { '1', '2', '3', '4', 
+    'Q', 'W', 'F', 'P',
+    'A', 'R', 'S', 'T', 
+    'Z', 'X', 'C', 'V',
+    'O', 'N', 'U', 'I' },
+};
+
 
 // DO NOT CHANGE TO 0
 // change to 0 will cause null byte
@@ -185,7 +207,7 @@ void display_sets ( vector<Card*>cards );
 
 //Maps cards to index of playing card deck
 //Returns index on success and -1 on error
-int map_card ( char key );
+int map_card ( char key, vector<char> accepted_chars );
 
 //Checks client guess
 //Returns indexes of needed cards in the playing deck 

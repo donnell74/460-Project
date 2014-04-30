@@ -177,7 +177,7 @@ void Server::update_scores()
 
 //Checks client guess
 //|check_guess
-int Server::check_guess( char* guess, Deck* deck, Deck* playing_deck )
+int Server::check_guess( char* guess, Deck* deck, Deck* playing_deck, vector<char> accepted_keys )
 {
     switch( guess[0] )
     {
@@ -193,10 +193,9 @@ int Server::check_guess( char* guess, Deck* deck, Deck* playing_deck )
             //Set to check
             vector<Card*>cset;
   
-            int idx_1 = map_card( toupper( guess[0] ) );
-            int idx_2 = map_card( toupper( guess[1] ) );
-            int idx_3 = map_card( toupper( guess[2] ) );
-	    cout<<idx_1<<idx_2<<idx_3<<endl;
+            int idx_1 = map_card( toupper( guess[0]), accepted_keys );
+            int idx_2 = map_card( toupper( guess[1]), accepted_keys );
+            int idx_3 = map_card( toupper( guess[2]), accepted_keys );
             cset.push_back( playing_deck->get_card( idx_1 ) );
             cset.push_back( playing_deck->get_card( idx_2 ) );
             cset.push_back( playing_deck->get_card( idx_3 ) );
@@ -317,7 +316,6 @@ void Server::update_score( int client_sock_fd, int guess_type )
             break;
     }
     pthread_mutex_unlock( &mutex );
-    cout << "score:" << client_list[index].score << endl;
     update_scores();
 }
 
@@ -327,10 +325,8 @@ string Server::check_name( string buffer )
 {
     int count = 0;
     string mybuffer = buffer;
-    cout << "I got money" << endl;
     for ( auto it : usernames )
     { 
-	cout << it << endl;
 	if ( it == mybuffer )
 	{
 	    mybuffer = buffer + to_string( count );
@@ -376,14 +372,30 @@ void Server::wait_for_client()
 
 	        // CRITICAL SECTION
 	        pthread_mutex_lock( &mutex );
-	        poll_fds.push_back( client_sock_fd );
-                this_client.score = 0;
-	        read( this_client.sock_fd, &buffer, 14 );
-	        this_client.name = check_name( buffer );
+          this_client.score = 0;
+          // Read name
+	        int hr = read( this_client.sock_fd, &buffer, 15 );
+          if ( hr <= 0 )
+          {
+            cout << strerror(errno) << endl;
+          }
+          else
+          {
+            char second_buffer[14] = {0};
+            strncpy( second_buffer, &buffer[1], 14 ); 
+            this_client.name = check_name( second_buffer );
+            this_client.keyboard = buffer[0] - '0';
+          }
 	        client_list.push_back( this_client );
 	        pthread_mutex_unlock( &mutex );
+         
+          // tell client what server knows
 	        sendMessage( this_client.sock_fd, 'n', 
                        this_client.name );
+	        sendMessage( this_client.sock_fd, 'k', 
+                       to_string(this_client.keyboard) );
+
+	        poll_fds.push_back( client_sock_fd );
 	         //send_playing_cards( std_indexes );
 	         //display_sets ( playing_deck->get_cards() );	
 	    }
@@ -452,7 +464,17 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
 {
 
     sendMessage( client_sock_fd, 'm', "Checking guess.." ); 
-    int guess_type = check_guess( guess, deck, playing_deck );
+    vector<Client_t>::iterator client;
+    for ( auto client_it = client_list.begin(); 
+          client_it != client_list.end(); ++client_it )
+    {
+        if ( client_it->sock_fd == client_sock_fd )
+        {
+          client = client_it;
+        }
+    }
+
+    int guess_type = check_guess( guess, deck, playing_deck, ACCEPTED_CHARS[client->keyboard - 1] );
   
     //Update Score
     update_score( client_sock_fd, guess_type );
@@ -500,26 +522,28 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
             if ( !deck->empty( 0 ) )
 	    { 
                 vector<int>indexes;
-                indexes.push_back( map_card( toupper ( guess[0] ) ) );
-                indexes.push_back( map_card( toupper ( guess[1] ) ) );
-                indexes.push_back( map_card( toupper ( guess[2] ) ) );
+                indexes.push_back( map_card( toupper ( guess[0] ), ACCEPTED_CHARS[client->keyboard - 1] ) );
+                indexes.push_back( map_card( toupper ( guess[1] ), ACCEPTED_CHARS[client->keyboard - 1] ) );
+                indexes.push_back( map_card( toupper ( guess[2] ), ACCEPTED_CHARS[client->keyboard - 1] ) );
                 playing_deck->remove_card( indexes[0] );
                 playing_deck->remove_card( indexes[1] );
                 playing_deck->remove_card( indexes[2] );
-	        send_playing_cards( indexes );
+                send_playing_cards( indexes );
                 display_sets( playing_deck->get_cards() );
+                break;
 	    }
             else
             {
 
                 vector<int>indexes;
-                indexes.push_back( map_card( toupper ( guess[0] ) ) );
-                indexes.push_back( map_card( toupper ( guess[1] ) ) );
-                indexes.push_back( map_card( toupper ( guess[2] ) ) );
+                indexes.push_back( map_card( toupper ( guess[0]), ACCEPTED_CHARS[client->keyboard - 1]  ) );
+                indexes.push_back( map_card( toupper ( guess[1]), ACCEPTED_CHARS[client->keyboard - 1]  ) );
+                indexes.push_back( map_card( toupper ( guess[2]), ACCEPTED_CHARS[client->keyboard - 1]  ) );
                 playing_deck->remove_card( indexes[0] );
                 playing_deck->remove_card( indexes[1] );
                 playing_deck->remove_card( indexes[2] );
-	        send_null_cards( indexes );
+                break;
+                send_null_cards( indexes );
             }
             break;
 				     

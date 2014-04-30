@@ -1,6 +1,7 @@
 #include "cardlib.h"
 #include <vector>
 #include <iostream>
+#include <algorithm>
 #include <string.h> 
 #include <random>
 
@@ -582,8 +583,10 @@ void display_sets ( vector<Card*>cards )
 
 
 //|map_card
-int map_card ( char key )
+int map_card ( char key, vector<char>accepted_keys )
 {
+  return find(accepted_keys.begin(), accepted_keys.end(), key) - accepted_keys.begin();
+  /*
     switch ( key )
     {
 
@@ -623,7 +626,7 @@ int map_card ( char key )
       case 'F':
           return 11;
 
-      /*Required if client list is extended to 16
+      //Required if client list is extended to 16
       case 'Z':
           return 12;
 
@@ -635,8 +638,8 @@ int map_card ( char key )
 
       case 'V':
           return 15;
-*/
     default:
         return 0;
     }
+*/
 }

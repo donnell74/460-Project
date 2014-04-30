@@ -19,7 +19,14 @@
 #define DEFAULT_PORT 51717
 #define TERM_STR "XX"
 
+#define ALPHA 1 
+#define LQWERTY 2 
+#define RQWERTY 3 
+#define COLEMAK 4 
+
 using namespace std;
+
+
 
 /* structs */
 struct Client_t
@@ -28,6 +35,7 @@ struct Client_t
   sockaddr_in addr;
   string name;
   int score;
+  int keyboard;
 };
 
 #endif /* NETWORKING_H */

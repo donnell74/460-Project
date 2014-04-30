@@ -16,7 +16,7 @@ class Client
     string past_data_read;
 
   public:
-    Client( int, char *, char * );
+    Client( int, char *, char *, string );
     ~Client();
     void die( string );
     void cleanup();

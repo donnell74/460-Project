@@ -35,7 +35,7 @@ class Server
     void sendMessage( int, char , string );
     void send_playing_cards( vector<int> );
     void send_null_cards( vector<int> );
-    int check_guess( char*, Deck*, Deck* );
+    int check_guess( char*, Deck*, Deck*, vector<char> );
     void cleanup();
     void update_score( int, int );
     void insertion_sort();
