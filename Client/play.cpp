@@ -839,7 +839,7 @@ string get_card_coords( int card )
 //|print_card_stats
 void print_card_stats( int card )
 {
-    werase( message_win );
+    //werase( message_win );
     
     if ( choice_string == "nnn" )
     {
@@ -1179,8 +1179,20 @@ void handle_input()
 	        quit_options( game_started );
 	        break;
 
-	    case 110:
-	        choice_string = "nnn";
+            case 78:
+                choice_string = "nnnn";
+                break;
+
+            case 88:
+                choice_string = "nnnn";
+                break;
+
+            case 110:
+                choice_string = "nnnn";
+                break; 
+
+	    case 120:
+	        choice_string = "nnnn";
 	        break;
 	
 	    case KEY_SPACE:
@@ -1235,13 +1247,11 @@ void handle_input()
 	}
       
     resume:
-        move( 32,18 );
-        clrtoeol();
+
         if ( in_accepted_chars( toupper( ch ) ) || choice_string == "nnn" )
         {
             print_card_stats( ch );
         }
-        clrtoeol();
         refresh();
     }
 }
@@ -1305,35 +1315,35 @@ string bitcode_parser( char bitcode )
 //|display_game_over
 void display_game_over( string msg )
 {
-  clear();
+    clear();
 
-  wborder( stdscr, '|', '|', '-', '-', '+', '+', '+', '+' );
-  int pos = 0;
-  int row = 5;
+    wborder( stdscr, '|', '|', '-', '-', '+', '+', '+', '+' );
+    int pos = 0;
+    int row = 5;
 
-  vector<string>clients;
+    vector<string>clients;
 
-  mvprintw( 0, 30, "Scoreboard");
+    mvprintw( 0, 30, "Scoreboard");
 
-  while ( ( pos = msg.find( "<>" ) ) != string::npos )
-  {
-      clients.push_back( msg.substr( 0, pos ) );
-      msg.erase( 0, pos + 2 );
-  }
+    while ( ( pos = msg.find( "<>" ) ) != string::npos )
+    {
+        clients.push_back( msg.substr( 0, pos ) );
+        msg.erase( 0, pos + 2 );
+    }
 
-  for ( unsigned int i = 0; i < clients.size(); i++ )
-  {
-      row += 1;
-      size_t found = clients[i].find(user);
-      if (found!=string::npos && clients[i][found+strlen(user)] == ' ')
-        attron( COLOR_PAIR( 11 ) );
+    for ( unsigned int i = 0; i < clients.size(); i++ )
+    {
+        row += 1;
+        size_t found = clients[i].find( user );
+        if ( found!=string::npos && clients[i][found + strlen( user )] == ' ')
+            attron( COLOR_PAIR( 11 ) );
 
-      mvprintw( row - 1, 30, "%d.%s ", i + 1,
+        mvprintw( row - 1, 30, "%d.%s ", i + 1,
                  clients[i].c_str() );
 
-      attroff( COLOR_PAIR( 11 ) );
-  }
-  refresh();
+        attroff( COLOR_PAIR( 11 ) );
+    }
+    refresh();
 }
 
 
