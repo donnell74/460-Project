@@ -82,6 +82,7 @@ int keyboard_as_int = 0;
 
 pthread_t timer_thread;
 struct itimerval itimer;
+string scoreboard = "";
 //end Globals
 
 //Timer functions
@@ -1395,6 +1396,7 @@ void display_game_over( string msg )
 
         mvprintw( row - 1, 30, "%d.%s ", i + 1,
                  clients[i].c_str() );
+        scoreboard += clients[i] + "\n";
 
         attroff( COLOR_PAIR( 11 ) );
     }
@@ -1413,6 +1415,7 @@ void handle_server_msg()
             printw( "%s", "\n" );
             refresh();
             endwin();
+	    cout << "Scores" << endl << scoreboard << endl;
             my_client->cleanup();
             break;
         
@@ -1562,8 +1565,8 @@ int main( int argc, char *argv[] )
       sigaction( SIGWINCH, &action, nullptr );
       pthread_join( timer_thread, nullptr );
       my_client->wait_for_input();
-      cout << "nCurses has exited. " << endl;
       endwin();
+      cout << "Scores" << endl << scoreboard << endl;
       my_client->cleanup();
 
 }
