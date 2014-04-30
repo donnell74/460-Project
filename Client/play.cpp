@@ -296,7 +296,7 @@ void show_keyboard_layout ( )
 
 
 //|get_keyboard_layout
-void get_keyboard_layout ( )
+void get_keyboard_layout( )
 {
   show_keyboard_layout();
   int characters = 0;
@@ -1125,9 +1125,11 @@ void quit_options( bool game_started )
                 mvwprintw( message_win, 0, 0, 
                            "CLIENT MESSAGE: Welcome back!" );
                 touchwin( score_win );
+                touchwin( legend_win );
                 refresh();
                 wrefresh( message_win );
                 wrefresh( score_win );
+                wrefresh( legend_win );
                 break;
         
                 default:
@@ -1224,10 +1226,10 @@ void handle_input()
 	}
       
         if ( choice_string.find( ( char )ch ) != -1 && 
-             in_accepted_chars( ch ) )
+             in_accepted_chars( toupper( ch ) ) )
 	{
 	    choice_string.erase( choice_string.find( ( char )ch ), 1 );
-	    dehighlight_card( get_card ( ch ) );
+	    dehighlight_card( get_card ( toupper( ch ) ) );
 	    goto resume;
 	 
 	}
