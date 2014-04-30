@@ -220,7 +220,7 @@ void splash_screen()
     attroff( COLOR_PAIR( 12 ) );
 
     //Project Details window
-    WINDOW* subwindow = newwin( 8, 35, ORIGIN_Y + 10, ORIGIN_X + 20 );
+    WINDOW* subwindow = newwin( 9, 51, ORIGIN_Y + 10, ORIGIN_X + 12 );
     wborder( subwindow, '|', '|', '-', '-', '+', '+', '+', '+' );
     mvwprintw( subwindow, 1, 3, "CSC 460" );
     mvwprintw( subwindow, 2, 3, "Spring 2014" );
@@ -228,7 +228,7 @@ void splash_screen()
     mvwprintw( subwindow, 4, 3, "\t\t Greg Donnell" );
     mvwprintw( subwindow, 5, 3, "\t\t Matthew Duff" );
     touchwin( subwindow );
-    mvwprintw( stdscr, ORIGIN_Y + 20, ORIGIN_X + 10, 
+    mvwprintw( stdscr, ORIGIN_Y + 20, ORIGIN_X + 13, 
                "Please Enter a Username: " );
     touchwin( stdscr );
     refresh();
@@ -241,7 +241,7 @@ void splash_screen()
 void show_keyboard_layout ( )
 {
     // Alpha
-    WINDOW* alpha = newwin( 9, 13, ORIGIN_Y + 10, ORIGIN_X + 10 );
+    WINDOW* alpha = newwin( 9, 13, ORIGIN_Y + 10, ORIGIN_X + 12 );
     wborder( alpha, '|', '|', '-', '-', '+', '+', '+', '+' );
     mvwprintw( alpha, 1, 1, "Keyboard  1" );
     mvwprintw( alpha, 2, 1, "-----------" );
@@ -250,11 +250,11 @@ void show_keyboard_layout ( )
     mvwprintw( alpha, 5, 3, "I J K L" );
     mvwprintw( alpha, 6, 3, "M N O P" );
     mvwprintw( alpha, 7, 3, "   X   " );
-    mvwprintw( stdscr, ORIGIN_Y + 22, ORIGIN_X + 10, 
+    mvwprintw( stdscr, ORIGIN_Y + 22, ORIGIN_X + 13, 
                "Please Choose Your Keyboard Layout: " );
     
     // left QWERTY
-    WINDOW* lqwerty = newwin( 9, 13, ORIGIN_Y + 10, ORIGIN_X + 23 );
+    WINDOW* lqwerty = newwin( 9, 13, ORIGIN_Y + 10, ORIGIN_X + 25 );
     wborder( lqwerty, '|', '|', '-', '-', '+', '+', '+', '+' );
     mvwprintw( lqwerty, 1, 1, "Keyboard  2" );
     mvwprintw( lqwerty, 2, 1, "-----------" );
@@ -264,7 +264,7 @@ void show_keyboard_layout ( )
     mvwprintw( lqwerty, 6, 3, "Z X C V" );
 
     // left QWERTY
-    WINDOW* rqwerty = newwin( 9, 13, ORIGIN_Y + 10, ORIGIN_X + 36 );
+    WINDOW* rqwerty = newwin( 9, 13, ORIGIN_Y + 10, ORIGIN_X + 38 );
     wborder( rqwerty, '|', '|', '-', '-', '+', '+', '+', '+' );
     mvwprintw( rqwerty, 1, 1, "Keyboard  3" );
     mvwprintw( rqwerty, 2, 1, "-----------" );
@@ -275,7 +275,7 @@ void show_keyboard_layout ( )
     mvwprintw( rqwerty, 7, 3, "   N   " );
 
     // left QWERTY
-    WINDOW* colemak = newwin( 9, 13, ORIGIN_Y + 10, ORIGIN_X + 49 );
+    WINDOW* colemak = newwin( 9, 13, ORIGIN_Y + 10, ORIGIN_X + 51 );
     wborder( colemak, '|', '|', '-', '-', '+', '+', '+', '+' );
     mvwprintw( colemak, 1, 1, "Keyboard  4" );
     mvwprintw( colemak, 2, 1, "-----------" );
@@ -1237,7 +1237,7 @@ void handle_input()
     resume:
         move( 32,18 );
         clrtoeol();
-        if ( in_accepted_chars( ch ) || choice_string == "nnn" )
+        if ( in_accepted_chars( toupper( ch ) ) || choice_string == "nnn" )
         {
             print_card_stats( ch );
         }
@@ -1366,7 +1366,7 @@ void handle_server_msg()
         case USERNAME:
             wmove( stdscr, 0, 0 );
             wclrtoeol( stdscr );
-            mvwprintw( stdscr, 22, 11, 
+            mvwprintw( stdscr, 22, 14, 
                        "You have been connected with username: %s", 
                        msg.substr( 1 ).data() );
             strncpy( user, msg.substr( 1 ).c_str(), msg.substr( 1 ).size() );
