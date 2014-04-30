@@ -1532,7 +1532,7 @@ int main( int argc, char *argv[] )
     {
         case 2:
 	{
-	    get_user_name( "" );
+	    get_user_name( getlogin() );
       get_keyboard_layout( );
 	    my_client = new Client( atoi( argv[1] ), LOCALHOST, user, ukeyboard_string );
 	}
