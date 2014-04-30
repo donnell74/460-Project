@@ -61,6 +61,7 @@ string choice_string = "";
 bool animate = false;
 bool name_set = false;
 bool game_started = false;
+bool timer_disabled = false;
 
 int cur_x1 = 0;
 int cur_y1 = 0;
@@ -70,13 +71,67 @@ int cur_y2 = 0;
 int uname_x;
 int uname_y;
 
+int delay = 15;
+
 char* keyboard;
 
 string ukeyboard_string = "";
 int ukeyboard_x;
 int ukeyboard_y;
 int keyboard_as_int = 0;
+
+pthread_t timer_thread;
+struct itimerval itimer;
 //end Globals
+
+//Timer functions
+void disable_timer()
+{
+  //Disable itimer
+  getitimer(ITIMER_REAL, &itimer);
+  itimer.it_value.tv_sec = 0;
+  itimer.it_value.tv_usec = 0;
+  setitimer(ITIMER_REAL, &itimer, nullptr);
+  //Cancel timer thread
+  if ( pthread_cancel( timer_thread ) != 0 )
+    {
+      cerr << strerror( errno ) << endl;
+    }
+
+  timer_disabled = true;
+}
+
+void check_timer( )
+{
+  if( delay == 0 )
+    {
+       werase( message_win );
+       mvwprintw( message_win, 0, 0, "Timer expired." );
+       endwin( );
+       exit( EXIT_SUCCESS );
+       disable_timer( );
+    }
+
+}
+void sig_alarm_wrapper( int sig )
+{
+  wclrtoeol(timer_win);
+  delay -= 1;
+  mvwprintw(timer_win,0,0,"GAME BEGINS IN:%d", delay);
+  wrefresh(timer_win);
+  check_timer( );
+}
+
+void* start_timer( void* arg )
+{
+  timer_win = newwin(1, 17, TIME_WIN_Y, TIME_WIN_X);
+  itimer = {{1,0},{1,0}};
+    if (setitimer(ITIMER_REAL, &itimer, nullptr) == -1) {
+        cerr << strerror(errno) << ": can't set interval timer\n";
+        exit(EXIT_FAILURE);
+    }
+
+}
 
 
 //Get name from user: allows for name editing
@@ -1444,6 +1499,23 @@ int main( int argc, char *argv[] )
     curs_set( 0 );
     noecho();
     splash_screen();
+    
+    //timer sigaction
+    struct sigaction time_action = {};
+      
+    time_action.sa_handler = sig_alarm_wrapper;
+    if(sigaction( SIGALRM, &time_action, nullptr ) == -1)
+    {
+	printw("Couldn't modify sig action handler");
+    }
+  
+    //Start timer thread 
+    if(pthread_create(&timer_thread, nullptr, start_timer, nullptr) != 0)
+      {
+    	cerr << strerror(errno) << ": can't create timer_thread\n";
+	exit(EXIT_FAILURE);
+     }
+
     timer_win = newwin( 1, 17, TIME_WIN_Y, TIME_WIN_X );
   
     switch( argc )
@@ -1475,10 +1547,10 @@ int main( int argc, char *argv[] )
 
       // bind TERM to cleanup
       struct sigaction action = {};
-
       action.sa_handler = sig_wrap_cleanup;
       sigaction( SIGINT, &action, nullptr );
       sigaction( SIGWINCH, &action, nullptr );
+      pthread_join( timer_thread, nullptr );
       my_client->wait_for_input();
       cout << "nCurses has exited. " << endl;
       endwin();
