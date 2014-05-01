@@ -44,6 +44,7 @@ const char UPDATE = 'u';
 const char GAMEOVER = 'o';
 const char USERNAME = 'n';
 const char KEYBOARD_LAYOUT = 'k';
+const char TIMER = 't';
 
 // Globals 
 Client *my_client;
@@ -70,8 +71,6 @@ int cur_y2 = 0;
 
 int uname_x;
 int uname_y;
-
-int delay = 15;
 
 char* keyboard;
 
@@ -415,7 +414,16 @@ void get_keyboard_layout( )
 //|update_timer_win
 void update_timer_win( string msg )
 {
+  werase( timer_win );
+  if ( stoi( msg ) == -1 )
+    {
+      return;
+    }
 
+  attron( COLOR_PAIR( 5 ) );
+  mvwprintw( timer_win, 0, 0, "GAME WILL BEGIN IN %s", msg.c_str() );
+  wrefresh( timer_win );
+  attroff( COLOR_PAIR( 5 ) );
 }
 
 
@@ -1508,6 +1516,10 @@ void handle_server_msg()
         case UPDATE:
             update_score_win( msg.substr( 1, msg.size() - 1 ) );
             break;
+	    
+        case TIMER:
+	  update_timer_win( msg.substr( 1 ) );
+	  break;
 
         default:
             break;
@@ -1534,25 +1546,8 @@ int main( int argc, char *argv[] )
     curs_set( 0 );
     noecho();
     splash_screen();
-    
-    //timer sigaction
-    /*struct sigaction time_action = {};
-      
-    time_action.sa_handler = sig_alarm_wrapper;
-    if ( sigaction( SIGALRM, &time_action, nullptr ) == -1 )
-    {
-	printw( "Couldn't modify sig action handler" );
-    }
-  
-    //Start timer thread 
-    if ( pthread_create( &timer_thread, nullptr, start_timer, nullptr ) != 0 )
-    {
-    	cerr << strerror( errno ) << ": can't create timer_thread\n";
-	exit( EXIT_FAILURE );
-    }
 
-    timer_win = newwin( 1, 17, TIME_WIN_Y, TIME_WIN_X );
-    */
+    timer_win = newwin( 1, 40, TIME_WIN_Y, TIME_WIN_X );
   
     switch( argc )
     {
@@ -1588,7 +1583,6 @@ int main( int argc, char *argv[] )
       action.sa_handler = sig_wrap_cleanup;
       sigaction( SIGINT, &action, nullptr );
       sigaction( SIGWINCH, &action, nullptr );
-      pthread_join( timer_thread, nullptr );
       my_client->wait_for_input();
       endwin();
       cout << "Scores" << endl << scoreboard << endl;

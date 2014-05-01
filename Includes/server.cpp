@@ -10,7 +10,7 @@ void Server::die( string error_msg )
 
     if ( DEBUG )
     {
-        cerr << strerror( errno ) << endl;
+      cerr << strerror( errno ) << endl;
     }
   
     // close socket to server
@@ -18,7 +18,7 @@ void Server::die( string error_msg )
     {
         if ( close( server_sock_fd ) == -1 && DEBUG )
         {
-            cerr << strerror( errno ) << endl;
+	  cerr << strerror( errno ) << endl;
         }
     }
     exit( EXIT_FAILURE );
@@ -30,7 +30,8 @@ Server::Server( int port, char *addr, int delay_time )
 {
     poll_fds = { { STDIN_FILENO, POLLIN, 0 } };
     delay = delay_time;
-    time( &start );
+    //time( &start );
+    
     last_correct = -1;
     streak = 0;
 
@@ -171,6 +172,55 @@ void Server::update_scores()
     for ( unsigned int j = 0; j < client_list.size(); j++ )
     {
         sendMessage( client_list[j].sock_fd, 'u', unames_string ); 
+    }
+}
+
+//Preliminary game tasks
+void Server::begin_game ( )
+{
+  send_playing_cards( std_indexes );
+  update_scores();
+  display_sets( playing_deck->get_cards() );
+}
+
+//|start_timer
+void Server::start_timer()
+{
+  delay_timer = {{1,0},{1,0}};
+  if ( setitimer( ITIMER_REAL, &delay_timer, nullptr ) == -1 ) {
+    cerr << strerror( errno ) << ": can't set interval timer\n";
+  }
+}
+
+//|disable_timer
+void Server::disable_timer()
+{
+  //Disable itimer
+  getitimer( ITIMER_REAL, &delay_timer );
+  delay_timer.it_value.tv_sec = 0;
+  delay_timer.it_value.tv_usec = 0;
+  setitimer( ITIMER_REAL, &delay_timer, nullptr );
+  update_client_timer();
+  begin_game();
+}
+
+//|check timer
+void Server::check_timer()
+{
+   if ( delay == 0 )
+    {
+      disable_timer();
+    }
+    
+   delay -= 1;
+}
+
+//|update_client_timer
+void Server::update_client_timer()
+{ 
+  for ( unsigned int i = 0; i < client_list.size(); i++ )
+    {
+      sendMessage( client_list[ i ].sock_fd, 't', to_string( delay ) ); 
     }
 }
 
@@ -360,10 +410,11 @@ void Server::wait_for_client()
         {
             die( "Error on accept. " );
         }
+
         else
         {   
-            time( &end );
-	    if ( difftime( end, start ) < delay &&  client_list.size() <= 12 )
+	  //time( &end );
+	  if ( /*difftime(end,start)<delay*/ delay > 0 &&  client_list.size() <= 12 )
 	    {
 	        cout << "Connected new client." << endl;
 
@@ -380,6 +431,7 @@ void Server::wait_for_client()
           {
             cout << strerror(errno) << endl;
           }
+
           else
           {
             char second_buffer[14] = {0};
@@ -629,21 +681,23 @@ void Server::wait_for_input()
         // &poll_fds[0] can cause problems on reallocation
         if ( poll( &poll_fds[0], poll_fds.size(), 100 ) == -1 )
         {
-            die( "Problem with input." );
+	  if (errno == EINTR )
+	    {
+	      continue;
+	    }
+	  die( "Problem with input." );
         }    
 
-        else
-        {
-
-            if ( ( poll_fds[0].revents & POLLIN ) != 0 )
+	//No need for Else statement, die terminates
+        if ( ( poll_fds[0].revents & POLLIN ) != 0 )
             {
                 handle_input();
             }
 
-            // POLLRDHUP
-            if ( poll_fds.size() > 2 )
-            {
-                for ( auto poll_fd_it : poll_fds )
+        // POLLRDHUP
+        if ( poll_fds.size() > 2 )
+	  {
+            for ( auto poll_fd_it : poll_fds )
                 {
                     if ( poll_fd_it.fd < 3 || poll_fd_it.fd == server_sock_fd )
                     {  
@@ -661,9 +715,8 @@ void Server::wait_for_input()
                         receive_input( poll_fd_it.fd );
                     }   
                 }  
-            }
-        } 
-    }
+	  }
+    } 
 }
 // End of Server
 

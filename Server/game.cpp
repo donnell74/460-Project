@@ -16,8 +16,10 @@ using namespace std;
 /* Globals */
 Server *my_server;
 pthread_mutex_t mutex;
+pthread_t timer_thread;
 
- 
+//end Globals
+
 /* Never used, here because of other bad code */
 //|handle_server_msg
 void handle_server_msg()
@@ -64,9 +66,7 @@ void handle_input()
     {
   
         case 'B':
-            my_server->send_playing_cards( std_indexes );
-            my_server->update_scores();
-            display_sets( my_server->playing_deck->get_cards() );
+	    my_server->begin_game();
             break;
 
         case 'O':
@@ -112,6 +112,12 @@ void handle_input()
     }
 }
 
+//|*start_timer_wrapper
+void *start_timer_wrap( void *arg )
+{
+  my_server->start_timer();
+  return arg;
+}
 
 //|*wait_for_client_wrap
 void *wait_for_client_wrap( void *arg )
@@ -120,13 +126,18 @@ void *wait_for_client_wrap( void *arg )
     return arg;
 }
 
+//|sig_alarm_wrap
+void sig_alarm_wrapper( int sig )
+{
+  my_server->check_timer();
+  my_server->update_client_timer();
+}
 
 //|sei_wrap_cleanup
 void sig_wrap_cleanup( int sig )
 {
     my_server->~Server();
 }
-
 
 //|main
 int main( int argc, char* argv[] )
@@ -164,10 +175,20 @@ int main( int argc, char* argv[] )
 
     // bind TERM to cleanup
     struct sigaction action = {};
-
     action.sa_handler = sig_wrap_cleanup;
     sigaction( SIGINT, &action, nullptr );
   
+    //Timer sigaction
+    struct sigaction time_action = {};  
+    time_action.sa_handler = sig_alarm_wrapper;
+    sigaction( SIGALRM, &time_action, nullptr );
+  
+    //Start timer thread 
+    if(pthread_create(&timer_thread, nullptr, start_timer_wrap, nullptr) != 0)
+      {
+      my_server->die( "Couldn't create timer_thread" );
+      }
+
     pthread_t thread;
     if ( pthread_create( &thread, NULL, wait_for_client_wrap, nullptr ) != 0 )
     {
@@ -175,7 +196,7 @@ int main( int argc, char* argv[] )
     }  
 
     pthread_detach( thread );
-
+    pthread_detach( timer_thread );
     my_server->wait_for_input();
   
     my_server->cleanup();

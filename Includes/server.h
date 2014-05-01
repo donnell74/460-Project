@@ -2,7 +2,7 @@
 #define SERVER_H
 #include "networking.h"
 #include "cardlib.h"
-#include <time.h>
+#include <sys/time.h>
 #include <algorithm>
 
 /* Function required by user to implement  */
@@ -22,6 +22,7 @@ class Server
     time_t end;
     int last_correct;
     int streak;
+    struct itimerval delay_timer = {};
     const int FIB [ 15 ] =
     { 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597 };
 
@@ -32,6 +33,10 @@ class Server
     ~Server();
     void die( string );
     vector<Client_t> get_client_list();
+    void start_timer();
+    void disable_timer();
+    void check_timer();
+    void update_client_timer();
     void sendMessage( int, char , string );
     void send_playing_cards( vector<int> );
     void send_null_cards( vector<int> );
@@ -47,7 +52,8 @@ class Server
     void score_sort();
     void wait_for_input();
     void force_game_over();
+    void begin_game();
     string check_name( string );
 };
-      
+
 #endif /* SERVER_H */
