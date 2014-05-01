@@ -1236,15 +1236,15 @@ void handle_input()
 	        break;
 
             case 78:
-                choice_string = "nnnn";
+                choice_string = "nnn";
                 break;
 
             case 88:
-                choice_string = "nnnn";
+                choice_string = "nnn";
                 break;
 
             case 110:
-                choice_string = "nnnn";
+                choice_string = "nnn";
                 break; 
 
 	    case 120:
@@ -1293,7 +1293,8 @@ void handle_input()
 	 
 	}
       
-        if ( choice_string.find( ( char )ch ) != -1 && 
+        if ( choice_string != "nnn" &&
+             choice_string.find( ( char )ch ) != -1 && 
              in_accepted_chars( toupper( ch ) ) )
 	{
 	    choice_string.erase( choice_string.find( ( char )ch ), 1 );
