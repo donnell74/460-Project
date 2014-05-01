@@ -1235,21 +1235,17 @@ void handle_input()
 	        quit_options( game_started );
 	        break;
 
-            case 78:
-                choice_string = "nnn";
-                break;
-
-            case 88:
-                choice_string = "nnn";
-                break;
-
-            case 110:
-                choice_string = "nnn";
-                break; 
-
+      case 78:
+      case 88:
+      case 110:
 	    case 120:
-	        choice_string = "nnnn";
-	        break;
+          choice_string = "nnn";
+          for( int i = 1; i < 13; i++ )
+          {
+              dehighlight_card( i );
+          }
+          break; 
+
 	
 	    case KEY_SPACE:
 	    {
@@ -1274,6 +1270,8 @@ void handle_input()
         if ( choice_string.find( ( char )ch ) == -1 && 
              choice_string.size() == 3 )
 	{
+      wclrtoeol( message_win );
+      wrefresh( message_win );
 	    //Empty choice string
 	    choice_string = "";
 	    //Delete all card highlights
