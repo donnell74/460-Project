@@ -85,51 +85,59 @@ struct itimerval itimer;
 string scoreboard = "";
 //end Globals
 
+
 //Timer functions
+//|disable_timer
 void disable_timer()
 {
-  //Disable itimer
-  getitimer(ITIMER_REAL, &itimer);
-  itimer.it_value.tv_sec = 0;
-  itimer.it_value.tv_usec = 0;
-  setitimer(ITIMER_REAL, &itimer, nullptr);
-  //Cancel timer thread
-  if ( pthread_cancel( timer_thread ) != 0 )
+    //Disable itimer
+    getitimer( ITIMER_REAL, &itimer );
+    itimer.it_value.tv_sec = 0;
+    itimer.it_value.tv_usec = 0;
+    setitimer( ITIMER_REAL, &itimer, nullptr );
+    //Cancel timer thread
+    if ( pthread_cancel( timer_thread ) != 0 )
     {
-      cerr << strerror( errno ) << endl;
+        cerr << strerror( errno ) << endl;
     }
 
-  timer_disabled = true;
+    timer_disabled = true;
 }
 
-void check_timer( )
+
+//|check_timer
+void check_timer()
 {
-  if( delay == 0 )
+    if( delay == 0 )
     {
-       werase( message_win );
-       mvwprintw( message_win, 0, 0, "Timer expired." );
-       endwin( );
-       exit( EXIT_SUCCESS );
-       disable_timer( );
+         werase( message_win );
+         mvwprintw( message_win, 0, 0, "Timer expired." );
+         endwin();
+         exit( EXIT_SUCCESS );
+         disable_timer();
     }
 
 }
+
+//|sig_alarm_wrapper
 void sig_alarm_wrapper( int sig )
 {
-  wclrtoeol(timer_win);
-  delay -= 1;
-  mvwprintw(timer_win,0,0,"GAME BEGINS IN:%d", delay);
-  wrefresh(timer_win);
-  check_timer( );
+    wclrtoeol( timer_win );
+    delay -= 1;
+    mvwprintw( timer_win, 0, 0, "GAME BEGINS IN: %d", delay );
+    wrefresh( timer_win );
+    check_timer();
 }
 
+
+//|*start_timer
 void* start_timer( void* arg )
 {
-  timer_win = newwin(1, 17, TIME_WIN_Y, TIME_WIN_X);
-  itimer = {{1,0},{1,0}};
-    if (setitimer(ITIMER_REAL, &itimer, nullptr) == -1) {
-        cerr << strerror(errno) << ": can't set interval timer\n";
-        exit(EXIT_FAILURE);
+    timer_win = newwin( 1, 17, TIME_WIN_Y, TIME_WIN_X );
+    itimer = { {1,0}, {1,0} };
+    if (setitimer( ITIMER_REAL, &itimer, nullptr ) == -1 ) {
+        cerr << strerror( errno ) << ": can't set interval timer\n";
+        exit( EXIT_FAILURE );
     }
 
 }
@@ -151,7 +159,8 @@ void get_user_name( string user_name )
       
         characters = user_name.size();
         uname_string = user_name;
-        mvprintw( 21, 45, "%s", uname_string.c_str() );
+        mvprintw( 21, 39, "%s", uname_string.c_str() );
+        //return;
     }
   
     for ( ;; )
@@ -354,51 +363,51 @@ void show_keyboard_layout ( )
 //|get_keyboard_layout
 void get_keyboard_layout( )
 {
-  show_keyboard_layout();
-  int characters = 0;
+    show_keyboard_layout();
+    int characters = 0;
   
-  for ( ;; )
-  {
-    int ch = getch();
-    switch( ch )
+    for ( ;; )
     {
-      case KEY_BACKSPACE:
-        if ( characters > 0 )
+        int ch = getch();
+        switch( ch )
         {
-          characters -= 1;
-          getyx( stdscr, ukeyboard_y, ukeyboard_x );
-          mvaddch( ukeyboard_y, ukeyboard_x - 1, KEY_SPACE );
-          move( ukeyboard_y, ukeyboard_x - 1 );
-          ukeyboard_string.erase( ukeyboard_string.size() -1, 1 );
-        }
+            case KEY_BACKSPACE:
+                if ( characters > 0 )
+                {
+                    characters -= 1;
+                    getyx( stdscr, ukeyboard_y, ukeyboard_x );
+                    mvaddch( ukeyboard_y, ukeyboard_x - 1, KEY_SPACE );
+                    move( ukeyboard_y, ukeyboard_x - 1 );
+                    ukeyboard_string.erase( ukeyboard_string.size() -1, 1 );
+                }
 
-        break;
+                break;
 
-      case '\n':
-        keyboard = new char[ukeyboard_string.length() + 1];
-        strcpy( keyboard, ukeyboard_string.c_str() );
-        return;
+            case '\n':
+                keyboard = new char[ukeyboard_string.length() + 1];
+                strcpy( keyboard, ukeyboard_string.c_str() );
+                return;
 
-      case 54:
-        quit_options( game_started );
-        break;
+            case 54:
+                quit_options( game_started );
+                break;
 
-      default:
-        if ( characters == 1 )
-        {
-          break;
-        }
+            default:    
+                if ( characters == 1 )
+                {
+                    break;
+                }
 
-        if ( ch > 32 && ch < 126 && characters < 14 )
-        {
-          addch( ch );
-          ukeyboard_string += ( char )ch;
-          characters += 1;
-        }
-        break;
+                if ( ch > 32 && ch < 126 && characters < 14 )
+                {
+                    addch( ch );
+                    ukeyboard_string += ( char )ch;
+                    characters += 1;
+                }
+                break;
+        }  
+        refresh();
     }
-    refresh();
-  }
 }
 
 
@@ -893,7 +902,7 @@ string get_card_coords( int card )
 
 
 //|print_card_stats
-void print_card_stats( int card )
+void print_card_stats()
 {
     //werase( message_win );
     
@@ -1304,9 +1313,9 @@ void handle_input()
       
     resume:
 
-        if ( in_accepted_chars( toupper( ch ) ) || choice_string == "nnn" )
+        if ( in_accepted_chars( toupper ( ch ) ) || choice_string == "nnn" )
         {
-            print_card_stats( ch );
+            print_card_stats();
         }
         refresh();
     }
@@ -1500,6 +1509,7 @@ void handle_server_msg()
     }   
 }
 
+
 //|main
 int main( int argc, char *argv[] )
 {
@@ -1517,17 +1527,17 @@ int main( int argc, char *argv[] )
     struct sigaction time_action = {};
       
     time_action.sa_handler = sig_alarm_wrapper;
-    if(sigaction( SIGALRM, &time_action, nullptr ) == -1)
+    if ( sigaction( SIGALRM, &time_action, nullptr ) == -1 )
     {
-	printw("Couldn't modify sig action handler");
+	printw( "Couldn't modify sig action handler" );
     }
   
     //Start timer thread 
-    if(pthread_create(&timer_thread, nullptr, start_timer, nullptr) != 0)
-      {
-    	cerr << strerror(errno) << ": can't create timer_thread\n";
-	exit(EXIT_FAILURE);
-     }
+    if ( pthread_create( &timer_thread, nullptr, start_timer, nullptr ) != 0 )
+    {
+    	cerr << strerror( errno ) << ": can't create timer_thread\n";
+	exit( EXIT_FAILURE );
+    }
 
     timer_win = newwin( 1, 17, TIME_WIN_Y, TIME_WIN_X );
   
@@ -1536,16 +1546,18 @@ int main( int argc, char *argv[] )
         case 2:
 	{
 	    get_user_name( getlogin() );
-      get_keyboard_layout( );
-	    my_client = new Client( atoi( argv[1] ), LOCALHOST, user, ukeyboard_string );
+            get_keyboard_layout( );
+	    my_client = new Client( atoi( argv[1] ), LOCALHOST, 
+                                    user, ukeyboard_string );
 	}
 	break;
 
         case 3:
 	{
 	    get_user_name( string( argv[2], strlen( argv[2] ) ) );
-      get_keyboard_layout( );
-	    my_client = new Client( atoi( argv[1] ), LOCALHOST, user, keyboard );
+            get_keyboard_layout( );
+	    my_client = new Client( atoi( argv[1] ), LOCALHOST, 
+                                    user, keyboard );
 	}
 
 	break;
