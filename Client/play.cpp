@@ -1457,21 +1457,34 @@ void handle_server_msg()
             vector<int>idxs;
             msg = msg.substr( 1 );
             int pos;
+	
+            for ( ; ; ) {
+              while ( ( pos = msg.find( ";" ) ) != string::npos )
+              {
+                  cards.push_back( msg.substr( 0, pos ) );
+                  msg.erase( 0, pos + 1 );
+              }   
+          
+              for ( int j = 0; j < cards.size(); j++ )
+              {
+                  idxs.push_back( stoi( cards[j].substr( 2 ).data() ) + 1 );
+              }
 
-            while ( ( pos = msg.find( ";" ) ) != string::npos )
-            {
-                cards.push_back( msg.substr( 0, pos ) );
-                msg.erase( 0, pos + 1 );
-            }   
-        
-            for ( int j = 0; j < cards.size(); j++ )
-            {
-                idxs.push_back( stoi( cards[j].substr( 2 ).data() ) + 1 );
+              if ( my_client->peek_next_msg()[0] == CARDS )
+              {
+                msg = my_client->get_next_msg().substr( 1 );
+                cards.clear();
+                idxs.clear();
+              }
+              else
+              {
+                break;
+              }
             }
 
             //Animate cards
             animate_cards( idxs, 20000 );
-	
+
             //Draw
             for ( int i = 0; i < cards.size(); ++i )
             {

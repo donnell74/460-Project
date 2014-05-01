@@ -26,6 +26,7 @@ class Client
     string get_past_data_read();
     void set_past_data_read( string );
     string get_next_msg();
+    string peek_next_msg();
 };
 
 #endif

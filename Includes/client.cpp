@@ -140,6 +140,13 @@ string Client::get_next_msg ()
   return msg;
 }
 
+string Client::peek_next_msg ()
+{
+  int pos_found = past_data_read.find( TERM_STR );
+  string msg = past_data_read.substr( 0, pos_found );
+  return msg;
+}
+
 string Client::get_past_data_read ()
 {
   return past_data_read; 
