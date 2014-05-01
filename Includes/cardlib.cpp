@@ -508,7 +508,7 @@ string create_playing_cards( vector<int>indexes,
         Card* ncard = deck->draw();
         card_array += ncard->bitcode;
 	card_array += ":" + to_string(indexes[i]) + ";";
-        cout << ncard->bitcode + 31 << endl;
+        //cout << ncard->bitcode + 31 << endl;
         //Add card to playing deck
         playing_deck->replace_card( indexes[i], ncard );
     }

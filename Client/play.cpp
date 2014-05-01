@@ -31,7 +31,7 @@
 #define ROW_OFFSET 1
 #define COL_OFFSET 1
 //Timer Window coordinates
-#define TIME_WIN_X 20
+#define TIME_WIN_X 14
 #define TIME_WIN_Y 24
 
 using namespace std;
@@ -256,7 +256,7 @@ void show_keyboard_layout ( )
     mvwprintw( alpha, 5, 3, "I J K L" );
     mvwprintw( alpha, 6, 3, "M N O P" );
     mvwprintw( alpha, 7, 3, "   X   " );
-    mvwprintw( stdscr, ORIGIN_Y + 22, ORIGIN_X + 13, 
+    mvwprintw( stdscr, ORIGIN_Y + 21, ORIGIN_X + 13, 
                "Please Choose Your Keyboard Layout: " );
     
     // left QWERTY
@@ -1393,7 +1393,7 @@ void handle_server_msg()
         case USERNAME:
             wmove( stdscr, 0, 0 );
             wclrtoeol( stdscr );
-            mvwprintw( stdscr, 22, 14, 
+            mvwprintw( stdscr, 23, 14, 
                        "You have been connected with username: %s", 
                        msg.substr( 1 ).data() );
             strncpy( user, msg.substr( 1 ).c_str(), msg.substr( 1 ).size() );
