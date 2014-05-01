@@ -1526,12 +1526,12 @@ int main( int argc, char *argv[] )
     splash_screen();
     
     //timer sigaction
-    struct sigaction time_action = {};
+    /*struct sigaction time_action = {};
       
     time_action.sa_handler = sig_alarm_wrapper;
     if(sigaction( SIGALRM, &time_action, nullptr ) == -1)
     {
-	printw("Couldn't modify sig action handler");
+      printw("Couldn't modify sig action handler");
     }
   
     //Start timer thread 
@@ -1542,6 +1542,7 @@ int main( int argc, char *argv[] )
      }
 
     timer_win = newwin( 1, 17, TIME_WIN_Y, TIME_WIN_X );
+    */
   
     switch( argc )
     {
