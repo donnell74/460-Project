@@ -227,8 +227,7 @@ void Server::update_client_timer()
 
 //Checks client guess
 //|check_guess
-int Server::check_guess( char* guess, Deck* deck, Deck* playing_deck, 
-                         vector<char> accepted_keys )
+int Server::check_guess( char* guess, Deck* deck, Deck* playing_deck, vector<char> accepted_keys )
 {
     switch( guess[0] )
     {
@@ -575,12 +574,9 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
             if ( !deck->empty( 0 ) )
 	    { 
                 vector<int>indexes;
-                indexes.push_back( map_card( toupper ( guess[0] ), 
-                                   ACCEPTED_CHARS[client->keyboard - 1] ) );
-                indexes.push_back( map_card( toupper ( guess[1] ), 
-                                   ACCEPTED_CHARS[client->keyboard - 1] ) );
-                indexes.push_back( map_card( toupper ( guess[2] ), 
-                                   ACCEPTED_CHARS[client->keyboard - 1] ) );
+                indexes.push_back( map_card( toupper ( guess[0] ), ACCEPTED_CHARS[client->keyboard - 1] ) );
+                indexes.push_back( map_card( toupper ( guess[1] ), ACCEPTED_CHARS[client->keyboard - 1] ) );
+                indexes.push_back( map_card( toupper ( guess[2] ), ACCEPTED_CHARS[client->keyboard - 1] ) );
                 playing_deck->remove_card( indexes[0] );
                 playing_deck->remove_card( indexes[1] );
                 playing_deck->remove_card( indexes[2] );
@@ -592,12 +588,9 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
             {
 
                 vector<int>indexes;
-                indexes.push_back( map_card( toupper ( guess[0] ), 
-                                   ACCEPTED_CHARS[client->keyboard - 1]  ) );
-                indexes.push_back( map_card( toupper ( guess[1] ), 
-                                   ACCEPTED_CHARS[client->keyboard - 1]  ) );
-                indexes.push_back( map_card( toupper ( guess[2] ), 
-                                   ACCEPTED_CHARS[client->keyboard - 1]  ) );
+                indexes.push_back( map_card( toupper ( guess[0]), ACCEPTED_CHARS[client->keyboard - 1]  ) );
+                indexes.push_back( map_card( toupper ( guess[1]), ACCEPTED_CHARS[client->keyboard - 1]  ) );
+                indexes.push_back( map_card( toupper ( guess[2]), ACCEPTED_CHARS[client->keyboard - 1]  ) );
                 playing_deck->remove_card( indexes[0] );
                 playing_deck->remove_card( indexes[1] );
                 playing_deck->remove_card( indexes[2] );
@@ -652,7 +645,7 @@ void Server::receive_input( int client_sock_fd )
     char buffer[4] = { 0 }; // will only care about first 3 if guess
 
     bytes_read = read( client_sock_fd, &buffer, 3 );
-    if ( bytes_read > 0 )
+    if ( bytes_read != -1 )
     {
         if ( strcmp( buffer, "QUI" ) == 0 )
         {
@@ -668,7 +661,10 @@ void Server::receive_input( int client_sock_fd )
     }
     else
     {
-      disconnect_client( client_sock_fd );
+        if ( DEBUG )
+        {
+            cout << "Problem with read from client." << endl;
+        }
     }  
 }
 

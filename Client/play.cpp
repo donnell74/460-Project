@@ -85,63 +85,6 @@ string scoreboard = "";
 //end Globals
 
 
-//Timer functions
-//|disable_timer
-void disable_timer()
-{
-    //Disable itimer
-    getitimer( ITIMER_REAL, &itimer );
-    itimer.it_value.tv_sec = 0;
-    itimer.it_value.tv_usec = 0;
-    setitimer( ITIMER_REAL, &itimer, nullptr );
-    //Cancel timer thread
-    if ( pthread_cancel( timer_thread ) != 0 )
-    {
-        cerr << strerror( errno ) << endl;
-    }
-
-    timer_disabled = true;
-}
-
-
-//|check_timer
-void check_timer()
-{
-    if( delay == 0 )
-    {
-         werase( message_win );
-         mvwprintw( message_win, 0, 0, "Timer expired." );
-         endwin();
-         exit( EXIT_SUCCESS );
-         disable_timer();
-    }
-
-}
-
-//|sig_alarm_wrapper
-void sig_alarm_wrapper( int sig )
-{
-    wclrtoeol( timer_win );
-    delay -= 1;
-    mvwprintw( timer_win, 0, 0, "GAME BEGINS IN: %d", delay );
-    wrefresh( timer_win );
-    check_timer();
-}
-
-
-//|*start_timer
-void* start_timer( void* arg )
-{
-    timer_win = newwin( 1, 17, TIME_WIN_Y, TIME_WIN_X );
-    itimer = { {1,0}, {1,0} };
-    if (setitimer( ITIMER_REAL, &itimer, nullptr ) == -1 ) {
-        cerr << strerror( errno ) << ": can't set interval timer\n";
-        exit( EXIT_FAILURE );
-    }
-
-}
-
-
 //Get name from user: allows for name editing
 //|get_user_name
 void get_user_name( string user_name )
@@ -159,7 +102,6 @@ void get_user_name( string user_name )
         characters = user_name.size();
         uname_string = user_name;
         mvprintw( 21, 39, "%s", uname_string.c_str() );
-        //return;
     }
   
     for ( ;; )
@@ -1252,9 +1194,9 @@ void handle_input()
 	        quit_options( game_started );
 	        break;
 
-            case 78:
-            case 88:
-            case 110:
+      case 78:
+      case 88:
+      case 110:
 	    case 120:
                 choice_string = "nnn";
                 for( int i = 1; i < 13; i++ )
@@ -1263,7 +1205,6 @@ void handle_input()
                 }  
                 break; 
 
-	
 	    case KEY_SPACE:
 	    {
 	        vector<int>cards;
@@ -1319,11 +1260,13 @@ void handle_input()
 	}
       
     resume:
-
-        if ( in_accepted_chars( toupper ( ch ) ) || choice_string == "nnn" )
+        move( 32,18 );
+        clrtoeol();
+        if ( in_accepted_chars( toupper( ch ) ) || choice_string == "nnn" )
         {
-            print_card_stats();
+            print_card_stats(  );
         }
+        clrtoeol();
         refresh();
     }
 }
@@ -1431,7 +1374,7 @@ void handle_server_msg()
             printw( "%s", "\n" );
             refresh();
             endwin();
-	    cout << "Scores" << endl << scoreboard << endl;
+            cout << "Scores" << endl << scoreboard << endl;
             my_client->cleanup();
             break;
         
@@ -1554,7 +1497,7 @@ int main( int argc, char *argv[] )
         case 2:
 	{
 	    get_user_name( getlogin() );
-            get_keyboard_layout( );
+      get_keyboard_layout( );
 	    my_client = new Client( atoi( argv[1] ), LOCALHOST, 
                                     user, ukeyboard_string );
 	}
@@ -1563,7 +1506,7 @@ int main( int argc, char *argv[] )
         case 3:
 	{
 	    get_user_name( string( argv[2], strlen( argv[2] ) ) );
-            get_keyboard_layout( );
+      get_keyboard_layout( );
 	    my_client = new Client( atoi( argv[1] ), LOCALHOST, 
                                     user, keyboard );
 	}
