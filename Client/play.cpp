@@ -904,7 +904,7 @@ string get_card_coords( int card )
 //|print_card_stats
 void print_card_stats()
 {
-    //werase( message_win );
+    werase( message_win );
     
     if ( choice_string == "nnn" )
     {
@@ -1244,16 +1244,16 @@ void handle_input()
 	        quit_options( game_started );
 	        break;
 
-      case 78:
-      case 88:
-      case 110:
+            case 78:
+            case 88:
+            case 110:
 	    case 120:
-          choice_string = "nnn";
-          for( int i = 1; i < 13; i++ )
-          {
-              dehighlight_card( i );
-          }
-          break; 
+                choice_string = "nnn";
+                for( int i = 1; i < 13; i++ )
+                {
+                     dehighlight_card( i );
+                }  
+                break; 
 
 	
 	    case KEY_SPACE:
@@ -1279,8 +1279,8 @@ void handle_input()
         if ( choice_string.find( ( char )ch ) == -1 && 
              choice_string.size() == 3 )
 	{
-      wclrtoeol( message_win );
-      wrefresh( message_win );
+            wclrtoeol( message_win );
+            wrefresh( message_win );
 	    //Empty choice string
 	    choice_string = "";
 	    //Delete all card highlights
