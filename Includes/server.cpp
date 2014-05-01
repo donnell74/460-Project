@@ -645,7 +645,7 @@ void Server::receive_input( int client_sock_fd )
     char buffer[4] = { 0 }; // will only care about first 3 if guess
 
     bytes_read = read( client_sock_fd, &buffer, 3 );
-    if ( bytes_read != -1 )
+    if ( bytes_read > 0)
     {
         if ( strcmp( buffer, "QUI" ) == 0 )
         {
@@ -661,10 +661,7 @@ void Server::receive_input( int client_sock_fd )
     }
     else
     {
-        if ( DEBUG )
-        {
-            cout << "Problem with read from client." << endl;
-        }
+      disconnect_client( client_sock_fd );
     }  
 }
 
