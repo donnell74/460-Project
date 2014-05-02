@@ -176,11 +176,24 @@ void Server::update_scores()
 }
 
 //Preliminary game tasks
+//|begin_game
 void Server::begin_game ( )
 {
-  send_playing_cards( std_indexes );
-  update_scores();
-  display_sets( playing_deck->get_cards() );
+  if ( delay > 0 )
+  {
+    delay = 0;
+    getitimer( ITIMER_REAL, &delay_timer );
+    delay_timer.it_value.tv_sec = 0;
+    delay_timer.it_value.tv_usec = 0;
+    setitimer( ITIMER_REAL, &delay_timer, nullptr );
+    send_playing_cards( std_indexes );
+    update_scores();
+    display_sets( playing_deck->get_cards() );
+  }
+  else
+  {
+    cout << "Game has already been started." << endl;
+  }
 }
 
 //|start_timer
