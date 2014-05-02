@@ -357,17 +357,20 @@ void get_keyboard_layout( )
 
 //|update_timer_win
 void update_timer_win( string msg )
-{
-  werase( timer_win );
-  if ( stoi( msg ) == -1 )
+{ 
+    if ( !game_started )
     {
-      return;
-    }
+        werase( timer_win );
+        if ( stoi( msg ) == -1 )
+        {
+             return;
+        }
 
-  attron( COLOR_PAIR( 5 ) );
-  mvwprintw( timer_win, 0, 0, "GAME WILL BEGIN IN %s", msg.c_str() );
-  wrefresh( timer_win );
-  attroff( COLOR_PAIR( 5 ) );
+        attron( COLOR_PAIR( 5 ) );
+        mvwprintw( timer_win, 0, 0, "GAME WILL BEGIN IN %s", msg.c_str() );
+        wrefresh( timer_win );
+        attroff( COLOR_PAIR( 5 ) );
+    }
 }
 
 
@@ -1048,7 +1051,7 @@ void highlight_card( int card )
     }
 
     //3.Right Border
-    mvaddch(y1-1, x2+1, CARD_CHAR);
+    mvaddch(y1 - 1, x2 + 1, CARD_CHAR);
     for ( int k = 0; k < CARD_HEIGHT; k++ )
     {
         mvaddch( y1 + k, x2 + 1, CARD_CHAR );
