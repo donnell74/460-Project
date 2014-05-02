@@ -64,6 +64,7 @@ bool name_set = false;
 bool game_started = false;
 bool timer_disabled = false;
 bool colemak_keyboard = false;
+bool watching = false;
 
 int cur_x1 = 0;
 int cur_y1 = 0;
@@ -1133,12 +1134,13 @@ void quit_options( bool game_started )
 
         switch ( ch )
         {
-            case 49:
+            case 49: //'1'
                 endwin();
                 my_client->cleanup();
                 break;
 
-            case 50:
+            case 50: //'2'
+                watching = true;
                 nocbreak();
                 touchwin( stdscr );
                 mvwprintw( message_win, 0, 0, 
@@ -1149,7 +1151,7 @@ void quit_options( bool game_started )
                 wrefresh( score_win );
                 break;
 
-            case 51:
+            case 51: //'3'
                 touchwin( stdscr );
                 mvwprintw( message_win, 0, 0, 
                            "CLIENT MESSAGE: Welcome back!" );
@@ -1203,14 +1205,18 @@ void handle_input()
     {
         ch = getch();
 
+        if ( watching ) // client types ctrl+c to quit
+        {
+          return;
+        }
         switch( ch )
 	{
 
-	    case 54:
+	    case 54: // '6'
 	        quit_options( game_started );
 	        break;
 
-            case 110:
+            case 110: //'n'
                 if ( !colemak_keyboard )
                 {
                     choice_string = "nnn";
@@ -1221,7 +1227,7 @@ void handle_input()
                 }     
                 break; 
 
-            case 120:
+            case 120: //'x'
                 if ( colemak_keyboard )
                 {
                     choice_string = "nnn";
