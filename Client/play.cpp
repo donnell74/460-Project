@@ -1384,6 +1384,14 @@ void display_game_over( string msg )
 
     vector<string>clients;
 
+    //Empty choice string
+    choice_string = "";
+    //Delete all card highlights
+    for( int i = 1; i < 13; i++ )
+    {
+        dehighlight_card( i );
+    }
+
     mvprintw( 0, 30, "Scoreboard");
 
     while ( ( pos = msg.find( "<>" ) ) != string::npos )

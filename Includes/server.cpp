@@ -179,9 +179,9 @@ void Server::update_scores()
 //|begin_game
 void Server::begin_game ( )
 {
-  if ( delay > 0 )
+  if ( delay >= 0 )
   {
-    delay = 0;
+    delay = -1;
     getitimer( ITIMER_REAL, &delay_timer );
     delay_timer.it_value.tv_sec = 0;
     delay_timer.it_value.tv_usec = 0;
