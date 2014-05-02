@@ -1141,6 +1141,14 @@ void quit_options( bool game_started )
 
             case 50: //'2'
                 watching = true;
+                
+                //handle the leftover guess
+                choice_string.clear();
+                //Delete all card highlights
+                for( int i = 1; i < 13; i++ )
+                {
+                    dehighlight_card( i );
+                }
                 nocbreak();
                 touchwin( stdscr );
                 mvwprintw( message_win, 0, 0, 
