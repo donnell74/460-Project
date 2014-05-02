@@ -63,6 +63,7 @@ bool animate = false;
 bool name_set = false;
 bool game_started = false;
 bool timer_disabled = false;
+bool colemak_keyboard = false;
 
 int cur_x1 = 0;
 int cur_y1 = 0;
@@ -268,6 +269,7 @@ void show_keyboard_layout ( )
     mvwprintw( lqwerty, 4, 3, "Q W E R" );
     mvwprintw( lqwerty, 5, 3, "A S D F" );
     mvwprintw( lqwerty, 6, 3, "Z X C V" );
+    mvwprintw( lqwerty, 7, 3, "   N   " );
 
     // left QWERTY
     WINDOW* rqwerty = newwin( 9, 13, ORIGIN_Y + 10, ORIGIN_X + 38 );
@@ -1086,7 +1088,16 @@ void show_game_screen()
     mvwprintw( legend_win, 1, 0, "========" );
     mvwprintw( legend_win, 2, 0, "'6'" );
     mvwprintw( legend_win, 3, 0, "--Quit" );
-    mvwprintw( legend_win, 4, 0, "'n'" );
+
+    if ( !colemak_keyboard )
+    {
+        mvwprintw( legend_win, 4, 0, "'n'" );
+    }
+    else
+    {
+        mvwprintw( legend_win, 4, 0, "'x'" );
+    }
+
     mvwprintw( legend_win, 5, 0, "--No Set" );
     mvwprintw( legend_win, 6, 0, "Space Bar" );
     mvwprintw( legend_win, 7, 0, "--Guess" );
@@ -1183,27 +1194,40 @@ void quit_options( bool game_started )
 //|handle_input
 void handle_input()
 {
-    int card, ch;
+    int card;
+    int ch;
     if( game_started )
     {
         ch = getch();
 
         switch( ch )
 	{
+
 	    case 54:
 	        quit_options( game_started );
 	        break;
 
-      case 78:
-      case 88:
-      case 110:
-	    case 120:
-                choice_string = "nnn";
-                for( int i = 1; i < 13; i++ )
+            case 110:
+                if ( !colemak_keyboard )
                 {
-                     dehighlight_card( i );
-                }  
+                    choice_string = "nnn";
+                    for( int i = 1; i < 13; i++ )
+                    {
+                         dehighlight_card( i );
+                    }
+                }     
                 break; 
+
+            case 120:
+                if ( colemak_keyboard )
+                {
+                    choice_string = "nnn";
+                    for( int i = 1; i < 13; i++ )
+                    {
+                         dehighlight_card( i );
+                    }
+                }  
+                goto resume; 
 
 	    case KEY_SPACE:
 	    {
@@ -1223,7 +1247,16 @@ void handle_input()
             default:
                 break;
         }
-
+ 
+        if ( choice_string.find( ( char )ch ) == -1 && 
+             choice_string.size() == 3 &&
+             !in_accepted_chars( toupper ( ch ) ) )
+	{
+            wclrtoeol( message_win );
+            mvwprintw( message_win, 0, 0, 
+                   "CLIENT MESSAGE: Press the SPACE BAR to submit guess" );
+            wrefresh( message_win );	 
+	}
 
         if ( choice_string.find( ( char )ch ) == -1 && 
              choice_string.size() == 3 )
@@ -1239,7 +1272,6 @@ void handle_input()
 	    }
 	 
 	}
-
         if ( choice_string.find( ( char )ch ) == -1 && 
              in_accepted_chars( toupper(ch) ) )
 	{
@@ -1258,15 +1290,12 @@ void handle_input()
 	    goto resume;
 	 
 	}
-      
+
     resume:
-        move( 32,18 );
-        clrtoeol();
         if ( in_accepted_chars( toupper( ch ) ) || choice_string == "nnn" )
         {
             print_card_stats(  );
         }
-        clrtoeol();
         refresh();
     }
 }
@@ -1401,7 +1430,11 @@ void handle_server_msg()
             break;
 
         case KEYBOARD_LAYOUT:
-            keyboard_as_int = msg.at(1) - '1'; //convert to int minus 1 
+            keyboard_as_int = msg.at(1) - '1'; //convert to int minus 1
+            if ( keyboard_as_int == 0 )
+            {
+                colemak_keyboard = true;
+            } 
             break;
 
         case CARDS:
