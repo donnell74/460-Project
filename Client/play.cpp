@@ -952,66 +952,6 @@ void animate_cards( vector<int>cards, int rate )
 }
 
 
-//|dehighlight_card
-void dehighlight_card(int card)
-{
-    int x1;
-    int x2;
-    int y1;
-    int y2; 
-    int column;
-    int row;
-    row = get_card_coords( card )[0] - 48;
-    column = get_card_coords( card )[1] - 48;
-  
-    x1 = ORIGIN_X + ( ( column - 1) * ( CARD_WIDTH + COL_OFFSET ) ) + 1;
-    x2 = x1 - 1 +CARD_WIDTH-1;
-    y1 = ORIGIN_Y + ( ( row - 1 ) * ( CARD_HEIGHT + ROW_OFFSET ) );
-    y2 = y1 + CARD_HEIGHT - 1;
-
-    //Clear previous highlight
-    if( x2 != 0 )
-    {
-        //1.Left Border
-        move( y1 - 1, x1 - 2 );
-        addch (32 );
-        for ( int i = 0; i < CARD_HEIGHT + 1; i++ )
-	{
-	    move( y1 + i, x1 - 2 );
-	    addch( 32 );
-	}
-
-        //2.Top Border
-        move( y1 - 1, x1 - 1 );
-        addch( 32 );
-        for ( int j = 0; j < CARD_WIDTH; j++ )
-	{
-	    move( y1 - 1, j + x1 );
-	    addch( 32 );
-	}
-
-        //3.Right Border
-        move( y1 - 1, x2 + 1 );
-        addch( 32 );
-        for ( int k = 0; k < CARD_HEIGHT; k++ )
-	{
-	    move( y1 + k, x2 + 1 );
-	    addch( 32 );
-	}
-
-        //4.Bottom Border
-        move( y2 + 1, x1 - 1 );
-        addch( 32 );
-        for ( int l = 0; l < CARD_WIDTH; l++ )
-	{
-	    move( y2 + 1, l + x1 );
-	    addch( 32 );
-	}
-
-    }
-}
-
-
 //|highlight_card
 void highlight_card( int card )
 {
@@ -1066,6 +1006,77 @@ void highlight_card( int card )
     }
 
     attroff( COLOR_PAIR( 1 ) );
+}
+
+
+//|dehighlight_card
+void dehighlight_card(int card)
+{
+    int x1;
+    int x2;
+    int y1;
+    int y2; 
+    int column;
+    int row;
+    row = get_card_coords( card )[0] - 48;
+    column = get_card_coords( card )[1] - 48;
+    
+    vector<int> cards_spots = {get_card( toupper(choice_string[0]) ),
+                               get_card( toupper(choice_string[1]) ),
+                               get_card( toupper(choice_string[2]) )};
+
+    x1 = ORIGIN_X + ( ( column - 1) * ( CARD_WIDTH + COL_OFFSET ) ) + 1;
+    x2 = x1 - 1 +CARD_WIDTH-1;
+    y1 = ORIGIN_Y + ( ( row - 1 ) * ( CARD_HEIGHT + ROW_OFFSET ) );
+    y2 = y1 + CARD_HEIGHT - 1;
+
+    //Clear previous highlight
+    if( x2 != 0 )
+    {
+        //1.Left Border
+        move( y1 - 1, x1 - 2 );
+        addch (32 );
+        for ( int i = 0; i < CARD_HEIGHT + 1; i++ )
+        {
+            move( y1 + i, x1 - 2 );
+            addch( 32 );
+        }
+
+        //2.Top Border
+        move( y1 - 1, x1 - 1 );
+        addch( 32 );
+        for ( int j = 0; j < CARD_WIDTH; j++ )
+        {
+            move( y1 - 1, j + x1 );
+            addch( 32 );
+        }
+
+        //3.Right Border
+        move( y1 - 1, x2 + 1 );
+        addch( 32 );
+        for ( int k = 0; k < CARD_HEIGHT; k++ )
+        {
+            move( y1 + k, x2 + 1 );
+            addch( 32 );
+        }
+
+        //4.Bottom Border
+        move( y2 + 1, x1 - 1 );
+        addch( 32 );
+        for ( int l = 0; l < CARD_WIDTH; l++ )
+        {
+            move( y2 + 1, l + x1 );
+            addch( 32 );
+        }
+    }
+
+    string::iterator it = choice_string.begin();
+    
+    while ( *it != ' ' && it != choice_string.end() )
+    {
+	    highlight_card( get_card( toupper(*it) ) );
+      ++it;
+    }
 }
 
 
