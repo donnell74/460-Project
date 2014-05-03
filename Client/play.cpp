@@ -1105,6 +1105,7 @@ void show_game_screen()
     getmaxyx (stdscr, row, column );
     score_win = newwin( 4, 80, 21, 0 );
     message_win = newwin( 1, 80, 20, 0 );
+    mvwprintw( message_win, 0, 0, "CLIENT MESSAGE: Make a guess " );
     legend_win = newwin( 10, 10, 1, 70 ); 
     mvwprintw( legend_win, 0, 0, "=LEGEND=" );
     mvwprintw( legend_win, 1, 0, "========" );
@@ -1146,13 +1147,6 @@ void quit_options( bool game_started )
         mvwprintw( quit_win, 5, 3, "3. Keep Playing" );
         touchwin( quit_win );
         wrefresh( quit_win );
-        //handle the leftover guess
-        choice_string.clear();
-        //Delete all card highlights
-        for( int i = 1; i < 13; i++ )
-        {
-            dehighlight_card( i );
-        }
 
         int ch;
         ch = wgetch( quit_win );
@@ -1324,8 +1318,10 @@ void handle_input()
 	{
             wclrtoeol( message_win );
             wrefresh( message_win );
+
 	    //Empty choice string
 	    choice_string = "";
+
 	    //Delete all card highlights
 	    for( int i = 1; i < 13; i++ )
 	    {
@@ -1347,7 +1343,7 @@ void handle_input()
         //Client reselects accepted card
         if ( choice_string != "nnn" &&
              choice_string.find( ( char )ch ) != -1 && 
-             in_accepted_chars( toupper( ch ) ) )
+             in_accepted_chars( toupper( ch ) ) && ch != 54 )
 	{
 	    choice_string.erase( choice_string.find( ( char )ch ), 1 );
 	    dehighlight_card( get_card ( toupper( ch ) ) );
@@ -1530,27 +1526,28 @@ void handle_server_msg()
             int pos;
 	
             for ( ; ; ) {
-              while ( ( pos = msg.find( ";" ) ) != string::npos )
-              {
-                  cards.push_back( msg.substr( 0, pos ) );
-                  msg.erase( 0, pos + 1 );
-              }   
-          
-              for ( int j = 0; j < cards.size(); j++ )
-              {
-                  idxs.push_back( stoi( cards[j].substr( 2 ).data() ) + 1 );
-              }
 
-              if ( my_client->peek_next_msg()[0] == CARDS )
-              {
-                msg = my_client->get_next_msg().substr( 1 );
-                cards.clear();
-                idxs.clear();
-              }
-              else
-              {
-                break;
-              }
+                while ( ( pos = msg.find( ";" ) ) != string::npos )
+                {
+                    cards.push_back( msg.substr( 0, pos ) );
+                    msg.erase( 0, pos + 1 );
+                }   
+          
+                for ( int j = 0; j < cards.size(); j++ )
+                {
+                    idxs.push_back( stoi( cards[j].substr( 2 ).data() ) + 1 );
+                }
+
+                if ( my_client->peek_next_msg()[0] == CARDS )
+                {
+                    msg = my_client->get_next_msg().substr( 1 );
+                    cards.clear();
+                    idxs.clear();
+                }
+                else
+                {
+                    break;
+                }
             }
 
             //Animate cards
@@ -1573,8 +1570,8 @@ void handle_server_msg()
             break;
 	    
         case TIMER:
-	  update_timer_win( msg.substr( 1 ) );
-	  break;
+	    update_timer_win( msg.substr( 1 ) );
+	    break;
 
         default:
             break;
@@ -1608,10 +1605,10 @@ int main( int argc, char *argv[] )
     {
         case 2:
 	{
-      char buff[15] = {0};
-      getlogin_r(buff, 15);
+            char buff[15] = {0};
+            getlogin_r( buff, 15 );
 	    get_user_name( string( buff, strlen( buff ) ) );
-      get_keyboard_layout( );
+            get_keyboard_layout();
 	    my_client = new Client( atoi( argv[1] ), LOCALHOST, 
                                     user, ukeyboard_string );
 	}
@@ -1620,7 +1617,7 @@ int main( int argc, char *argv[] )
         case 3:
 	{
 	    get_user_name( string( argv[2], strlen( argv[2] ) ) );
-      get_keyboard_layout( );
+            get_keyboard_layout();
 	    my_client = new Client( atoi( argv[1] ), LOCALHOST, 
                                     user, keyboard );
 	}
@@ -1635,15 +1632,15 @@ int main( int argc, char *argv[] )
 	break;
     }
 
-      // bind TERM to cleanup
-      struct sigaction action = {};
-      action.sa_handler = sig_wrap_cleanup;
-      sigaction( SIGINT, &action, nullptr );
-      sigaction( SIGWINCH, &action, nullptr );
-      my_client->wait_for_input();
-      endwin();
-      cout << "Scores" << endl << scoreboard << endl;
-      my_client->cleanup();
+    // bind TERM to cleanup
+    struct sigaction action = {};
+    action.sa_handler = sig_wrap_cleanup;
+    sigaction( SIGINT, &action, nullptr );
+    sigaction( SIGWINCH, &action, nullptr );
+    my_client->wait_for_input();
+    endwin();
+    cout << "Scores" << endl << scoreboard << endl;
+    my_client->cleanup();
 
 }
 

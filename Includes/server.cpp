@@ -131,8 +131,8 @@ void Server::send_playing_cards( vector<int>indexes )
     for ( auto client_it : get_client_list() )
     {
         sendMessage( client_it.sock_fd, 'c', cards_to_send );
-        sendMessage( client_it.sock_fd, 'm', "Make a guess " + 
-                     client_it.name ); 
+        //sendMessage( client_it.sock_fd, 'm', "Make a guess " + 
+        //             client_it.name ); 
     }
 
 }
@@ -425,8 +425,9 @@ void Server::wait_for_client()
 
         else
         {   
-	  //time( &end );
-	  if ( /*difftime(end,start)<delay*/ delay > 0 &&  client_list.size() <= 12 )
+	    //time( &end );
+	    if ( /*difftime(end,start)<delay*/ delay > 0 &&  
+                 client_list.size() <= 12 )
 	    {
 	        cout << "Connected new client." << endl;
 
@@ -436,33 +437,34 @@ void Server::wait_for_client()
 
 	        // CRITICAL SECTION
 	        pthread_mutex_lock( &mutex );
-          this_client.score = 0;
-          // Read name
+                this_client.score = 0;
+                // Read name
 	        int hr = read( this_client.sock_fd, &buffer, 15 );
-          if ( hr <= 0 )
-          {
-            cout << strerror(errno) << endl;
-          }
+                if ( hr <= 0 )
+                {
+                    cout << strerror( errno ) << endl;
+                } 
 
-          else
-          {
-            char second_buffer[14] = {0};
-            strncpy( second_buffer, &buffer[1], 14 ); 
-            this_client.name = check_name( second_buffer );
-            this_client.keyboard = buffer[0] - '0';
-          }
+                else
+                {
+                    char second_buffer[14] = {0};
+                    strncpy( second_buffer, &buffer[1], 14 ); 
+                    this_client.name = check_name( second_buffer );
+                    this_client.keyboard = buffer[0] - '0';
+                }
 	        client_list.push_back( this_client );
 	        pthread_mutex_unlock( &mutex );
          
-          // tell client what server knows
+                // tell client what server knows
 	        sendMessage( this_client.sock_fd, 'n', 
-                       this_client.name );
+                             this_client.name );
 	        sendMessage( this_client.sock_fd, 'k', 
-                       to_string(this_client.keyboard) );
-
+                             to_string(this_client.keyboard) );
+                sendMessage( this_client.sock_fd, 'm',
+                             "Make a guess " ); 
 	        poll_fds.push_back( client_sock_fd );
-	         //send_playing_cards( std_indexes );
-	         //display_sets ( playing_deck->get_cards() );	
+	        //send_playing_cards( std_indexes );
+	        //display_sets ( playing_deck->get_cards() );	
 	    }
             else
 	    {    

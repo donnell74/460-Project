@@ -26,8 +26,6 @@
 
 using namespace std;
 
-
-
 /* structs */
 struct Client_t
 {
