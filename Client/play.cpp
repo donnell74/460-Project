@@ -355,7 +355,6 @@ void get_keyboard_layout( )
 }
 
 
-
 //|update_timer_win
 void update_timer_win( string msg )
 { 
@@ -1174,8 +1173,7 @@ void quit_options( bool game_started )
 
                 case 51: //'3'
                     touchwin( stdscr );
-                    mvwprintw( message_win, 0, 0, 
-                               "CLIENT MESSAGE: Welcome back!" );
+                    touchwin( message_win );
                     touchwin( score_win );
                     touchwin( legend_win );
                     refresh();
@@ -1276,26 +1274,38 @@ void handle_input()
 		    {
 		        cards.push_back( get_card( 
                                        choice_string[d] ) );
-		    } 
+		    }
+                    
 	        }
                 break;
             }
             default:
                 break;
         }
- 
+
+        
+        //Selections correct, but pressed wrong key to submit. 
         if ( choice_string.find( ( char )ch ) == -1 && 
              choice_string.size() == 3 &&
-             !in_accepted_chars( toupper ( ch ) ) )
+             !in_accepted_chars( toupper ( ch ) ) && ch != 54 )
 	{
             wclrtoeol( message_win );
             mvwprintw( message_win, 0, 0, 
                    "CLIENT MESSAGE: Press the SPACE BAR to submit guess" );
             wrefresh( message_win );	 
 	}
-
+        
+     
+        //Client backs out of No Set selection
+        if ( choice_string == "nnn" && 
+             in_accepted_chars( toupper ( ch ) ) && colemak_keyboard )
+        {
+            choice_string = "";
+        }
+     
+        //Client selects more than 3 cards           
         if ( choice_string.find( ( char )ch ) == -1 && 
-             choice_string.size() == 3 )
+             choice_string.size() == 3 && ch != 54 )
 	{
             wclrtoeol( message_win );
             wrefresh( message_win );
@@ -1308,6 +1318,8 @@ void handle_input()
 	    }
 	 
 	}
+        
+        //Client selects accepted card
         if ( choice_string.find( ( char )ch ) == -1 && 
              in_accepted_chars( toupper(ch) ) )
 	{
@@ -1317,6 +1329,7 @@ void handle_input()
 	 
 	}
       
+        //Client reselects accepted card
         if ( choice_string != "nnn" &&
              choice_string.find( ( char )ch ) != -1 && 
              in_accepted_chars( toupper( ch ) ) )
@@ -1327,11 +1340,18 @@ void handle_input()
 	 
 	}
 
-    resume:
-        if ( in_accepted_chars( toupper( ch ) ) || choice_string == "nnn" )
+        //Client backs out of No Set selection
+        if ( choice_string == "nnn" && 
+             in_accepted_chars( toupper ( ch ) ) && colemak_keyboard )
         {
-            print_card_stats(  );
+            choice_string = "";
         }
+
+        resume:
+            if ( in_accepted_chars( toupper( ch ) ) || choice_string == "nnn" )
+            {
+                print_card_stats(  );
+            }
         refresh();
     }
 }

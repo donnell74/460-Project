@@ -539,7 +539,8 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
         }
     }
 
-    int guess_type = check_guess( guess, deck, playing_deck, ACCEPTED_CHARS[client->keyboard - 1] );
+    int guess_type = check_guess( guess, deck, playing_deck, 
+                                  ACCEPTED_CHARS[client->keyboard - 1] );
   
     //Update Score
     update_score( client_sock_fd, guess_type );
@@ -587,9 +588,12 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
             if ( !deck->empty( 0 ) )
 	    { 
                 vector<int>indexes;
-                indexes.push_back( map_card( toupper ( guess[0] ), ACCEPTED_CHARS[client->keyboard - 1] ) );
-                indexes.push_back( map_card( toupper ( guess[1] ), ACCEPTED_CHARS[client->keyboard - 1] ) );
-                indexes.push_back( map_card( toupper ( guess[2] ), ACCEPTED_CHARS[client->keyboard - 1] ) );
+                indexes.push_back( map_card( toupper ( guess[0] ), 
+                                   ACCEPTED_CHARS[client->keyboard - 1] ) );
+                indexes.push_back( map_card( toupper ( guess[1] ), 
+                                   ACCEPTED_CHARS[client->keyboard - 1] ) );
+                indexes.push_back( map_card( toupper ( guess[2] ), 
+                                   ACCEPTED_CHARS[client->keyboard - 1] ) );
                 playing_deck->remove_card( indexes[0] );
                 playing_deck->remove_card( indexes[1] );
                 playing_deck->remove_card( indexes[2] );
@@ -601,9 +605,12 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
             {
 
                 vector<int>indexes;
-                indexes.push_back( map_card( toupper ( guess[0]), ACCEPTED_CHARS[client->keyboard - 1]  ) );
-                indexes.push_back( map_card( toupper ( guess[1]), ACCEPTED_CHARS[client->keyboard - 1]  ) );
-                indexes.push_back( map_card( toupper ( guess[2]), ACCEPTED_CHARS[client->keyboard - 1]  ) );
+                indexes.push_back( map_card( toupper ( guess[0]), 
+                                   ACCEPTED_CHARS[client->keyboard - 1]  ) );
+                indexes.push_back( map_card( toupper ( guess[1]), 
+                                   ACCEPTED_CHARS[client->keyboard - 1]  ) );
+                indexes.push_back( map_card( toupper ( guess[2]), 
+                                   ACCEPTED_CHARS[client->keyboard - 1]  ) );
                 playing_deck->remove_card( indexes[0] );
                 playing_deck->remove_card( indexes[1] );
                 playing_deck->remove_card( indexes[2] );
