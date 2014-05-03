@@ -124,9 +124,13 @@ void get_user_name( string user_name )
             break;
 
             case '\n':
-                user = new char[uname_string.length() + 1];
-                strcpy( user, uname_string.c_str() );
-                return;
+                if ( characters > 0 )
+                {
+                  user = new char[uname_string.length() + 1];
+                  strcpy( user, uname_string.c_str() );
+                  return;
+                }
+                break;
 
 	    case 54:
                 quit_options( game_started );
@@ -328,9 +332,13 @@ void get_keyboard_layout( )
                 break;
 
             case '\n':
-                keyboard = new char[ukeyboard_string.length() + 1];
-                strcpy( keyboard, ukeyboard_string.c_str() );
-                return;
+                if ( characters > 0 )
+                {
+                  keyboard = new char[ukeyboard_string.length() + 1];
+                  strcpy( keyboard, ukeyboard_string.c_str() );
+                  return;
+                }
+                break;
 
             case 54:
                 quit_options( game_started );
@@ -1139,6 +1147,13 @@ void quit_options( bool game_started )
         mvwprintw( quit_win, 5, 3, "3. Keep Playing" );
         touchwin( quit_win );
         wrefresh( quit_win );
+        //handle the leftover guess
+        choice_string.clear();
+        //Delete all card highlights
+        for( int i = 1; i < 13; i++ )
+        {
+            dehighlight_card( i );
+        }
 
         int ch;
         ch = wgetch( quit_win );
@@ -1153,13 +1168,6 @@ void quit_options( bool game_started )
             case 50: //'2'
                 watching = true;
                 
-                //handle the leftover guess
-                choice_string.clear();
-                //Delete all card highlights
-                for( int i = 1; i < 13; i++ )
-                {
-                    dehighlight_card( i );
-                }
                 nocbreak();
                 touchwin( stdscr );
                 mvwprintw( message_win, 0, 0, 
