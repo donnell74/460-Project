@@ -363,7 +363,6 @@ void get_keyboard_layout( )
 }
 
 
-
 //|update_timer_win
 void update_timer_win( string msg )
 { 
@@ -1158,40 +1157,50 @@ void quit_options( bool game_started )
         int ch;
         ch = wgetch( quit_win );
 
-        switch ( ch )
+        for ( ;; )
         {
-            case 49: //'1'
-                endwin();
-                my_client->cleanup();
-                break;
+            switch ( ch )
+            {
+                case 49: //'1'
+                    endwin();
+                    my_client->cleanup();
+                    return;
 
-            case 50: //'2'
-                watching = true;
-                
-                nocbreak();
-                touchwin( stdscr );
-                mvwprintw( message_win, 0, 0, 
-                           "CLIENT MESSAGE: Press 'Ctrl' + 'c' to quit" );
-                touchwin( score_win );
-                refresh();
-                wrefresh( message_win );
-                wrefresh( score_win );
-                break;
+                case 50: //'2'
+                    watching = true;
+                 
+                    //handle the leftover guess
+                    choice_string.clear();
+                    //Delete all card highlights
+                    for( int i = 1; i < 13; i++ )
+                    {
+                        dehighlight_card( i );
+                    }
+                    nocbreak();
+                    touchwin( stdscr );
+                    mvwprintw( message_win, 0, 0, 
+                               "CLIENT MESSAGE: Press 'Ctrl' + 'c' to quit" );
+                    touchwin( score_win );
+                    refresh();
+                    wrefresh( message_win );
+                    wrefresh( score_win );
+                    return;
 
-            case 51: //'3'
-                touchwin( stdscr );
-                mvwprintw( message_win, 0, 0, 
-                           "CLIENT MESSAGE: Welcome back!" );
-                touchwin( score_win );
-                touchwin( legend_win );
-                refresh();
-                wrefresh( message_win );
-                wrefresh( score_win );
-                wrefresh( legend_win );
-                break;
+                case 51: //'3'
+                    touchwin( stdscr );
+                    touchwin( message_win );
+                    touchwin( score_win );
+                    touchwin( legend_win );
+                    refresh();
+                    wrefresh( message_win );
+                    wrefresh( score_win );
+                    wrefresh( legend_win );
+                    return;
         
                 default:
-                    break;
+                    quit_options( game_started );
+                    return;
+            }
         }
     }
     else
@@ -1205,19 +1214,23 @@ void quit_options( bool game_started )
         int ch;
         ch = wgetch( quit_win );
 
-        switch ( ch )
+        for ( ;; )
         {
-            case 49:
-                endwin();
-                exit( EXIT_SUCCESS );
-                break;
+            switch ( ch )
+            {
+                case 49:
+                    endwin();
+                    exit( EXIT_SUCCESS );
+                    return;
 
-            case 50:
-                splash_screen();
-                break;
+                case 50:
+                    splash_screen();
+                    return;
 
-            default:
-                break;
+                default:
+                    quit_options( game_started );
+                    return;
+            }   
         }
     }
 }
@@ -1276,26 +1289,38 @@ void handle_input()
 		    {
 		        cards.push_back( get_card( 
                                        choice_string[d] ) );
-		    } 
+		    }
+                    
 	        }
                 break;
             }
             default:
                 break;
         }
- 
+
+        
+        //Selections correct, but pressed wrong key to submit. 
         if ( choice_string.find( ( char )ch ) == -1 && 
              choice_string.size() == 3 &&
-             !in_accepted_chars( toupper ( ch ) ) )
+             !in_accepted_chars( toupper ( ch ) ) && ch != 54 )
 	{
             wclrtoeol( message_win );
             mvwprintw( message_win, 0, 0, 
                    "CLIENT MESSAGE: Press the SPACE BAR to submit guess" );
             wrefresh( message_win );	 
 	}
-
+        
+     
+        //Client backs out of No Set selection
+        if ( choice_string == "nnn" && 
+             in_accepted_chars( toupper ( ch ) ) && colemak_keyboard )
+        {
+            choice_string = "";
+        }
+     
+        //Client selects more than 3 cards           
         if ( choice_string.find( ( char )ch ) == -1 && 
-             choice_string.size() == 3 )
+             choice_string.size() == 3 && ch != 54 )
 	{
             wclrtoeol( message_win );
             wrefresh( message_win );
@@ -1308,6 +1333,8 @@ void handle_input()
 	    }
 	 
 	}
+        
+        //Client selects accepted card
         if ( choice_string.find( ( char )ch ) == -1 && 
              in_accepted_chars( toupper(ch) ) )
 	{
@@ -1317,6 +1344,7 @@ void handle_input()
 	 
 	}
       
+        //Client reselects accepted card
         if ( choice_string != "nnn" &&
              choice_string.find( ( char )ch ) != -1 && 
              in_accepted_chars( toupper( ch ) ) )
@@ -1327,11 +1355,18 @@ void handle_input()
 	 
 	}
 
-    resume:
-        if ( in_accepted_chars( toupper( ch ) ) || choice_string == "nnn" )
+        //Client backs out of No Set selection
+        if ( choice_string == "nnn" && 
+             in_accepted_chars( toupper ( ch ) ) && colemak_keyboard )
         {
-            print_card_stats(  );
+            choice_string = "";
         }
+
+        resume:
+            if ( in_accepted_chars( toupper( ch ) ) || choice_string == "nnn" )
+            {
+                print_card_stats(  );
+            }
         refresh();
     }
 }
