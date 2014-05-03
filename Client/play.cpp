@@ -1131,38 +1131,42 @@ void quit_options( bool game_started )
         int ch;
         ch = wgetch( quit_win );
 
-        switch ( ch )
+        for ( ;; )
         {
-            case 49:
-                endwin();
-                my_client->cleanup();
-                break;
+            switch ( ch )
+            {
+                case 49:
+                    endwin();
+                    my_client->cleanup();
+                    return;
 
-            case 50:
-                nocbreak();
-                touchwin( stdscr );
-                mvwprintw( message_win, 0, 0, 
-                           "CLIENT MESSAGE: Press 'Ctrl' + 'c' to quit" );
-                touchwin( score_win );
-                refresh();
-                wrefresh( message_win );
-                wrefresh( score_win );
-                break;
+                case 50:
+                    nocbreak();
+                    touchwin( stdscr );
+                    mvwprintw( message_win, 0, 0, 
+                               "CLIENT MESSAGE: Press 'Ctrl' + 'c' to quit" );
+                    touchwin( score_win );
+                    refresh();
+                    wrefresh( message_win );
+                    wrefresh( score_win );
+                    return;
 
-            case 51:
-                touchwin( stdscr );
-                mvwprintw( message_win, 0, 0, 
-                           "CLIENT MESSAGE: Welcome back!" );
-                touchwin( score_win );
-                touchwin( legend_win );
-                refresh();
-                wrefresh( message_win );
-                wrefresh( score_win );
-                wrefresh( legend_win );
-                break;
+                case 51:
+                    touchwin( stdscr );
+                    mvwprintw( message_win, 0, 0, 
+                               "CLIENT MESSAGE: Welcome back!" );
+                    touchwin( score_win );
+                    touchwin( legend_win );
+                    refresh();
+                    wrefresh( message_win );
+                    wrefresh( score_win );
+                    wrefresh( legend_win );
+                    return;
         
                 default:
-                    break;
+                    quit_options( game_started );
+                    return;
+            }
         }
     }
     else
@@ -1176,19 +1180,23 @@ void quit_options( bool game_started )
         int ch;
         ch = wgetch( quit_win );
 
-        switch ( ch )
+        for ( ;; )
         {
-            case 49:
-                endwin();
-                exit( EXIT_SUCCESS );
-                break;
+            switch ( ch )
+            {
+                case 49:
+                    endwin();
+                    exit( EXIT_SUCCESS );
+                    return;
 
-            case 50:
-                splash_screen();
-                break;
+                case 50:
+                    splash_screen();
+                    return;
 
-            default:
-                break;
+                default:
+                    quit_options( game_started );
+                    return;
+            }   
         }
     }
 }
