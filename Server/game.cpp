@@ -61,7 +61,6 @@ void handle_input()
 
     cin >> inp;
     type = inp[0];
-    cout << type << endl;
     switch( toupper( type ) )
     {
   
