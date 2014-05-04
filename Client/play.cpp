@@ -1454,7 +1454,7 @@ void display_game_over( string msg )
     {
         row += 1;
         size_t found = clients[i].find( user );
-        if ( found!=string::npos && clients[i][found + strlen( user )] == ' ')
+        if ( found!=string::npos && clients[i][found + strlen( user ) + 1] == ' ')
             attron( COLOR_PAIR( 11 ) );
 
         mvprintw( row - 1, 30, "%d.%s ", i + 1,
