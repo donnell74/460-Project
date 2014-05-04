@@ -1405,6 +1405,7 @@ string bitcode_parser( char bitcode )
     }
     
     //Reverse string
+    //Needed for correct parsing
     for ( int j = card_string.size(); j > 0; j-- )
     {
         result += card_string[j -1];
