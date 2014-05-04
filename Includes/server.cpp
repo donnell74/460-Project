@@ -266,6 +266,12 @@ int Server::check_guess( char* guess, Deck* deck, Deck* playing_deck,
             int idx_1 = map_card( toupper( guess[0]), accepted_keys );
             int idx_2 = map_card( toupper( guess[1]), accepted_keys );
             int idx_3 = map_card( toupper( guess[2]), accepted_keys );
+            if ( playing_deck->get_card( idx_1 ) == nullptr ||
+                 playing_deck->get_card( idx_2 ) == nullptr ||
+		 playing_deck->get_card( idx_3 ) == nullptr )
+            {
+               return 3;
+            } 
             cset.push_back( playing_deck->get_card( idx_1 ) );
             cset.push_back( playing_deck->get_card( idx_2 ) );
             cset.push_back( playing_deck->get_card( idx_3 ) );

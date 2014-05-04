@@ -1384,7 +1384,6 @@ string bitcode_parser( char bitcode )
     
     if ( bit == 255 )
     {
-        mvprintw( 43, 0, "9999" );
         return "9999";
     }
 
