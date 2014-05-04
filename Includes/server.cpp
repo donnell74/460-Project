@@ -32,7 +32,7 @@ Server::Server( int port, char *addr, int delay_time )
     delay = delay_time;
     //time( &start );
     
-    last_correct = -1;
+    last_correct = 0;
     streak = 0;
 
     // create socket for server
@@ -335,8 +335,13 @@ void Server::update_score( int client_sock_fd, int guess_type )
     switch ( guess_type )
     {   
         case 0:
+
+            //Correct Set Guess
             client_list[index].score += 10;
-            if ( client_sock_fd == last_correct )
+
+            //Check to see if client gets bonus
+            if ( client_sock_fd == last_correct && 
+                 client_list[index].on_streak )
             {
                 if ( streak > 14 )
                 {
@@ -349,20 +354,32 @@ void Server::update_score( int client_sock_fd, int guess_type )
 
             streak += 1;
             }
+
+            //Client is not on streak
             else
             {
+                client_list[last_correct].on_streak = false;
                 last_correct = client_sock_fd;
                 streak = 0;
+                client_list[index].on_streak = true;
             }
             break;
 
         case 1:
+
+            //Incorrect 'No Set' Guess
             client_list[index].score += -5;
+            client_list[index].on_streak = false;
             break;
 
         case 2:
+
+            //Correct 'No Set' Guess
             client_list[index].score += 5;
-            if ( client_sock_fd == last_correct )
+
+            //Check to see if client in on streak
+            if ( client_sock_fd == last_correct &&
+                 client_list[index].on_streak )
             {
                 if ( streak > 14 )
                 {
@@ -374,15 +391,22 @@ void Server::update_score( int client_sock_fd, int guess_type )
                 }
             streak += 1;
             }
+            
+            //Client is not on streak
             else
             {
                 streak = 0;
+                client_list[last_correct].on_streak = false;
                 last_correct = client_sock_fd;
+                client_list[index].on_streak = true;
             }
             break;
         
         case 3:
+
+            //Incorrect Set Guess
             client_list[index].score += -3;
+            client_list[index].on_streak = false;
 
         default:
             break;
@@ -445,6 +469,7 @@ void Server::wait_for_client()
 	        // CRITICAL SECTION
 	        pthread_mutex_lock( &mutex );
                 this_client.score = 0;
+                this_client.on_streak = false;
                 // Read name
 	        int hr = read( this_client.sock_fd, &buffer, 15 );
                 if ( hr <= 0 )

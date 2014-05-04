@@ -34,6 +34,7 @@ struct Client_t
   string name;
   int score;
   int keyboard;
+  bool on_streak;
 };
 
 #endif /* NETWORKING_H */
