@@ -104,15 +104,17 @@ vector<Client_t> Server::get_client_list()
 //|force_game_over
 void Server::force_game_over()
 {
-  cout << "Attempting a forced game over" << endl;
-  deck->remove_all_cards();
+    cout << "Attempting a forced game over" << endl;
+    deck->remove_all_cards();
 }
 
 
 //|sendMessage
 void Server::sendMessage( int sock_fd, char type, string msg )
 {
-    msg.insert( msg.begin(), type ); //makes calls to sendMessage more readable
+    //makes calls to sendMessage more readable
+    msg.insert( msg.begin(), type );
+ 
     msg.append( TERM_STR ); 
     int bytes_sent = write( sock_fd, msg.c_str(), msg.size() ); 
     if ( bytes_sent < 0 )
@@ -127,12 +129,11 @@ void Server::sendMessage( int sock_fd, char type, string msg )
 void Server::send_playing_cards( vector<int>indexes )
 {
   
-    string cards_to_send = create_playing_cards( indexes, deck, playing_deck );
+    string cards_to_send = create_playing_cards( indexes, deck, 
+                                                 playing_deck );
     for ( auto client_it : get_client_list() )
     {
         sendMessage( client_it.sock_fd, 'c', cards_to_send );
-        //sendMessage( client_it.sock_fd, 'm', "Make a guess " + 
-        //             client_it.name ); 
     }
 
 }
@@ -155,7 +156,6 @@ void Server::send_null_cards( vector<int>indexes )
 }
 
 
-
 //|update_scores
 void Server::update_scores()
 {
@@ -175,72 +175,79 @@ void Server::update_scores()
     }
 }
 
+
 //Preliminary game tasks
 //|begin_game
-void Server::begin_game ( )
+void Server::begin_game()
 {
-  if ( delay >= 0 )
-  {
-    delay = -1;
-    getitimer( ITIMER_REAL, &delay_timer );
-    delay_timer.it_value.tv_sec = 0;
-    delay_timer.it_value.tv_usec = 0;
-    setitimer( ITIMER_REAL, &delay_timer, nullptr );
-    send_playing_cards( std_indexes );
-    update_scores();
-    display_sets( playing_deck->get_cards() );
-  }
-  else
-  {
-    cout << "Game has already been started." << endl;
-  }
+    if ( delay >= 0 )
+    {
+        delay = -1;
+        getitimer( ITIMER_REAL, &delay_timer );
+        delay_timer.it_value.tv_sec = 0;
+        delay_timer.it_value.tv_usec = 0;
+        setitimer( ITIMER_REAL, &delay_timer, nullptr );
+        send_playing_cards( std_indexes );
+        update_scores();
+        display_sets( playing_deck->get_cards() );
+    }
+    else
+    {
+        cout << "Game has already been started." << endl;
+    }
 }
+
 
 //|start_timer
 void Server::start_timer()
 {
-  delay_timer = {{1,0},{1,0}};
-  if ( setitimer( ITIMER_REAL, &delay_timer, nullptr ) == -1 ) {
-    cerr << strerror( errno ) << ": can't set interval timer\n";
-  }
+    delay_timer = { {1, 0}, {1, 0} };
+    if ( setitimer( ITIMER_REAL, &delay_timer, nullptr ) == -1 ) 
+    {
+        cerr << strerror( errno ) << ": can't set interval timer\n";
+    }
 }
+
 
 //|disable_timer
 void Server::disable_timer()
 {
-  //Disable itimer
-  getitimer( ITIMER_REAL, &delay_timer );
-  delay_timer.it_value.tv_sec = 0;
-  delay_timer.it_value.tv_usec = 0;
-  setitimer( ITIMER_REAL, &delay_timer, nullptr );
-  update_client_timer();
-  begin_game();
+    //Disable itimer
+    getitimer( ITIMER_REAL, &delay_timer );
+    delay_timer.it_value.tv_sec = 0;
+    delay_timer.it_value.tv_usec = 0;
+    setitimer( ITIMER_REAL, &delay_timer, nullptr );
+    update_client_timer();
+    begin_game();
 }
+
 
 //|check timer
 void Server::check_timer()
 {
-   if ( delay == 0 )
+    if ( delay == 0 )
     {
-      disable_timer();
+        disable_timer();
     }
     
-   delay -= 1;
+    delay -= 1;
 }
+
 
 //|update_client_timer
 void Server::update_client_timer()
 { 
-  for ( unsigned int i = 0; i < client_list.size(); i++ )
+    for ( unsigned int i = 0; i < client_list.size(); i++ )
     {
-      sendMessage( client_list[ i ].sock_fd, 't', to_string( delay ) ); 
+        sendMessage( client_list[ i ].sock_fd, 't', to_string( delay ) ); 
     }
 }
 
 
 //Checks client guess
 //|check_guess
-int Server::check_guess( char* guess, Deck* deck, Deck* playing_deck, vector<char> accepted_keys )
+int Server::check_guess( char* guess, Deck* deck, Deck* playing_deck, 
+                         vector<char> accepted_keys )
 {
     switch( guess[0] )
     {
@@ -283,7 +290,9 @@ int Server::check_guess( char* guess, Deck* deck, Deck* playing_deck, vector<cha
 void Server::cleanup ()
 {
     cout << "\nServer going down ( as well as all clients )." << endl;
-    // client list is empty or we quit while creating first client connection
+    // client list is empty or we quit while creating 
+    //first client connection
+
     if ( ! client_list.empty() && ( client_list.front().sock_fd != 0 ) )
     {
         for ( auto client_it : client_list )
@@ -322,7 +331,7 @@ void Server::update_score( int client_sock_fd, int guess_type )
         }
     }
 
-    pthread_mutex_lock( &mutex );
+    //pthread_mutex_lock( &mutex );
     switch ( guess_type )
     {   
         case 0:
@@ -378,7 +387,7 @@ void Server::update_score( int client_sock_fd, int guess_type )
         default:
             break;
     }
-    pthread_mutex_unlock( &mutex );
+    //pthread_mutex_unlock( &mutex );
     update_scores();
 }
 
@@ -409,8 +418,7 @@ void Server::wait_for_client()
     for ( ;; )
     {
         char buffer[14] = { 0 }; // used for client name
-        // auto client_it = 
-        //client_list.push_back( client_list.begin(), Client{});
+
         // emplace might be replacing, check when implementing multiple client
         Client_t this_client = {};
         socklen_t client_len = sizeof ( this_client.addr );
@@ -425,9 +433,8 @@ void Server::wait_for_client()
 
         else
         {   
-	    //time( &end );
-	    if ( /*difftime(end,start)<delay*/ delay > 0 &&  
-                 client_list.size() <= 12 )
+	    
+	    if ( delay > 0 && client_list.size() <= 12 )
 	    {
 	        cout << "Connected new client." << endl;
 
@@ -512,7 +519,7 @@ void Server::disconnect_client( int client_sock_fd )
 //|compareByScore
 bool compareByScore( const Client_t &a, const Client_t &b )
 {
-      return a.score > b.score;
+    return a.score > b.score;
 }
 
 
@@ -537,15 +544,17 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
     {
         if ( client_it->sock_fd == client_sock_fd )
         {
-          client = client_it;
+            client = client_it;
         }
     }
 
     int guess_type = check_guess( guess, deck, playing_deck, 
                                   ACCEPTED_CHARS[client->keyboard - 1] );
-  
     //Update Score
+    pthread_mutex_lock( &mutex );
     update_score( client_sock_fd, guess_type );
+    pthread_mutex_unlock( &mutex );
+
     switch( guess_type )
     {
         case 0:
@@ -605,7 +614,6 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
 	    }
             else
             {
-
                 vector<int>indexes;
                 indexes.push_back( map_card( toupper ( guess[0]), 
                                    ACCEPTED_CHARS[client->keyboard - 1]  ) );
@@ -616,8 +624,8 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
                 playing_deck->remove_card( indexes[0] );
                 playing_deck->remove_card( indexes[1] );
                 playing_deck->remove_card( indexes[2] );
-                break;
                 send_null_cards( indexes );
+                break;
             }
             break;
 				     
@@ -696,41 +704,41 @@ void Server::wait_for_input()
         // &poll_fds[0] can cause problems on reallocation
         if ( poll( &poll_fds[0], poll_fds.size(), 100 ) == -1 )
         {
-	  if (errno == EINTR )
+	    if (errno == EINTR )
 	    {
-	      continue;
+	        continue;
 	    }
-	  die( "Problem with input." );
+	    die( "Problem with input." );
         }    
 
 	//No need for Else statement, die terminates
         if ( ( poll_fds[0].revents & POLLIN ) != 0 )
-            {
-                handle_input();
-            }
+        {
+            handle_input();
+        }
 
         // POLLRDHUP
         if ( poll_fds.size() > 2 )
-	  {
+	{
             for ( auto poll_fd_it : poll_fds )
+            {
+                if ( poll_fd_it.fd < 3 || poll_fd_it.fd == server_sock_fd )
+                {  
+                    continue;
+                }
+
+                if ( ( poll_fd_it.revents & POLLRDHUP ) != 0 )
                 {
-                    if ( poll_fd_it.fd < 3 || poll_fd_it.fd == server_sock_fd )
-                    {  
-                        continue;
-                    }
+                    // client hung up
+                    disconnect_client( poll_fd_it.fd );
+                }   
 
-                    if ( ( poll_fd_it.revents & POLLRDHUP ) != 0 )
-                    {
-                        // client hung up
-                        disconnect_client( poll_fd_it.fd );
-                    }   
-
-                    if ( ( poll_fd_it.revents & POLLIN ) != 0 )
-                    {
+                if ( ( poll_fd_it.revents & POLLIN ) != 0 )
+                {
                         receive_input( poll_fd_it.fd );
-                    }   
-                }  
-	  }
+                }   
+            }  
+	}
     } 
 }
 // End of Server
