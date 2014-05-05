@@ -117,14 +117,14 @@ void Client::wait_for_input()
 	  
             if ( ( poll_fds[0].revents & POLLIN ) != 0 )
             {
-	      if( gameStarted )
-		{
-		  handle_input();
+	        if( gameStarted )
+                {
+		    handle_input();
 		}	
 
-	      else
+	        else
 		{
-		  flushSTDIN();
+		    flushSTDIN();
 		}
             }
 

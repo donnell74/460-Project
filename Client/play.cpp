@@ -1611,16 +1611,22 @@ void handle_server_msg()
     }   
 }
 
+
+//IflushSTDIN
 void flushSTDIN( )
 {
-  int c;
-  c = getch();
+    int c;
+    c = getch();
 }
 
+
+//|endwinwrap
 void endwinwrap( )
 {
-  endwin();
+    endwin();
 }
+
+
 //|main
 int main( int argc, char *argv[] )
 {
