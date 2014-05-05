@@ -1235,6 +1235,7 @@ void handle_input()
 {
     int card;
     int ch;
+
     if( game_started )
     {
         ch = getch();
@@ -1243,6 +1244,7 @@ void handle_input()
         {
           return;
         }
+
         switch( ch )
 	{
 
@@ -1514,10 +1516,11 @@ void handle_server_msg()
 
         case CARDS:
         {
-            if ( game_started == false )
+            if ( !game_started )
 	    {
 	        show_game_screen();
-	        game_started = true;
+		game_started = true;
+	        my_client->gameStarted = true;
 	    }  
       
             vector<string>cards;
@@ -1585,6 +1588,11 @@ void handle_server_msg()
     }   
 }
 
+void flushSTDIN( )
+{
+  int c;
+  c = getch();
+}
 
 //|main
 int main( int argc, char *argv[] )
@@ -1595,6 +1603,7 @@ int main( int argc, char *argv[] )
     int column;
     initscr();
     keypad( stdscr, TRUE );
+    cbreak();
     curs_set( 0 );
     noecho();
     splash_screen();
@@ -1643,5 +1652,6 @@ int main( int argc, char *argv[] )
     my_client->cleanup();
 
 }
+
 
 
