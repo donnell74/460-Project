@@ -150,12 +150,18 @@ void get_user_name( string user_name )
 }
 
 
+void ncurses_cleanup()
+{
+    echo();
+    endwin();
+}
+
+
 //|sig_wrap_cleanup
 void sig_wrap_cleanup( int sig )
 {
     echo();
     endwin();
-    cout << "nCurses has exited. " << endl;
     // wrapper for sigaction to pass int to sig which is never used
     my_client->cleanup();
 }
@@ -1419,6 +1425,7 @@ string bitcode_parser( char bitcode )
     }
     
     //Reverse string
+    //Needed for correct parsing
     for ( int j = card_string.size(); j > 0; j-- )
     {
         result += card_string[j -1];
@@ -1515,10 +1522,10 @@ void handle_server_msg()
         case USERNAME:
             wmove( stdscr, 0, 0 );
             wclrtoeol( stdscr );
+            strncpy( user, msg.substr( 1 ).data(), 15 );
             mvwprintw( stdscr, 23, 14, 
                        "You have been connected with username: %s", 
-                       msg.substr( 1 ).data() );
-            strncpy( user, msg.substr( 1 ).c_str(), msg.substr( 1 ).size() );
+                       user );
             wrefresh( stdscr );
             break;
 
@@ -1532,10 +1539,11 @@ void handle_server_msg()
 
         case CARDS:
         {
-            if ( game_started == false )
+            if ( !game_started )
 	    {
 	        show_game_screen();
-	        game_started = true;
+		game_started = true;
+	        my_client->gameStarted = true;
 	    }  
       
             vector<string>cards;
@@ -1603,7 +1611,16 @@ void handle_server_msg()
     }   
 }
 
+void flushSTDIN( )
+{
+  int c;
+  c = getch();
+}
 
+void endwinwrap( )
+{
+  endwin();
+}
 //|main
 int main( int argc, char *argv[] )
 {
@@ -1613,6 +1630,7 @@ int main( int argc, char *argv[] )
     int column;
     initscr();
     keypad( stdscr, TRUE );
+    cbreak();
     curs_set( 0 );
     noecho();
     splash_screen();
@@ -1624,7 +1642,9 @@ int main( int argc, char *argv[] )
         case 2:
 	{
             char buff[15] = {0};
-            getlogin_r( buff, 15 );
+	    //Encounters problems on some remote terminals
+            //printw("Here:%d",getlogin_r( buff, 15 ));
+	    cuserid( buff );
 	    get_user_name( string( buff, strlen( buff ) ) );
             get_keyboard_layout();
 	    my_client = new Client( atoi( argv[1] ), LOCALHOST, 
@@ -1661,5 +1681,6 @@ int main( int argc, char *argv[] )
     my_client->cleanup();
 
 }
+
 
 

@@ -4,21 +4,25 @@
 //|die
 void Client::die( string error_msg )
 {
+    ncurses_cleanup();
     // standardize error_msg so no extra new lines
     error_msg.erase( error_msg.find_last_not_of( " \n\r\t" ) + 1 ); 
-    cerr << error_msg;
+    cerr << error_msg << endl;
 
     if ( DEBUG )
     {
-        cerr << strerror( errno );
+        cerr << strerror( errno ) << endl;
     }
   
     // close socket to server
     if ( close( client_sock_fd ) == -1 )
     {
-        cerr << strerror( errno );
+        cerr << strerror( errno ) << endl;
     }
-
+    
+    //Terminate ncurses
+    //sleep(2);
+    //endwinwrap();
     exit( EXIT_FAILURE );
 }
 
@@ -26,7 +30,7 @@ void Client::die( string error_msg )
 //|cleanup
 void Client::cleanup()
 {
-    cout << "You have been disconnected.";
+    cout << "You have been disconnected." << endl;
     send_message( "QUI" );
     exit( EXIT_SUCCESS );
 }
@@ -37,7 +41,7 @@ Client::Client( int port, char *addr, char * user, string keyboard )
 {
     struct sockaddr_in server_addr = {};
     struct hostent *server;
-
+    gameStarted = false;
 
     client_sock_fd = socket( AF_INET, SOCK_STREAM, 0 );
     if ( client_sock_fd < 0 )
@@ -110,15 +114,25 @@ void Client::wait_for_input()
         }
         else
         {
+	  
             if ( ( poll_fds[0].revents & POLLIN ) != 0 )
             {
-                handle_input();
+	      if( gameStarted )
+		{
+		  handle_input();
+		}	
+
+	      else
+		{
+		  flushSTDIN();
+		}
             }
 
             if ( ( poll_fds[1].revents & POLLIN ) != 0 )
             {
                 read_server_msg();
-            } 
+            }
+	    
         }
     }
 }
