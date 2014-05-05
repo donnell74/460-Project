@@ -30,7 +30,7 @@ void Client::die ( string error_msg )
 //|cleanup
 void Client::cleanup()
 {
-    cout << "You have been disconnected.";
+    cout << "You have been disconnected." << endl;
     send_message( "QUI" );
     exit( EXIT_SUCCESS );
 }
