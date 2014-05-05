@@ -4,24 +4,25 @@
 //|die
 void Client::die ( string error_msg )
 {
+    ncurses_cleanup();
     // standardize error_msg so no extra new lines
     error_msg.erase( error_msg.find_last_not_of( " \n\r\t" ) + 1 ); 
-    cerr << error_msg;
+    cerr << error_msg << endl;
 
     if ( DEBUG )
     {
-        cerr << strerror( errno );
+        cerr << strerror( errno ) << endl;
     }
   
     // close socket to server
     if ( close( client_sock_fd ) == -1 )
     {
-        cerr << strerror( errno );
+        cerr << strerror( errno ) << endl;
     }
     
     //Terminate ncurses
-    sleep(2);
-    endwinwrap();
+    //sleep(2);
+    //endwinwrap();
     exit( EXIT_FAILURE );
 }
 

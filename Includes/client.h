@@ -9,6 +9,7 @@ void handle_input();
 void flushSTDIN();
 void endwinwrap();
 void quit_options( bool );
+void ncurses_cleanup();
 
 class Client
 {

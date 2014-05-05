@@ -150,12 +150,18 @@ void get_user_name( string user_name )
 }
 
 
+void ncurses_cleanup()
+{
+    echo();
+    endwin();
+}
+
+
 //|sig_wrap_cleanup
 void sig_wrap_cleanup( int sig )
 {
     echo();
     endwin();
-    cout << "nCurses has exited. " << endl;
     // wrapper for sigaction to pass int to sig which is never used
     my_client->cleanup();
 }
