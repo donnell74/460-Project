@@ -421,7 +421,11 @@ void update_score_win( string msg )
 //|draw_card
 void draw_card( int card, int number, int symbol, int shade, int color )
 {
-    int x, y, shade_ch, card_color;
+    int x;
+    int y;
+    int shade_ch;
+    int card_color;
+
     int columns[4] = { ORIGIN_X, ( ORIGIN_X + CARD_WIDTH + COL_OFFSET ), 
 		     ( ORIGIN_X + 2 * ( CARD_WIDTH + COL_OFFSET ) ), 
 		     ( ORIGIN_X + 3 * ( CARD_WIDTH + COL_OFFSET ) ) };
@@ -725,6 +729,7 @@ void draw_card( int card, int number, int symbol, int shade, int color )
 
 }
 
+
 //|draw_card_IDs
 void draw_card_IDs()
 {
@@ -764,51 +769,51 @@ int get_card( int ch )
     // for cases
     if ( ch == ACCEPTED_CHARS[keyboard_as_int][0] )
     {
-      return 1;
+        return 1;
     }
     else if ( ch == ACCEPTED_CHARS[keyboard_as_int][1] )
     {
-      return 2;
+        return 2;
     }
     else if ( ch == ACCEPTED_CHARS[keyboard_as_int][2] )
     {
-      return 3;
+        return 3;
     }
     else if ( ch == ACCEPTED_CHARS[keyboard_as_int][3] )
     {
-      return 4;
+        return 4;
     }
     else if ( ch == ACCEPTED_CHARS[keyboard_as_int][4] )
     {
-      return 5;
+        return 5;
     }
     else if ( ch == ACCEPTED_CHARS[keyboard_as_int][5] )
     {
-      return 6;
+        return 6;
     }
     else if ( ch == ACCEPTED_CHARS[keyboard_as_int][6] )
     {
-      return 7;
+        return 7;
     }
     else if ( ch == ACCEPTED_CHARS[keyboard_as_int][7] )
     {
-      return 8;
+        return 8;
     }
     else if ( ch == ACCEPTED_CHARS[keyboard_as_int][8] )
     {
-      return 9;
+        return 9;
     }
     else if ( ch == ACCEPTED_CHARS[keyboard_as_int][9] )
     {
-      return 10;
+        return 10;
     }
     else if ( ch == ACCEPTED_CHARS[keyboard_as_int][10] )
     {
-      return 11;
+        return 11;
     }
     else if ( ch == ACCEPTED_CHARS[keyboard_as_int][11] )
     {
-      return 12;
+        return 12;
     }
     else
     {
@@ -968,6 +973,7 @@ void highlight_card( int card )
     int x2;
     int y1;
     int y2;
+
     row = get_card_coords( card )[0] - 48;
     column = get_card_coords( card )[1] - 48;
   
@@ -984,6 +990,7 @@ void highlight_card( int card )
   
     //Draw border around selected card
     attron( COLOR_PAIR( 1 ) );
+
     //1.Left Border
     mvaddch( y1 - 1, x1 - 2, CARD_CHAR );
     for( int i = 0; i < CARD_HEIGHT + 1; i++ )
@@ -1025,12 +1032,13 @@ void dehighlight_card(int card)
     int y2; 
     int column;
     int row;
+
     row = get_card_coords( card )[0] - 48;
     column = get_card_coords( card )[1] - 48;
     
-    vector<int> cards_spots = {get_card( toupper(choice_string[0]) ),
-                               get_card( toupper(choice_string[1]) ),
-                               get_card( toupper(choice_string[2]) )};
+    vector<int> cards_spots = { get_card( toupper(choice_string[0]) ),
+                                get_card( toupper(choice_string[1]) ),
+                                get_card( toupper(choice_string[2]) ) };
 
     x1 = ORIGIN_X + ( ( column - 1) * ( CARD_WIDTH + COL_OFFSET ) ) + 1;
     x2 = x1 - 1 +CARD_WIDTH-1;
@@ -1091,7 +1099,8 @@ void dehighlight_card(int card)
 void show_game_screen()
 {
     clear();
-    int row, column;
+    int row;
+    int column;
     start_color();
 
     init_pair( 1, COLOR_RED, COLOR_BLACK );
@@ -1165,6 +1174,7 @@ void quit_options( bool game_started )
                  
                     //handle the leftover guess
                     choice_string.clear();
+
                     //Delete all card highlights
                     for( int i = 1; i < 13; i++ )
                     {
@@ -1235,14 +1245,16 @@ void handle_input()
 {
     int card;
     int ch;
+
     if( game_started )
     {
         ch = getch();
 
         if ( watching ) // client types ctrl+c to quit
         {
-          return;
+            return;
         }
+
         switch( ch )
 	{
 
@@ -1300,7 +1312,7 @@ void handle_input()
 	{
             wclrtoeol( message_win );
             mvwprintw( message_win, 0, 0, 
-                   "CLIENT MESSAGE: Press the SPACE BAR to submit guess" );
+                       "CLIENT MESSAGE: Press the SPACE BAR to submit guess" );
             wrefresh( message_win );	 
 	}
         
@@ -1374,6 +1386,7 @@ string bitcode_parser( char bitcode )
     int bit = ( int )bitcode;
     int remainder;
     int padding;
+
     string card_string = "";
     string result = "";
 
@@ -1399,6 +1412,7 @@ string bitcode_parser( char bitcode )
             card_string += to_string( bit );
             break;
         }
+
         remainder = bit % 4;
         bit = bit >> 2;
         card_string += to_string( remainder );
@@ -1435,6 +1449,7 @@ void display_game_over( string msg )
 
     //Empty choice string
     choice_string = "";
+
     //Delete all card highlights
     for( int i = 1; i < 13; i++ )
     {
@@ -1453,11 +1468,15 @@ void display_game_over( string msg )
     {
         row += 1;
         size_t found = clients[i].find( user );
+
         if ( found!=string::npos && clients[i][found + strlen( user )] == ' ')
+        {
             attron( COLOR_PAIR( 11 ) );
+        }
 
         mvprintw( row - 1, 30, "%d.%s ", i + 1,
-                 clients[i].c_str() );
+                  clients[i].c_str() );
+
         scoreboard += clients[i] + "\n";
 
         attroff( COLOR_PAIR( 11 ) );

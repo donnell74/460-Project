@@ -29,12 +29,12 @@ using namespace std;
 /* structs */
 struct Client_t
 {
-  int sock_fd;  
-  sockaddr_in addr;
-  string name;
-  int score;
-  int keyboard;
-  bool on_streak;
+    int sock_fd;  
+    sockaddr_in addr;
+    string name;
+    int score;
+    int keyboard;
+    bool on_streak;
 };
 
 #endif /* NETWORKING_H */

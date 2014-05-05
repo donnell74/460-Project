@@ -2,7 +2,7 @@
 
 // Start of Clienti
 //|die
-void Client::die ( string error_msg )
+void Client::die( string error_msg )
 {
     // standardize error_msg so no extra new lines
     error_msg.erase( error_msg.find_last_not_of( " \n\r\t" ) + 1 ); 

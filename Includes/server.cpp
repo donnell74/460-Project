@@ -476,6 +476,7 @@ void Server::wait_for_client()
 	        pthread_mutex_lock( &mutex );
                 this_client.score = 0;
                 this_client.on_streak = false;
+
                 // Read name
 	        int hr = read( this_client.sock_fd, &buffer, 15 );
                 if ( hr <= 0 )
@@ -501,8 +502,6 @@ void Server::wait_for_client()
                 sendMessage( this_client.sock_fd, 'm',
                              "Make a guess " ); 
 	        poll_fds.push_back( client_sock_fd );
-	        //send_playing_cards( std_indexes );
-	        //display_sets ( playing_deck->get_cards() );	
 	    }
             else
 	    {    
@@ -540,7 +539,6 @@ void Server::disconnect_client( int client_sock_fd )
     }
 
     // even if close fails, server acts if client has died
-    // as of point
     sendMessage( client_sock_fd, 'x', "You have been disconnected" ); 
     cout << "Client with fd of " << client_sock_fd 
          << " has disconnected." << endl;
@@ -557,7 +555,6 @@ bool compareByScore( const Client_t &a, const Client_t &b )
 //|score_sort
 void Server::score_sort()
 {
-
     pthread_mutex_lock( &mutex );
     sort( client_list.begin(), client_list.end(), compareByScore );
     pthread_mutex_unlock( &mutex );
@@ -567,9 +564,9 @@ void Server::score_sort()
 //|respond_to_client
 void Server::respond_to_client ( int client_sock_fd, char* guess )
 {
-
     sendMessage( client_sock_fd, 'm', "Checking guess.." ); 
     vector<Client_t>::iterator client;
+
     for ( auto client_it = client_list.begin(); 
           client_it != client_list.end(); ++client_it )
     {
@@ -671,7 +668,6 @@ void Server::respond_to_client ( int client_sock_fd, char* guess )
 
     //|Game over
     if ( deck->empty( 0 ) && num_sets( playing_deck->get_cards() ) == 0 )
-         // && playing_deck->count( 1 ) < 13 )  
     {
         cout << "Sending game over to all clients" << endl;
 

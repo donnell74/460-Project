@@ -31,26 +31,16 @@ void handle_server_msg()
 //|display_options
 void display_options()
 {
-  cout << "Menu" << endl;
-  cout << "B. Start Game" << endl;
-  cout << "O. End Game" << endl;
-  cout << "Q. Quit" << endl;
-  cout << "D. Display deck" << endl;
-  cout << "S. Shuffle deck" << endl;
-  cout << "A. Memory Addresses" << endl;
-  cout << "W. Display possible sets" << endl;
-  cout << "P. Display Playing Deck" << endl;
-  //cout << "K. Set Options" << endl;
- }
-
-
-/*void set_options ( )
-{
-  cout << "Set Options" << endl;
-  cout << "1. Test Set" << endl;
-  cout << "2. Show all sets" << endl;
+    cout << "Menu" << endl;
+    cout << "B. Start Game" << endl;
+    cout << "O. End Game" << endl;
+    cout << "Q. Quit" << endl;
+    cout << "D. Display deck" << endl;
+    cout << "S. Shuffle deck" << endl;
+    cout << "A. Memory Addresses" << endl;
+    cout << "W. Display possible sets" << endl;
+    cout << "P. Display Playing Deck" << endl;
 }
-*/
 
 
 //|handle_input
@@ -61,6 +51,7 @@ void handle_input()
 
     cin >> inp;
     type = inp[0];
+
     switch( toupper( type ) )
     {
   
@@ -111,12 +102,14 @@ void handle_input()
     }
 }
 
-//|*start_timer_wrapper
+
+//|start_timer_wrapper
 void *start_timer_wrap( void *arg )
 {
-  my_server->start_timer();
-  return arg;
+    my_server->start_timer();
+    return arg;
 }
+
 
 //|*wait_for_client_wrap
 void *wait_for_client_wrap( void *arg )
@@ -125,18 +118,21 @@ void *wait_for_client_wrap( void *arg )
     return arg;
 }
 
+
 //|sig_alarm_wrap
 void sig_alarm_wrapper( int sig )
 {
-  my_server->check_timer();
-  my_server->update_client_timer();
+    my_server->check_timer();
+    my_server->update_client_timer();
 }
 
-//|sei_wrap_cleanup
+
+//|sig_wrap_cleanup
 void sig_wrap_cleanup( int sig )
 {
     my_server->~Server();
 }
+
 
 //|main
 int main( int argc, char* argv[] )
@@ -183,12 +179,14 @@ int main( int argc, char* argv[] )
     sigaction( SIGALRM, &time_action, nullptr );
   
     //Start timer thread 
-    if(pthread_create(&timer_thread, nullptr, start_timer_wrap, nullptr) != 0)
-      {
-      my_server->die( "Couldn't create timer_thread" );
-      }
+    if( pthread_create( &timer_thread, nullptr, start_timer_wrap, 
+                        nullptr ) != 0 )
+    {
+        my_server->die( "Couldn't create timer_thread" );
+    }
 
     pthread_t thread;
+
     if ( pthread_create( &thread, NULL, wait_for_client_wrap, nullptr ) != 0 )
     {
         my_server->die( "Couldn't start wait for client" );

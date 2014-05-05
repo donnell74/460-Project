@@ -76,7 +76,7 @@ Deck::Deck( int code )
     //Construct deck object
     for ( int  i = 0; i < 12; i++ )
     {
-        cards.push_back(nullptr);
+        cards.push_back( nullptr );
     }
  
 }
@@ -127,11 +127,13 @@ void Deck::reset_top()
 }
 
 
+//|remove_all_cards
 void Deck::remove_all_cards()
 {
-  top = 81;
-  _count = 0;
+    top = 81;
+    _count = 0;
 }
+
 
 //|get_card
 Card* Deck::get_card( int index )
@@ -225,9 +227,12 @@ void Deck::shuffle()
 //|sort_cards
 void Deck::sort_cards()
 {
-  //Sort cards using Insertion Sort algorithm
-  int i, j, key;
-  Card* ncard;
+    //Sort cards using Insertion Sort algorithm
+    int i;
+    int j; 
+    int key;
+
+    Card* ncard;
   
     for ( j = top + 1; j < 81; j++ )
     {
@@ -311,7 +316,7 @@ void Deck::add_card( Card* ncard )
 //|empty
 bool Deck::empty( int code )
 {
-    switch( code )
+    switch ( code )
     {
 
         case 0:
@@ -475,21 +480,20 @@ void set_auxillary()
         ncard->symbol = static_cast<Symbol>( ins[1] );
         ncard->shade = static_cast<Shade>( ins[2] );
         ncard->number = static_cast<Number>( ins[3] );
+
         set.push_back( ncard );
+
         cout << "card_color:"  << set[j]->color  << endl;
         cout << "card_symbol:" << set[j]->symbol << endl;
         cout << "card_shade:"  << set[j]->shade  << endl;
         cout << "card_number:" << set[j]->number << endl;
 
-    }
-
-      
+    }      
 
     if ( check_set( set ) )
     {
         cout << "These cards form a valid set" << endl;
     }
-
     else
     {
         cout << "Cards do not form a valid set" << endl;
@@ -507,8 +511,8 @@ string create_playing_cards( vector<int>indexes,
     {
         Card* ncard = deck->draw();
         card_array += ncard->bitcode;
-	card_array += ":" + to_string(indexes[i]) + ";";
-        //cout << ncard->bitcode + 31 << endl;
+	card_array += ":" + to_string( indexes[i] ) + ";";
+
         //Add card to playing deck
         playing_deck->replace_card( indexes[i], ncard );
     }
@@ -574,6 +578,7 @@ void display_sets ( vector<Card*>cards )
     }
 
     cout << _sets.size() << " possible sets" << endl;
+
     for ( unsigned int i = 0; i < _sets.size(); i++ )
     {
         cout << "Deck[" << _sets[i]->x << "] Deck[" << _sets[i]->y 
@@ -585,61 +590,6 @@ void display_sets ( vector<Card*>cards )
 //|map_card
 int map_card ( char key, vector<char>accepted_keys )
 {
-  return find(accepted_keys.begin(), accepted_keys.end(), key) - accepted_keys.begin();
-  /*
-    switch ( key )
-    {
-
-      case '1':
-          return 0;
-
-      case '2':
-          return 1;
-
-      case '3':
-          return 2;
-
-      case '4':
-          return 3;
-
-      case 'Q':
-          return 4;
-
-      case 'W':
-          return 5;
-
-      case 'E':
-          return 6;
-
-      case 'R':
-          return 7;
-
-      case 'A':
-          return 8;
-
-      case 'S':
-          return 9;
-
-      case 'D':
-          return 10;
-
-      case 'F':
-          return 11;
-
-      //Required if client list is extended to 16
-      case 'Z':
-          return 12;
-
-      case 'X':  
-          return 13;
-
-      case 'C':
-          return 14;
-
-      case 'V':
-          return 15;
-    default:
-        return 0;
-    }
-*/
+    return find( accepted_keys.begin(), accepted_keys.end(), 
+                 key ) - accepted_keys.begin();
 }
