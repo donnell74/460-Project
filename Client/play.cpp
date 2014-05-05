@@ -1595,6 +1595,10 @@ void flushSTDIN( )
   c = getch();
 }
 
+void endwinwrap( )
+{
+  endwin();
+}
 //|main
 int main( int argc, char *argv[] )
 {
@@ -1616,7 +1620,9 @@ int main( int argc, char *argv[] )
         case 2:
 	{
             char buff[15] = {0};
-            getlogin_r( buff, 15 );
+	    //Encounters problems on some remote terminals
+            //printw("Here:%d",getlogin_r( buff, 15 ));
+	    cuserid( buff );
 	    get_user_name( string( buff, strlen( buff ) ) );
             get_keyboard_layout();
 	    my_client = new Client( atoi( argv[1] ), LOCALHOST, 

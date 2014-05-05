@@ -6,6 +6,8 @@
 /* Function required by user to implement  */
 void handle_server_msg ();
 void handle_input();
+void flushSTDIN();
+void endwinwrap();
 void quit_options( bool );
 
 class Client
@@ -16,6 +18,7 @@ class Client
     string past_data_read;
 
   public:
+    bool gameStarted;
     Client( int, char *, char *, string );
     ~Client();
     void die( string );

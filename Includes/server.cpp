@@ -766,7 +766,7 @@ void Server::wait_for_input()
 
                 if ( ( poll_fd_it.revents & POLLIN ) != 0 )
                 {
-                        receive_input( poll_fd_it.fd );
+                    receive_input( poll_fd_it.fd );
                 }   
             }  
 	}

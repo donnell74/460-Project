@@ -18,7 +18,10 @@ void Client::die ( string error_msg )
     {
         cerr << strerror( errno );
     }
-
+    
+    //Terminate ncurses
+    sleep(2);
+    endwinwrap();
     exit( EXIT_FAILURE );
 }
 
@@ -37,7 +40,7 @@ Client::Client( int port, char *addr, char * user, string keyboard )
 {
     struct sockaddr_in server_addr = {};
     struct hostent *server;
-
+    gameStarted = false;
 
     client_sock_fd = socket( AF_INET, SOCK_STREAM, 0 );
     if ( client_sock_fd < 0 )
@@ -110,15 +113,25 @@ void Client::wait_for_input()
         }
         else
         {
+	  
             if ( ( poll_fds[0].revents & POLLIN ) != 0 )
             {
-                handle_input();
+	      if( gameStarted )
+		{
+		  handle_input();
+		}	
+
+	      else
+		{
+		  flushSTDIN();
+		}
             }
 
             if ( ( poll_fds[1].revents & POLLIN ) != 0 )
             {
                 read_server_msg();
-            } 
+            }
+	    
         }
     }
 }
